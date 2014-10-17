@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[金涛的博客]]></title>
-  <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
+  <title><![CDATA[Category: 技术 | 金涛的博客]]></title>
+  <link href="http://jintao-zero.github.io/blog/categories/技术/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
   <updated>2014-10-17T16:49:37+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
