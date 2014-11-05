@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2014/11/03/xue-xi-markdownyu-fa/</loc>
+    
+    <lastmod>2014-11-03T20:23:52+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2014/10/17/hello-world/</loc>
     
     <lastmod>2014-10-17T16:46:20+08:00</lastmod>
@@ -13,14 +21,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2014-10-22T15:13:39+08:00</lastmod>
+    <lastmod>2014-11-05T20:32:38+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2014-10-22T15:13:39+08:00</lastmod>
+    <lastmod>2014-11-05T20:32:38+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

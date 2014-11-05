@@ -4,7 +4,7 @@
   <title><![CDATA[金涛的博客]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2014-10-22T15:13:39+08:00</updated>
+  <updated>2014-11-05T20:32:38+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -14,11 +14,45 @@
 
   
   <entry>
+    <title type="html"><![CDATA[学习Markdown语法]]></title>
+    <link href="http://jintao-zero.github.io/blog/2014/11/03/xue-xi-markdownyu-fa/"/>
+    <updated>2014-11-03T20:23:52+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2014/11/03/xue-xi-markdownyu-fa</id>
+    <content type="html"><![CDATA[<p>学习Markdown基本语法</p>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Hello World]]></title>
     <link href="http://jintao-zero.github.io/blog/2014/10/17/hello-world/"/>
     <updated>2014-10-17T16:46:20+08:00</updated>
     <id>http://jintao-zero.github.io/blog/2014/10/17/hello-world</id>
-    <content type="html"><![CDATA[<p>Thanks to Opene Source! this is my blog, welcome everybody.</p>
+    <content type="html"><![CDATA[<p>属于自己的个人博客终于搭建起来 ：）。
+利用这个博客，我首先是做一些自己学习、工作中的笔记，然后也希望能够写一些有价值的思考帮助到别人。</p>
+
+<p>搭建博客感谢以下开源项目：</p>
+
+<h2>Octopress</h2>
+
+<p><a href="http://octopress.org/">Octopress</a>是一款基于<a href="https://github.com/jekyll/jekyll">Jekyll</a>的静态站点生成系统，它很大程度上简化了用Jekyll搭建博客的过程。</p>
+
+<h2>Github</h2>
+
+<p><a href="https://pages.github.com/">Github</a>是一个面向全球开发者提供的免费、开源的代码托管项目。Github用户可以上传静态页面为自己建立个人主页或者项目主页，利用Githbub提供的免费主机以及子域名，我们可以将Octopress生成的静态页面上传到Github上建立个人博客。：）</p>
+
+<h2>Markdown</h2>
+
+<p><a href="http://zh.wikipedia.org/wiki/Markdown">Markdown</a>是一种轻量级标记语言，创始人约翰·格鲁伯（John Gruber）。它允许人们“使用易读易写的纯文本格式编写文档，然后转换成有效的XHTML(或者HTML)文档”。[1]这种语言吸收了很多在电子邮件中已有的纯文本标记的特性。<br/>
+Octopress可以将用Markdown编写的文本转化为html静态页面，两者配合可以快捷的撰写博客</p>
+
+<h2>参考博客</h2>
+
+<p>在搭建过程中，参考了以下博客，在此表示感谢：<br/>
+<a href="http://812lcl.com/">812lcl的博客</a><br/>
+<a href="http://codemacro.com/">loop in codes</a><br/>
+<a href="http://yang3wei.github.io/">yang3wei的专栏</a></p>
+
+<p>Thanks to Opene Source! this is my blog, welcome everybody.</p>
 ]]></content>
   </entry>
   
