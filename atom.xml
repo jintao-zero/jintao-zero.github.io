@@ -4,7 +4,7 @@
   <title><![CDATA[金涛的博客]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2014-12-13T15:06:10+08:00</updated>
+  <updated>2014-12-13T15:13:42+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -24,6 +24,13 @@
 Object "netns" is unknown, try "ip help".
 [root@gaichao ~]#
 </code></pre>
+
+<p>下面分别介绍以下安装失败与成功的经验：</p>
+
+<!-- more -->
+
+
+<p></p>
 
 <h2>安装ip netns失败</h2>
 
