@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li/</loc>
+    
+    <lastmod>2015-02-10T19:07:27+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2014/12/11/centos-6-dot-5-an-zhuang-ip-netns/</loc>
     
     <lastmod>2014-12-11T16:42:57+08:00</lastmod>
@@ -29,14 +37,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2014-12-13T15:13:42+08:00</lastmod>
+    <lastmod>2015-02-11T15:44:36+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2014-12-13T15:13:42+08:00</lastmod>
+    <lastmod>2015-02-11T15:44:36+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>金涛的博客</title>
+  <title>Tcp 客户端示例 - 金涛的博客</title>
   <meta name="author" content="jintao">
 
   
@@ -19,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jintao-zero.github.io">
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="金涛的博客" type="application/atom+xml">
@@ -64,15 +64,12 @@
 </nav>
   <div id="main">
     <div id="content">
-      <div class="blog-index">
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-      
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">Tcp 客户端示例</a></h1>
+      <h1 class="entry-title">Tcp 客户端示例</h1>
     
     
       <p class="meta">
@@ -88,7 +85,7 @@
   </header>
 
 
-  <div class="entry-content"><p>实现了一个简单客户端，使用tcp与服务端进行通讯。本片文章主要介绍在tcp客户端网络编程中用到的几个基本函数：<br/>
+<div class="entry-content"><p>实现了一个简单客户端，使用tcp与服务端进行通讯。本片文章主要介绍在tcp客户端网络编程中用到的几个基本函数：<br/>
 1、创建socket</p>
 
 <pre><code>int socket(int domain, int type, int protocol)
@@ -136,147 +133,171 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
 
 <p>连接成功，函数返回0，失败，则返回－1，同时置错误码errno</p>
 
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">Read on &rarr;</a>
-    </footer>
-  
+<!-- more -->
 
 
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/12/11/centos-6-dot-5-an-zhuang-ip-netns/">CentOS 6.5 安装ip Netns</a></h1>
-    
-    
-      <p class="meta">
-        
+<p></p>
 
+<p>3、send发送内容</p>
 
-
-
-<time class='entry-date' datetime='2014-12-11T16:42:57+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:42 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>项目需要用到网络空间这一个技术，但是在CentOS 6.x版本中，ip命令并不能够使用netns这个参数：</p>
-
-<pre><code>[root@gaichao ~]# ip netns
-Object "netns" is unknown, try "ip help".
-[root@gaichao ~]#
+<pre><code>ssize_t send(int socket, const void *buffer, size_t length, int flags);
 </code></pre>
 
-<p>下面分别介绍以下安装失败与成功的经验：</p>
+<p>send函数发送数据到对端套接字。使用send函数时需要socket处于连接状态。</p>
 
+<p>参数buffer为需要发送内容首地址<br/>
+参数length为需要发送的报文内容长度<br/>
+参数flags可能包含以下两种：</p>
+
+<pre><code>    #define MSG_OOB        0x1  /* process out-of-band data */
+    #define MSG_DONTROUTE  0x4  /* bypass routing, use direct interface */
+</code></pre>
+
+<p>本例中，不需要以上两种标志，设置为0即可</p>
+
+<p>发送成功，函数返回发送的字节数，发送失败，返回－1，设置errno错误码</p>
+
+<p>4、recv接受内容</p>
+
+<pre><code>ssize_t recv(int socket, void *buffer, size_t length, int flags);
+</code></pre>
+
+<p>recv函数只可以在处于连接状态套接字使用。
+默认情况下，如果没有数据可读，recv调用将会一直阻塞等待数据到达，除非socket被设置为非阻塞状态。通常情况下，recv会返回任何可读数据，最大达到请求的length数量，而不是一直等待接收到length数量才返回，可以通过设置套接字属性SO_RCVLOWAT和SO_RCVTIMEO来进行修改。
+如果没有可接收数据并且对端已经执行关闭操作，那么recv返回0</p>
+
+<p>参数flags，有以下几种类型：</p>
+
+<pre><code>MSG_OOB        process out-of-band data
+MSG_PEEK       peek at incoming message
+MSG_WAITALL    wait for full request or error
+</code></pre>
+
+<p>MSG_OOB标志请求接收带外数据。<br/>
+MSG_PEEK标志使recv只从头读取队列中的数据而不从队列中删除这些数据，这样接下来的读操作会读取相同内容。
+MSG_WAITALL标志使recv操作阻塞直到读取的报文达到请求字节数。</p>
+
+<p>recv函数返回接收到的字节数，返回－1表示发生错误，返回0表示对端已经关闭连接。</p>
+
+<p>5、示例代码
+示例完成功能：1、与服务端建立tcp连接 2、从控制台读取输入，发送到服务端 3、读取服务端返回数据 4、关闭tcp连接</p>
+
+<pre><code>#include &lt;sys/socket.h&gt;
+#include &lt;netdb.h&gt;
+#include &lt;arpa/inet.h&gt;
+#include &lt;sys/errno.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+#include &lt;unistd.h&gt;
+
+#define SERVER_PORT 8000
+
+int main(int argc, char *argv[])
+{
+    // judge the legal arguments
+    if (2 &gt; argc) {
+        printf("please input a hostname \n");
+        return -1;
+    }
+
+    // create a SOC_STREAM socket
+    int sock_client = socket(AF_INET, SOCK_STREAM, 0);
+    if (0 &gt; sock_client) {
+        perror("create socket error");
+        return -1;
+    }
+
+
+    // construct server sockaddr
+    struct hostent *p = gethostbyname(argv[1]);
+    if (p == NULL) {
+        printf("gethostbyname:%s fail.reason:%s \n", argv[1], strerror(errno));
+        return -1;
+    }
+    struct sockaddr_in servaddr;
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr = *(struct in_addr *)p-&gt;h_addr;
+    servaddr.sin_port = htons(SERVER_PORT);
+
+    // connect to server
+    if (connect(sock_client, (struct sockaddr *)&amp;servaddr, sizeof(servaddr)) == -1) {
+        printf("connect to server:%s port:%d fail.reason:%s \n", inet_ntoa(servaddr.sin_addr), SERVER_PORT,
+        strerror(errno));
+        return -1;
+    }
+    printf("connect to server:%s port:%d success\n", inet_ntoa(servaddr.sin_addr), SERVER_PORT );
+
+    // send and rev data with server
+    char buf[1024];
+    while(fgets(buf, sizeof(buf)-1, stdin))
+    {
+        int len = strlen(buf);
+        if (len == 1)
+            break;
+        buf[len-1] = '\0';
+        printf("%d\n", len-1);
+        ssize_t send_size = send(sock_client, buf, len, 0);
+        if (send_size != len) {
+            printf("send fail \n");
+            break;
+        }
+        ssize_t rcv_size = recv(sock_client, buf, sizeof(buf), 0);
+        if (rcv_size == -1) {
+            printf("rcv fail\n");
+            break;
+        }
+        printf("recv from server:%s \n", buf);
+    }
+    close(sock_client);
+}   
+</code></pre>
 </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/12/11/centos-6-dot-5-an-zhuang-ip-netns/">Read on &rarr;</a>
-    </footer>
-  
 
 
-    </article>
-  
-  
-    <article>
+  <footer>
+    <p class="meta">
       
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/11/03/xue-xi-markdownyu-fa/">学习Markdown语法</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-11-03T20:23:52+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>8:23 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>学习Markdown基本语法</p>
-</div>
-  
   
 
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
 
-    </article>
-  
-  
-    <article>
       
-  <header>
+
+
+
+
+<time class='entry-date' datetime='2015-02-10T19:07:27+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:07 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/tcp-ip/'>tcp/ip</a>
+  
+</span>
+
+
+    </p>
     
-      <h1 class="entry-title"><a href="/blog/2014/10/17/hello-world/">Hello World</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-10-17T16:46:20+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:46 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>属于自己的个人博客终于搭建起来 ：）。
-利用这个博客，我首先是做一些自己学习、工作中的笔记，然后也希望能够写一些有价值的思考帮助到别人。</p>
-
-<p>搭建博客感谢以下开源项目：</p>
-
-<h2>Octopress</h2>
-
-<p><a href="http://octopress.org/">Octopress</a>是一款基于<a href="https://github.com/jekyll/jekyll">Jekyll</a>的静态站点生成系统，它很大程度上简化了用Jekyll搭建博客的过程。</p>
-
-<h2>Github</h2>
-
-<p><a href="https://pages.github.com/">Github</a>是一个面向全球开发者提供的免费、开源的代码托管项目。Github用户可以上传静态页面为自己建立个人主页或者项目主页，利用Githbub提供的免费主机以及子域名，我们可以将Octopress生成的静态页面上传到Github上建立个人博客。：）</p>
-
-<h2>Markdown</h2>
-
-<p><a href="http://zh.wikipedia.org/wiki/Markdown">Markdown</a>是一种轻量级标记语言，创始人约翰·格鲁伯（John Gruber）。它允许人们“使用易读易写的纯文本格式编写文档，然后转换成有效的XHTML(或者HTML)文档”。[1]这种语言吸收了很多在电子邮件中已有的纯文本标记的特性。<br/>
-Octopress可以将用Markdown编写的文本转化为html静态页面，两者配合可以快捷的撰写博客</p>
-
-<h2>参考博客</h2>
-
-<p>在搭建过程中，参考了以下博客，在此表示感谢：<br/>
-<a href="http://812lcl.com/">812lcl的博客</a><br/>
-<a href="http://codemacro.com/">loop in codes</a><br/>
-<a href="http://yang3wei.github.io/">yang3wei的专栏</a></p>
-
-<p>Thanks to Opene Source! this is my blog, welcome everybody.</p>
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li/" data-via="" data-counturl="http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li/" >Tweet</a>
+  
+  
+  
 </div>
-  
-  
 
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/12/11/centos-6-dot-5-an-zhuang-ip-netns/" title="Previous Post: CentOS 6.5 安装ip netns">&laquo; CentOS 6.5 安装ip netns</a>
+      
+      
+    </p>
+  </footer>
+</article>
 
-    </article>
-  
-  <div class="pagination">
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
 </div>
+
 <aside class="sidebar">
   
     <section>
@@ -318,6 +339,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 
   
 </aside>
+
 
     </div>
   </div>
