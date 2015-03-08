@@ -32,6 +32,8 @@ fork创建一个新进程。新进程是当前运行进程的一个拷贝。fork
 
 以下为根据上面的并发服务器轮廓代码修改的tcp客户端代码：
 
+<!-- more -->
+
 	for (; ; ) {
 
 		if ((connsock = accept(sock_server, (struct sockaddr *)&clientaddr, &clientaddr_len)) < 0) {
