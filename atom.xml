@@ -4,7 +4,7 @@
   <title><![CDATA[金涛的博客]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2015-03-08T16:15:29+08:00</updated>
+  <updated>2015-03-08T16:35:35+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -46,6 +46,9 @@ for ( ; ; ) {
 <p>fork创建一个新进程。新进程是当前运行进程的一个拷贝。fork函数一次调用，两次返回。对于子进程返回值为0，对于父进程，返回值为子进程id。</p>
 
 <p>以下为根据上面的并发服务器轮廓代码修改的tcp客户端代码：</p>
+
+<!-- more -->
+
 
 <pre><code>for (; ; ) {
 

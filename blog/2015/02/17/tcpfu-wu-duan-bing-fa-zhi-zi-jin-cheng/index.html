@@ -113,6 +113,9 @@ for ( ; ; ) {
 
 <p>以下为根据上面的并发服务器轮廓代码修改的tcp客户端代码：</p>
 
+<!-- more -->
+
+
 <pre><code>for (; ; ) {
 
     if ((connsock = accept(sock_server, (struct sockaddr *)&amp;clientaddr, &amp;clientaddr_len)) &lt; 0) {
