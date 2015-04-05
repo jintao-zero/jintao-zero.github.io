@@ -5,11 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: Tcp/ip - 金涛的博客</title>
+  <title>Python Property 属性用法 - 金涛的博客</title>
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Category: tcp/ip">
+  <meta name="description" content="python提供了一个property类： class property([fget[, fset[, fdel[, doc]]]]) property类为新式类（继承object）返回property属性
+fget函数用来获取属性值。fset设置属性值。fdel用来删除属性。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +19,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jintao-zero.github.io/blog/categories/tcp-ip">
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/04/05/python-property-shu-xing-yong-fa">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="金涛的博客" type="application/atom+xml">
@@ -64,63 +65,131 @@
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Tcp/ip</h1>
+    
+      <h1 class="entry-title">Python Property 属性用法</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-04-05T17:26:05+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>5:26 pm</span></time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><p>python提供了一个property类：</p>
 
-  
-  <h2>2015</h2>
+<pre><code>class property([fget[, fset[, fdel[, doc]]]])
+</code></pre>
 
-<article>
-  
-<h1><a href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Tcp服务端并发之子进程</a></h1>
-<time datetime="2015-02-17T14:56:56+08:00" pubdate><span class='month'>Feb</span> <span class='day'>17</span> <span class='year'>2015</span></time>
+<p>property类为新式类（继承object）返回property属性<br/>
+fget函数用来获取属性值。fset设置属性值。fdel用来删除属性。doc为属性创建docstring。<br/>
+property的典型应用是应用一个被管理的属性x：</p>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/tcp-ip/'>tcp/ip</a></span>
-</footer>
+<pre><code>class C(object):
+def __init__(self):
+    self._x = None
 
+def getx(self):
+    return self._x
 
-</article>
+def setx(self, value):
+    self._x = value
 
+def delx(self):
+    del self._x
 
+x = property(getx, setx, delx, "I'm the 'x' property.")
+</code></pre>
 
-<article>
-  
-<h1><a href="/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">Tcp 服务端例子</a></h1>
-<time datetime="2015-02-13T11:04:43+08:00" pubdate><span class='month'>Feb</span> <span class='day'>13</span> <span class='year'>2015</span></time>
+<p>如果c是类C的实例，c.x将会调用getx，c.x＝value将会调用setx，del c.x会调用用delx</p>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/tcp-ip/'>tcp/ip</a></span>
-</footer>
+<p>将property 用作decorrator可以定义只读properties：</p>
 
+<pre><code>class Parrot(object):
+    def __init__(self):
+        self._voltage = 100000
 
-</article>
+    @property
+    def voltage(self):
+        """Get the current voltage."""
+        return self._voltage
+</code></pre>
 
+<p>@property修饰符将voltage函数变为voltage函数的同名属性的只读getter函数，同时这只这个属性的docstring与voltage函数相同</p>
 
+<p>一个property对象具有getter，setter和deleter方法可以用当作修饰符将属性同名函数变为属性对应的访问函数，下面是例子：</p>
 
-<article>
-  
-<h1><a href="/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">Tcp 客户端示例</a></h1>
-<time datetime="2015-02-10T19:07:27+08:00" pubdate><span class='month'>Feb</span> <span class='day'>10</span> <span class='year'>2015</span></time>
+<pre><code>class C(object):
+    def __init__(self):
+        self._x = None
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/tcp-ip/'>tcp/ip</a></span>
-</footer>
+    @property
+    def x(self):
+        """I'm the 'x' property."""
+        return self._x
 
+    @x.setter
+    def x(self, value):
+        self._x = value
 
-</article>
+    @x.deleter
+    def x(self):
+        del self._x
+</code></pre>
 
+<p>上面的用法与第一个列子相同，需要注意的是几个函数的名字都相同</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-04-05T17:26:05+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>5:26 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://jintao-zero.github.io/blog/2015/04/05/python-property-shu-xing-yong-fa/" data-via="" data-counturl="http://jintao-zero.github.io/blog/2015/04/05/python-property-shu-xing-yong-fa/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/" title="Previous Post: tcp服务端并发之子进程">&laquo; tcp服务端并发之子进程</a>
+      
+      
+    </p>
+  </footer>
 </article>
 
 </div>
