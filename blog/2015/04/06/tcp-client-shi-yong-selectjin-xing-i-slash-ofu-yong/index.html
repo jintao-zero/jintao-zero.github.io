@@ -1,0 +1,414 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Tcp Client 使用select进行I/O复用 - 金涛的博客</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="在tcp客户端示例中，存在以下两种情况时，示例代码不能更好的处理： 目前客户端输入一条数据并发送，等待服务端返回后，才能继续输入数据 这样的设计不利于客户端批量处理数据
+当服务端出现异常（如服务进程退出或者服务端主机崩溃等异常情况），客户端也许正在等待输入，不能够及时感知到服务端的异常， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="金涛的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">金涛的博客</a></h1>
+  
+    <h2>积跬步、至百里</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Tcp Client 使用select进行I/O复用</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-04-06T11:49:13+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:49 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>在<a href="http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">tcp客户端示例</a>中，存在以下两种情况时，示例代码不能更好的处理：</p>
+
+<ul>
+<li><p>目前客户端输入一条数据并发送，等待服务端返回后，才能继续输入数据
+ 这样的设计不利于客户端批量处理数据</p></li>
+<li><p>当服务端出现异常（如服务进程退出或者服务端主机崩溃等异常情况），客户端也许正在等待输入，不能够及时感知到服务端的异常，只有从send返回错误时，才能感知到服务端故障</p></li>
+</ul>
+
+
+<h1>select 函数介绍</h1>
+
+<p>上面实现的客户端示例中，客户端只能处理一个描述符，我们需要修改客户端使其可以同时处理标准输入和套接字描述符，达到I/O复用：</p>
+
+<pre><code>#include &lt;sys/select.h&gt;
+#include &lt;sys/time.h&gt;
+int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict errorfds,
+     struct timeval *restrict timeout);
+</code></pre>
+
+<ul>
+<li><p>timeout参数，它告知内核等待所有描述符中的一个就绪可花多长时间<br/>
+  struct timeval {<br/>
+      long tv_sec;  /* seconds*/<br/>
+      long tv_usec; /* microseconds*/<br/>
+  }   <br/>
+  (1) 永远等待下去：仅在有一个描述符准备好时返回。为此，将timeout设置为   空指针<br/>
+  (2) 等待一段固定时间：在有一个描述符准备好I/O时返回，但是不超过由该参数所指向的timeval结构中指定的秒数和微秒数<br/>
+  (3) 根本不等待：检查描述符后立即返回，这称为轮询。为此，该参数必须指向一个timeval结构，而且其中的定时器值必须为0</p></li>
+<li><p>readfds, writefds, errorfds参数，这三个参数指定了，需要内核测试读、写     和异常条件的描述符集合。
+系统提供了以下宏来对描述符进行操作：<br/>
+void FD_CLR(fd, fd_set <em>fdset)<br/>
+void FD_COPY(fd_set </em>fdest_orig, fd_set <em>fdset_copy)<br/>
+int FD_ISSET(fd, fd_set </em>fdset)<br/>
+void FD_SET(fd, fd_set <em>fdset)<br/>
+void FD_ZERO(fd_set </em>fdset)</p></li>
+<li><p>nfds参数，指定待测试的描述符个数，它的值是待测试的最大描述符加1</p></li>
+</ul>
+
+
+<!-- more -->
+
+
+<h1>描述符就绪条件</h1>
+
+<ul>
+<li><p>满足下列四个条件中的任何一个时，一个套接字准备好读<br/>
+a) 该套接字接收缓冲区中的数据字节数大于等于套接字接收缓冲区低水位标记的当前大小。对这样的套接字执行读操作不会阻塞并将返回一个大于0的值（也就是返回准备好读入的数据）。对于TCP和UDP套接字，其默认值为1。<br/>
+b) 该连接的读半部关闭（也就是接收了FIN的TCP连接）。对这样的套接字的读操作将不阻塞并返回0（也就是返回EOF）<br/>
+c) 该套接字是一个监听套接字且已完成的连接数大于0。对于这样的套接字调用accept通常不会阻塞。  <br/>
+d) 其上有一个套接字错误待处理。对这样的套接字的读操作将不阻塞并返回－1（也就是返回一个错误），同时把errno设置成确切的错误条件。</p></li>
+<li><p>下列四个条件中的任何一个满足时，一个套接字准备好写。<br/>
+a) 该套接字发送缓冲区中的可用空间字节数大于等于套接字发送缓冲区低水位表姐的当前大小，并且或者该套接字已连接，或者该套接字不需要连接（如UDP套接字）。  <br/>
+b) 该连接的写半部关闭。对这样的套接字的写操作将产生SIGPIPE信号。<br/>
+c) 使用非阻塞式connect的套接字已建立连接，或者connect已经以失败告终。<br/>
+d) 其上有一个套接字错误待处理。</p></li>
+<li>如果一个套接字存在带外数据或者仍处于带外标记，那么它有异常条件待处理。</li>
+</ul>
+
+
+<h1>修改tcp客户端程序</h1>
+
+<ul>
+<li><p>批量输入<br/>
+a) 用户输入数据，标准输入可读，read返回读入字节数，发送到服务器<br/>
+b) 用户输入Ctrl-D时，标准输入可读，read返回字节数为0，此时关闭套接字写端</p></li>
+<li><p>套接字增加处理情况：
+a) 如果对端TCP发送数据，那么该套接字变为可读，并且read返回一个大于0的值（即读入数据的字节数）。<br/>
+b) 如果对端TCP发送一个FIN（对端进程终止），那么该套接字变为可读，并且read返回0（EOF）。<br/>
+c) 如果对端TCP发送一个RST（对端主机崩溃并重新启动），那么该套接字变为可读，并且read返回－1，而errno中含有确切的错误码。</p></li>
+</ul>
+
+
+<p>以下是相关修改：<br/>
+1、将标准输入、套接字添加到客服描述符集合</p>
+
+<pre><code>fd_set readfds;
+FD_ZERO(&amp;readfds);
+FD_SET(sock_client, &amp;readfds);
+FD_SET(STDIN_FILENO, &amp;readfds);
+int maxfd = (STDIN_FILENO &gt; sock_client ? STDIN_FILENO: sock_client) + 1;
+select(maxfd, &amp;readfds, NULL, NULL, NULL)
+</code></pre>
+
+<p>2、标准输入可读</p>
+
+<pre><code>if (FD_ISSET(STDIN_FILENO , &amp;readfds)) {
+    ssize_t rd_size = read(STDIN_FILENO , buf, sizeof(buf));
+    if (rd_size &gt; 0) {
+        ssize_t sd_size = send(sock_client, buf, rd_size, 0);
+        buf[rd_size] = '\0';
+        printf("send msg(len:%ld):%s to server \n", sd_size, buf);
+    } else if (rd_size == 0) {
+    // client finish send msg to server, we close write part of the full-duplex connection
+        shutdown(sock_client, SHUT_WR); // send FIN to server
+        stdineof = 1;
+        continue;
+    } else {
+    // client finish send msg to server, we close write part of the full-duplex connection
+        printf("read fail from console, reason:%s \n", strerror(errno));
+        break;
+    }
+}  
+</code></pre>
+
+<p>3、套接字可读</p>
+
+<pre><code>if (FD_ISSET(sock_client, &amp;readfds)) {
+    ssize_t rd_size = read(sock_client, buf, sizeof(buf));
+    if (rd_size &gt; 0) {
+        printf("receive from server:%s", buf);
+    } else if (rd_size == 0) { // client receive FIN
+            printf("receive 0 from server\n");
+            if (stdineof == 1) {
+                printf("normal finish\n");
+            } else {// server crash and reset, client receive RST
+                printf("server terminate prematurely\n");
+            }
+            break;
+        } else {
+            printf("read fail.reason: %s\n", strerror(errno));
+            break;
+        }
+    }
+}
+</code></pre>
+
+<p>下面是使用select进行I/O复用的tcp客户端代码：</p>
+
+<pre><code>int main(int argc, char *argv[])
+{
+    // judge the legal arguments
+    if (2 &gt; argc) {
+        printf("please input a hostname \n");
+        return -1;
+    }
+
+// create a socket
+    int sock_client = socket(AF_INET, SOCK_STREAM, 0);
+    if (0 &gt; sock_client) {
+        perror("create socket error");
+        return -1;
+    }
+
+
+    // construct server sockaddr
+        struct hostent *p = gethostbyname(argv[1]);
+        if (p == NULL) {
+            printf("gethostbyname:%s fail.reason:%s \n", argv[1], strerror(errno));
+            return -1;
+        }
+        struct sockaddr_in servaddr;
+        bzero(&amp;servaddr, sizeof(servaddr));
+        servaddr.sin_family = AF_INET;
+        servaddr.sin_addr = *(struct in_addr *)p-&gt;h_addr;
+        servaddr.sin_port = htons(SERVER_PORT);
+
+        // connect to server
+        if (connect(sock_client, (struct sockaddr *)&amp;servaddr, sizeof(servaddr)) == -1) {
+            printf("connect to server:%s port:%d fail.reason:%s \n", inet_ntoa(servaddr.sin_addr), SERVER_PORT,
+                strerror(errno));
+            return -1;
+        }
+        printf("connect to server:%s port:%d success\n", inet_ntoa(servaddr.sin_addr), SERVER_PORT );
+
+
+        int stdineof = 0;
+        for (; ; ) {
+            fd_set readfds;
+            FD_ZERO(&amp;readfds);
+            FD_SET(sock_client, &amp;readfds);
+            if (stdineof == 0)
+                FD_SET(STDIN_FILENO, &amp;readfds);
+            int maxfd = (STDIN_FILENO &gt; sock_client ? STDIN_FILENO: sock_client) + 1;
+            if (select(maxfd, &amp;readfds, NULL, NULL, NULL) &gt; 0) {
+                char buf[LINE_MAX]={0};
+                if (FD_ISSET(STDIN_FILENO , &amp;readfds)) {
+                    ssize_t rd_size = read(STDIN_FILENO , buf, sizeof(buf));
+                    if (rd_size &gt; 0) {
+                        ssize_t sd_size = send(sock_client, buf, rd_size, 0);
+                        buf[rd_size] = '\0';
+                        printf("send msg(len:%ld):%s to server \n", sd_size, buf);
+                    } else if (rd_size == 0) {
+                        // client finish send msg to server, we close write part of the full-duplex connection
+                        shutdown(sock_client, SHUT_WR); // send FIN to server
+                        stdineof = 1;
+                        continue;
+                    } else {
+                        // client finish send msg to server, we close write part of the full-duplex connection
+                        printf("read fail from console, reason:%s \n", strerror(errno));
+                        break;
+                    }
+                } else if (FD_ISSET(sock_client, &amp;readfds)) {
+                    ssize_t rd_size = read(sock_client, buf, sizeof(buf));
+                    if (rd_size &gt; 0) {
+                        printf("receive from server:%s", buf);
+                    } else if (rd_size == 0) { // client receive FIN
+                        printf("receive 0 from server\n");
+                        if (stdineof == 1) {
+                            printf("normal finish\n");
+                        } else {// server crash and reset, client receive RST
+                            printf("server terminate prematurely\n");
+                        }
+                        break;
+                    } else {
+                        printf("read fail.reason: %s\n", strerror(errno));
+                        break;
+                    }
+                }
+            }
+        }
+        close(sock_client);
+    }
+</code></pre>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-04-06T11:49:13+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:49 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/网络/'>网络</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/04/05/python-property-shu-xing-yong-fa/" title="Previous Post: python property 属性用法">&laquo; python property 属性用法</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp Client 使用select进行I/O复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/05/python-property-shu-xing-yong-fa/">Python Property 属性用法</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Tcp服务端并发之子进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">Tcp 服务端例子</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">Tcp 客户端示例</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+    <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/centos'>centos (1)</a></li><li><a href='/blog/categories/python'>python (1)</a></li><li><a href='/blog/categories/技术'>技术 (2)</a></li><li><a href='/blog/categories/网络'>网络 (4)</a></li></ul>
+</section>
+<section>
+    <h1>Tags</h1>
+    <ul class="tag-cloud">
+        
+    </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
