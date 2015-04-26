@@ -3,7 +3,7 @@ layout: post
 title: "tcp 服务端例子"
 date: 2015-02-13 11:04:43 +0800
 comments: true
-categories: ['tcp/ip']
+categories: ['网络']
 ---
 实现了一个简单服务端，使用tcp与客户端进行通讯。本片文章主要介绍在tcp服务端网络编程中用到的几个基本函数：  
 1、创建套接字socket函数
