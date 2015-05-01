@@ -1,0 +1,439 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Tcp Server使用kevent进行io复用 - 金涛的博客</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="概述 kqueue是FreeBSD系统中引入的可扩展事件通知接口，NetBSD，OpenBSD，DragonflyBSD和OS X这些系统也支持此接口。传统的io复用接口如select和poll存在以下两个缺点： 支持的文件描述符数量有限， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="金涛的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">金涛的博客</a></h1>
+  
+    <h2>积跬步、至百里</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Tcp Server使用kevent进行io复用</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-01T08:40:25+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>8:40 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>概述</h1>
+
+<p>kqueue是FreeBSD系统中引入的可扩展事件通知接口，NetBSD，OpenBSD，DragonflyBSD和OS X这些系统也支持此接口。传统的io复用接口如select和poll存在以下两个缺点：</p>
+
+<ul>
+<li>支持的文件描述符数量有限，select接口支持的文件描述个数与进程能够打开的最大文件个数有关</li>
+<li>当大量描述符需要复用时，select和poll的效率会降低，内核是采用轮询方式判断描述符是否可用</li>
+</ul>
+
+
+<p>kqueue是针对传统传统的select/poll处理大量的文件描述符性能较低效而开发出来的。注册一批描述符到kqueue以后，当其中的描述符状态发生变化时，kqueue将一次性通知应用程序哪些描述符可读、可写或者发生错误。</p>
+
+<p>kqueue支持多种类型的文件描述符，包括socket、信号、定时器、AIO、VNODE、PIPE。</p>
+
+<h1>接口</h1>
+
+<h2>kqueue</h2>
+
+<pre><code>int kqueue(void);
+</code></pre>
+
+<p>kqueue系统调用创建一个新的内核事件队列并返回该队列描述符。调用fork时，子进程不继承该描述符。<br/>
+失败时，系统调用返回-1,同时设置errno</p>
+
+<h2>kevent</h2>
+
+<pre><code>int kevent(int kq, const struct kevent *changelist, int nchanges, struct kevent *eventlist, int nevents, const struct timespec *timeout);
+</code></pre>
+
+<p>使用kevent系统调用向队列注册事件和返回已经触发的事件。</p>
+
+<ul>
+<li>kq<br/>
+kq为kqueue系统调用返回的队列描述符</li>
+<li>changelist<br/>
+changelist指向一个kevnet结构体数组，kevent定义在&lt;sys/event.h>头文件中，这个数组描述了需要对kq队列中的事件进行修改，包括添加、删除、修改等操作</li>
+<li>nchanges<br/>
+nchanges是changelist参数指向数组的大小</li>
+<li>evnetlist<br/>
+指向一个kevnet结构体数组，用于返回已经触发的事件</li>
+<li>nevents<br/>
+定义eventlist数组大小</li>
+<li><p>timeout
+timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时，kevent系统调用无限阻塞等待事件发生。timeout非NULL，但是值为0时，kevent立即返回</p>
+
+<p><!-- more --></p></li>
+</ul>
+
+
+<h2>EV_SET</h2>
+
+<pre><code>EV_SET(&amp;kev, ident, filter, flags, fflags, data, udata);
+struct kevent {
+         uintptr_t       ident;          /* identifier for this event */
+         int16_t         filter;         /* filter for event */
+         uint16_t        flags;          /* general flags */
+         uint32_t        fflags;         /* filter-specific flags */
+         intptr_t        data;           /* filter-specific data */
+         void            *udata;         /* opaque user data identifier */
+ };
+</code></pre>
+
+<p>EV_SET宏用来初始化一个kevent结构体。下面详细介绍结构体各个字段</p>
+
+<ul>
+<li>ident
+ident用来标识一个事件，ident值的准确含义由filter字段进行解释，ident值通常代表一个文件描述符</li>
+<li><p>filter
+内核filter定义的过滤器处理发生在ident上的事件。预定义的系统过滤器如下，通过kevent结构体中的flags和data字段传递参数</p>
+
+<p>EVFILT_READ <br/>
+文件描述符作为标识符，当描述符可读时返回。根据文件描述符类型不同，触发该过滤器的情况不同：</p>
+
+<ul>
+<li>sockets:<br/>
+处于监听状态的socket套接字，当存在待处理的建立连接请求（已经完成三次握手）时，该套接字可读，kevent结构体的data字段包含监听队列中待处理的请求个数。<br/>
+非监听状态的套接字缓冲区中有可读数据时，触发该过滤器，每个套接字对应的缓冲区可读低水位可以通过传递fflags和data参数进行设置。</li>
+<li>Vnodes<br/>
+当文件指针没有达到文件末尾时，触发该过滤器。</li>
+<li>Fifos, Pipes<br/>
+当管道可读时，触发该过滤器。data字段返回可读字节数。</li>
+</ul>
+
+
+<p>EVFILT_WRITE  <br/>
+文件描述符作为标识符。当文件描述符可写时，触发该过滤器。对于sockets、pipes和fifos，data字段返回缓冲区中可写字节数。  <br/>
+EVFILT_AIO<br/>
+尚不支持<br/>
+EVFILT_VNODE  <br/>
+文件描述符作为标识符，fflags字段定义需要监测的事件类型：</p>
+
+<ul>
+<li>NOTE_DELETE  <br/>
+unlink系统调用操作文件描述符指向的文件时，事件发生。</li>
+<li>NOTE_WRITE  <br/>
+对文件描述指向的文件进行写操作</li>
+<li>NOTE_EXTEND<br/>
+对文件描述符指向的文件进行extened</li>
+<li>NOTE_ATTRIB<br/>
+文件描述符指向的文件属性发生了变化</li>
+<li>NOTE_LINK<br/>
+文件描述指向的文件链接数发生了变化</li>
+<li>NOTE_RENAME<br/>
+文件描述符指向的文件发生了重命名</li>
+<li>NOTE_REVOKE</li>
+</ul>
+
+
+<p>kevent系统调用返回时，fflags包含触发过滤器的事件</p>
+
+<p>EVFILT_PROC
+进程id作为标识符。监测的事件定义在fflags字段中：</p>
+
+<ul>
+<li>NOTE_EXIT  <br/>
+进程退出</li>
+<li>NOTE_EXITSTATUS<br/>
+进程已经退出，退出状态</li>
+<li>NOTE_FORK<br/>
+进程调用fork或者其他类似接口创建子进程</li>
+<li>NOTE_EXEC<br/>
+进程调用execve或者其他类似接口执行一个新进程</li>
+<li>NOTE_SIGNAL<br/>
+进程被发送一个信号。<br/>
+kevent系统调用返回时，fflags包含触发过滤器的事件。</li>
+</ul>
+
+
+<p>EVFILT_SIGNAL<br/>
+将信号值作为标识符，当该信号发送到进程时，触发过滤器。</p>
+
+<p>EVFILT_TIMER
+设置一个ident标识的定时器。当添加一个定时器时，data字段指定定时器超时事件，fflags字段可以为以下设置：</p>
+
+<ul>
+<li>NOTE_SECONDS <br/>
+data字段值单位为秒</li>
+<li>NOTE_USECONDS<br/>
+data字段值单位为毫米</li>
+<li>NOTE_NSECONDS<br/>
+data字段值单位为纳秒</li>
+<li>NOTE_ABSOLUTE
+data字段值为绝对时间</li>
+</ul>
+</li>
+<li><p>flags<br/>
+flags表示对该事件做的操作。</p>
+
+<ul>
+<li>EV_ADD<br/>
+添加该事件到kqueue队列</li>
+<li>EV_ENABLE
+如果该事件触发，kevent返回该事件</li>
+<li>EV_DISABLE
+如果该事件触发，kevent不返回该事件</li>
+<li>EV_DELETE
+从kevent队列中删除该事件</li>
+<li>EV_RECEIPT
+对kqueue进行批量修改，而不返回任何待处理事件。</li>
+<li>EV_ONESHOT
+过滤器第一次触发后，返回该事件，然后将该事件从kqueue队列中删除。</li>
+<li>EV_CLEAR
+用户获取事件后，重置事件状态。</li>
+<li>EV_ERROR
+系统处理事件出错时，返回该事件event，将flags设置为EV_ERROR</li>
+</ul>
+</li>
+<li><p>fflags<br/>
+过滤器相关的标志</p></li>
+<li>data<br/>
+过滤器相关的数值</li>
+<li>udata
+用户定义的值，当事件返回时，内核将该值带给用户</li>
+</ul>
+
+
+<p>将<a href="http://jintao-zero.github.io/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">tcp server 使用select进行并发</a>示例改为使用kevent进行i/o多路复用，主要涉及以下方面的修改：</p>
+
+<p>1、套接字注册</p>
+
+<pre><code>int Register(int kq, int fd)
+{
+    struct kevent ke;
+    EV_SET(&amp;ke, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+    return kevent(kq, &amp;ke, 1, NULL, 0, NULL);
+}
+</code></pre>
+
+<p> 目前只是对监听套接字和客户端连接套接字注册可读过滤器</p>
+
+<p>2、循环调用kevent处理套接字事件</p>
+
+<pre><code>struct kevent events[MAX_EVENT_COUNT];
+for ( ; ; ) {
+    int nevent = kevent(kq, NULL, 0, events, MAX_EVENT_COUNT, NULL);
+}
+
+void HandleEvent(int kq, struct kevent * events, int nevents) 
+{
+    for (int i = 0; i &lt; nevents; i++) {
+        int sock = events[i].ident;
+        int data = events[i].data;
+        if (sock == serv_sock) {
+            Accept(kq, data);
+        } else {
+            Receive(sock, data);
+        }
+    }
+}
+
+void Accept(int kq, int conn_size)
+{
+    for (int i = 0; i &lt; conn_size; i++) {
+      int client = accept(serv_sock, NULL, NULL);
+      Register(kq, client);
+    }
+}
+
+void Receive(int sock, int buf_size)
+{
+    if (0 == buf_size)
+        close(sock); // close a file descriptor removing any            kevents that reference the descriptor
+
+    char *buf = malloc(buf_size);
+    if (NULL == buf)
+        return;
+
+    recv(sock, buf, buf_size, 0);
+    for (int i = 0; i &lt; buf_size; i++)
+        buf[i] = toupper(buf[i]);
+    send(sock, buf, buf_size, 0);
+    free(buf);
+}    
+</code></pre>
+
+<h1>结束语</h1>
+
+<p>这篇文章只是简单介绍了kevent I/O多路复用模型的简单用法，上述例子中涉及的一些细节，如错误处理等都尚须完善<br/>
+参考<a href="http://www.ibm.com/developerworks/cn/aix/library/1105_huangrg_kqueue/index.html#resources">使用 kqueue 在 FreeBSD 上开发高性能应用服务器</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-05-01T08:40:25+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>8:40 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/网络/'>网络</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/" title="Previous Post: tcp server使用select进行I/O复用">&laquo; tcp server使用select进行I/O复用</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/">Tcp Server使用kevent进行io复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp server使用select进行I/O复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp Client 使用select进行I/O复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/05/python-property-shu-xing-yong-fa/">Python Property 属性用法</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Tcp服务端并发之子进程</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+    <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/centos'>centos (1)</a></li><li><a href='/blog/categories/python'>python (1)</a></li><li><a href='/blog/categories/技术'>技术 (2)</a></li><li><a href='/blog/categories/网络'>网络 (6)</a></li></ul>
+</section>
+<section>
+    <h1>Tags</h1>
+    <ul class="tag-cloud">
+        
+    </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/</loc>
+    
+    <lastmod>2015-05-01T08:40:25+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/</loc>
     
     <lastmod>2015-04-12T15:30:03+08:00</lastmod>
@@ -77,14 +85,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2015-04-26T14:42:23+08:00</lastmod>
+    <lastmod>2015-05-01T20:40:34+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2015-04-26T14:42:23+08:00</lastmod>
+    <lastmod>2015-05-01T20:40:34+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
