@@ -1,0 +1,436 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python解析json - 金涛的博客</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="JSON简介 JSON(JavaScript Object Notation)是一个轻量级的数据交换格式。方便人类读写。方便机器解析和产生。它基于JavaScript Programming Language的子集，Standard ECMA-262 3rd Edition - December &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/05/28/pythonjie-xi-json">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="金涛的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">金涛的博客</a></h1>
+  
+    <h2>积跬步、至百里</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python解析json</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-28T15:21:55+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:21 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>JSON简介</h1>
+
+<p>JSON(JavaScript Object Notation)是一个轻量级的数据交换格式。方便人类读写。方便机器解析和产生。它基于<a href="http://javascript.crockford.com/">JavaScript Programming Language</a>的子集，<a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf">Standard ECMA-262 3rd Edition - December 1999.</a>。JSON使用完全独立于各种语言的文本格式，但是也使用了类似C语言家族的习惯，包括C,C++,C#,Java,JavaScript,Perl,Python以及其他语言。这些特性使得JSON成为理想的数据交换语言。</p>
+
+<p>JSON基于两种结构：</p>
+
+<ul>
+<li>一个name/value对集合。在各种语言中，这种集合被认为是一个对象，记录，结构体，字典，哈希表，有键列表，或者关联数组</li>
+<li>一个有序列表。在大多数语言中，这种列表被认为是一个数组，向量，列表，或者序列。</li>
+</ul>
+
+
+<p>这些都是常见的数据结构。事实上大部分现代计算机语言都以某种形式支持它们。这使得一种数据格式在同样基于这些结构的编程语言之间交换成为可能。
+关于JSON格式中各个基本类型和数据结构的详细描述，可以参考<a href="http://www.json.org/">json</a></p>
+
+<p>  <!-- more --></p>
+
+<h1>Python JSON模块</h1>
+
+<h2>类</h2>
+
+<p>类JSONDecoder</p>
+
+<pre><code>class JSONDecoder(__builtin__.object)   
+</code></pre>
+
+<p>将JSON格式解码为Python对应类型，下面是对应关系：</p>
+
+<pre><code>    | JSON          | Python            |
+    +===============+===================+
+    | object        | dict              |
+    +---------------+-------------------+
+    | array         | list              |
+    +---------------+-------------------+
+    | string        | unicode           |
+    +---------------+-------------------+
+    | number (int)  | int, long         |
+    +---------------+-------------------+
+    | number (real) | float             |
+    +---------------+-------------------+
+    | true          | True              |
+    +---------------+-------------------+
+    | false         | False             |
+    +---------------+-------------------+
+    | null          | None              |
+    +---------------+-------------------+
+</code></pre>
+
+<p>类JSONEncoder</p>
+
+<pre><code>class JSONEncoder(__builtin__.object)
+</code></pre>
+
+<p>将Python中的类型转换为JSON格式，下面是对应关系：</p>
+
+<pre><code>    | Python            | JSON          |
+    +===================+===============+
+    | dict              | object        |
+    +-------------------+---------------+
+    | list, tuple       | array         |
+    +-------------------+---------------+
+    | str, unicode      | string        |
+    +-------------------+---------------+
+    | int, long, float  | number        |
+    +-------------------+---------------+
+    | True              | true          |
+    +-------------------+---------------+
+    | False             | false         |
+    +-------------------+---------------+
+    | None              | null          |
+    +-------------------+---------------+
+</code></pre>
+
+<h2>函数</h2>
+
+<p>json模块对外提供了4个函数来进行json格式的编码、解码工作：<br/>
+1、dump函数</p>
+
+<pre><code>dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True, allow_nan=True, cls=None, indent=None, separators=None, encoding='utf-8', default=None, sort_keys=False, **kw)
+</code></pre>
+
+<p>序列化<code>obj</code>为json格式流保存到fp中（fp是一个支持.write()函数的类文件对象）</p>
+
+<ul>
+<li><p>skipkeys<br/>
+如果<code>skipkeys</code>为true，字典（<code>dict</code>）中键不为基本类型（<code>str</code>,<code>unicode</code>,<code>int</code>,<code>long</code>,<code>float</code>,<code>bool</code>,<code>None</code>）时，键值对将会被过滤掉，否则产生<code>TypeError</code>异常</p></li>
+<li><p>ensure_ascii  <br/>
+如果<code>ensure_ascii</code>为true(默认为true)，输出中的所有非ASCII字符都转义为<code>\uXXXX</code>序列，并且返回值序列只包含ASCII序列。</p></li>
+<li><p>check_circular<br/>
+如果check_circular为false，将会忽略对容器类型的循环引用检测，进而导致<code>OverflowError</code></p></li>
+<li><p>allow_nan<br/>
+如果<code>allow_nan</code>为false，序列化float类型无限值（<code>nan</code>,<code>inf</code>,<code>-inf</code>）时，将会导致<code>ValueError</code>错误</p></li>
+<li><p>indent<br/>
+如果indent指定为非负数值，JSON数组和对象成员将会以indent缩进整齐打印。</p></li>
+<li><p>separators<br/>
+如果separators是一个<code>(item_separator, dict_separator)</code>元组，它就会用来替代缺省的<code>(', ', ': ')</code>分隔符。<code>(',', ':')</code>是最长用的压缩分隔符</p></li>
+<li>encoding
+json文本字符编码，缺省为UTF-8</li>
+<li>default(obj)<br/>
+default(obj)是一个函数返回obj的序列化版本或者产生TypeError。</li>
+<li>sort_keys<br/>
+如果为True(sort_keys默认为False)，字典将会按照key排序输出。</li>
+</ul>
+
+
+<p>2、dumps函数</p>
+
+<pre><code>dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True, allow_nan=True, cls=None, indent=None, separators=None, encoding='utf-8', default=None, sort_keys=False, **kw)
+</code></pre>
+
+<p>序列化<code>obj</code>对象为JSON格式的字符串。
+各个参数的意思于上面dump函数相同</p>
+
+<p>3、load函数</p>
+
+<pre><code>load(fp, encoding=None, cls=None, object_hook=None, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None, **kw)
+</code></pre>
+
+<p>load函数从fp引用的对象中读取JSON格式字符串，反序列化为Python对象。</p>
+
+<ul>
+<li>encoding<br/>
+如果fp的内容不是基于ASCII字符集，那么需要指定encoding为相应编码集。</li>
+<li>object_hook<br/>
+object_hook可选参数被用来代替Python中的<code>dict</code>类型解析json序列串中的对象。这一特性被用来定制解码器。</li>
+<li>object_pairs_hook<br/>
+object_pairs_hook作为可选函数，被用来解析有序对，如果同时设置了object_pairs_hook和object_hook参数，优先使用object_pairs_hook函数。</li>
+</ul>
+
+
+<p>4、loads</p>
+
+<pre><code>loads(s, encoding=None, cls=None, object_hook=None, parse_float=None, parse_int=None, parse_constant=None, object_pairs_hook=None, **kw)
+</code></pre>
+
+<p>loads函数将s字符串反序列化为Python对象。</p>
+
+<ul>
+<li><p>parse_float<br/>
+如果指定parse_float参数，它被用来反序列化float字符串，缺省为float(num_str)。</p></li>
+<li><p>parse_int<br/>
+如果指定parse_int参数，它被用来反序列化int字符串，缺省为int(num_str)</p></li>
+<li><p>parse_constant<br/>
+如果指定parse_constant参数，它将被用来返序列化-Infinity, Infinity, NaN, null, true, false.</p></li>
+</ul>
+
+
+<h2>示例</h2>
+
+<p>1、编码Python基本类型</p>
+
+<pre><code>&gt;&gt;&gt; import json
+&gt;&gt;&gt; json.dumps(['foo', {'bar': ('baz', None, 1.0, 2)}])
+'["foo", {"bar": ["baz", null, 1.0, 2]}]'
+&gt;&gt;&gt; print json.dumps("\"foo\bar")
+"\"foo\bar"
+&gt;&gt;&gt; print json.dumps(u'\u1234')
+"\u1234"
+&gt;&gt;&gt; print json.dumps('\\')
+"\\"
+&gt;&gt;&gt; print json.dumps({"c": 0, "b": 0, "a": 0}, sort_keys=True)
+{"a": 0, "b": 0, "c": 0}
+&gt;&gt;&gt; from StringIO import StringIO
+&gt;&gt;&gt; io = StringIO()
+&gt;&gt;&gt; json.dump(['streaming API'], io)
+&gt;&gt;&gt; io.getvalue()
+'["streaming API"]'   
+</code></pre>
+
+<p>2、压缩编码</p>
+
+<pre><code>&gt;&gt;&gt; import json
+&gt;&gt;&gt; json.dumps([1,2,3,{'4': 5, '6': 7}], sort_keys=True, separators=(',',':'))
+'[1,2,3,{"4":5,"6":7}]'
+</code></pre>
+
+<p>3、优雅打印</p>
+
+<pre><code>&gt;&gt;&gt; import json
+&gt;&gt;&gt; print json.dumps({'4': 5, '6': 7}, sort_keys=True,
+...                  indent=4, separators=(',', ': '))
+{
+    "4": 5,
+    "6": 7
+}
+</code></pre>
+
+<p>4、反序列化JSON</p>
+
+<pre><code>&gt;&gt;&gt; import json
+&gt;&gt;&gt; obj = [u'foo', {u'bar': [u'baz', None, 1.0, 2]}]
+&gt;&gt;&gt; json.loads('["foo", {"bar":["baz", null, 1.0, 2]}]') == obj
+True
+&gt;&gt;&gt; json.loads('"\\"foo\\bar"') == u'"foo\x08ar'
+True
+&gt;&gt;&gt; from StringIO import StringIO
+&gt;&gt;&gt; io = StringIO('["streaming API"]')
+&gt;&gt;&gt; json.load(io)[0] == 'streaming API'
+True
+</code></pre>
+
+<p>5、定制JSON对象反序列化</p>
+
+<pre><code>&gt;&gt;&gt; import json
+&gt;&gt;&gt; def as_complex(dct):
+...     if '__complex__' in dct:
+...         return complex(dct['real'], dct['imag'])
+...     return dct
+...
+&gt;&gt;&gt; json.loads('{"__complex__": true, "real": 1, "imag": 2}',
+...     object_hook=as_complex)
+(1+2j)
+&gt;&gt;&gt; from decimal import Decimal
+&gt;&gt;&gt; json.loads('1.1', parse_float=Decimal) == Decimal('1.1')
+True
+</code></pre>
+
+<p>6、定制JSON对象序列化</p>
+
+<pre><code>&gt;&gt;&gt; import json
+&gt;&gt;&gt; def encode_complex(obj):
+...     if isinstance(obj, complex):
+...         return [obj.real, obj.imag]
+...     raise TypeError(repr(o) + " is not JSON serializable")
+...
+&gt;&gt;&gt; json.dumps(2 + 1j, default=encode_complex)
+'[2.0, 1.0]'
+&gt;&gt;&gt; json.JSONEncoder(default=encode_complex).encode(2 + 1j)
+'[2.0, 1.0]'
+&gt;&gt;&gt; ''.join(json.JSONEncoder(default=encode_complex).iterencode(2 + 1j))
+'[2.0, 1.0]'
+</code></pre>
+
+<p>7、使用json.tool校验和打印json</p>
+
+<pre><code>$ echo '{"json":"obj"}' | python -m json.tool
+{
+    "json": "obj"
+}
+$ echo '{ 1.2:3.4}' | python -m json.tool
+Expecting property name enclosed in double quotes: line 1 column 3 (char 2)
+</code></pre>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-05-28T15:21:55+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:21 pm</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/" title="Previous Post: tcp server使用kevent进行io复用">&laquo; tcp server使用kevent进行io复用</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/05/28/pythonjie-xi-json/">Python解析json</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/">Tcp Server使用kevent进行io复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp server使用select进行I/O复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp Client 使用select进行I/O复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/05/python-property-shu-xing-yong-fa/">Python Property 属性用法</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+    <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/centos'>centos (1)</a></li><li><a href='/blog/categories/python'>python (1)</a></li><li><a href='/blog/categories/技术'>技术 (2)</a></li><li><a href='/blog/categories/网络'>网络 (6)</a></li></ul>
+</section>
+<section>
+    <h1>Tags</h1>
+    <ul class="tag-cloud">
+        
+    </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
