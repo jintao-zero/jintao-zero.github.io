@@ -1,90 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
 
-<!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
-<head>
-  <meta charset="utf-8">
-  <title>Python解析json - 金涛的博客</title>
-  <meta name="author" content="jintao">
-
-  
-  <meta name="description" content="JSON简介 JSON(JavaScript Object Notation)是一个轻量级的数据交换格式。方便人类读写。方便机器解析和产生。它基于JavaScript Programming Language的子集，Standard ECMA-262 3rd Edition - December &hellip;">
-  
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  
-  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/05/28/pythonjie-xi-json">
-  <link href="/favicon.png" rel="icon">
-  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="金涛的博客" type="application/atom+xml">
-  <script src="/javascripts/modernizr-2.0.js"></script>
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
-  <script src="/javascripts/octopress.js" type="text/javascript"></script>
-  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
-<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
-
-  
-
-</head>
-
-<body   >
-  <header role="banner"><hgroup>
-  <h1><a href="/">金涛的博客</a></h1>
-  
-    <h2>积跬步、至百里</h2>
-  
-</hgroup>
-
-</header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
-  
-</ul>
-  
-<form action="https://www.google.com/search" method="get">
-  <fieldset role="search">
-    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
-    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
-  </fieldset>
-</form>
-  
-<ul class="main-navigation">
-  <li><a href="/">Blog</a></li>
-  <li><a href="/blog/archives">Archives</a></li>
-</ul>
-
-</nav>
-  <div id="main">
-    <div id="content">
-      <div>
-<article class="hentry" role="article">
-  
-  <header>
+  <title><![CDATA[Tag: Python | 金涛的博客]]></title>
+  <link href="http://jintao-zero.github.io/blog/tags/python/atom.xml" rel="self"/>
+  <link href="http://jintao-zero.github.io/"/>
+  <updated>2015-05-31T08:04:25+08:00</updated>
+  <id>http://jintao-zero.github.io/</id>
+  <author>
+    <name><![CDATA[jintao]]></name>
     
-      <h1 class="entry-title">Python解析json</h1>
-    
-    
-      <p class="meta">
-        
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
 
-
-
-
-<time class='entry-date' datetime='2015-05-28T15:21:55+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:21 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-<div class="entry-content"><h1>JSON简介</h1>
+  
+  <entry>
+    <title type="html"><![CDATA[python解析json]]></title>
+    <link href="http://jintao-zero.github.io/blog/2015/05/28/pythonjie-xi-json/"/>
+    <updated>2015-05-28T15:21:55+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2015/05/28/pythonjie-xi-json</id>
+    <content type="html"><![CDATA[<h1>JSON简介</h1>
 
 <p>JSON(JavaScript Object Notation)是一个轻量级的数据交换格式。方便人类读写。方便机器解析和产生。它基于<a href="http://javascript.crockford.com/">JavaScript Programming Language</a>的子集，<a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf">Standard ECMA-262 3rd Edition - December 1999.</a>。JSON使用完全独立于各种语言的文本格式，但是也使用了类似C语言家族的习惯，包括C,C++,C#,Java,JavaScript,Perl,Python以及其他语言。这些特性使得JSON成为理想的数据交换语言。</p>
 
@@ -326,153 +260,7 @@ True
 $ echo '{ 1.2:3.4}' | python -m json.tool
 Expecting property name enclosed in double quotes: line 1 column 3 (char 2)
 </code></pre>
-</div>
-
-
-  <footer>
-    <p class="meta">
-      
+]]></content>
+  </entry>
   
-
-<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
-
-      
-
-
-
-
-<time class='entry-date' datetime='2015-05-28T15:21:55+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:21 pm</span></time>
-      
-
-<span class="categories">
-  
-    <a class='category' href='/blog/categories/cheng-xu-she-ji/'>程序设计</a>
-  
-</span>
-
-
-    </p>
-    
-      <div class="sharing">
-  
-  
-  
-  
-	
-<!-- JiaThis Button BEGIN -->
-<div class="jiathis_style_32x32">
-	<a class="jiathis_button_qzone"></a>
-	<a class="jiathis_button_tsina"></a>
-	<a class="jiathis_button_tqq"></a>
-	<a class="jiathis_button_weixin"></a>
-	<a class="jiathis_button_renren"></a>
-	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
-	<a class="jiathis_counter_style"></a>
-</div>
-<script type="text/javascript">
-var jiathis_config = {data_track_clickback:'true'};
-</script>
-<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
-<!-- JiaThis Button END -->
-
-<!-- UY BEGIN -->
-<div id="uyan_frame"></div>
-<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
-<!-- UY END -->
-
-  
-</div>
-
-    
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/" title="Previous Post: tcp server使用kevent进行io复用">&laquo; tcp server使用kevent进行io复用</a>
-      
-      
-    </p>
-  </footer>
-</article>
-
-</div>
-
-<aside class="sidebar">
-  
-    <section>
-  <h1>Recent Posts</h1>
-  <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2015/05/28/pythonjie-xi-json/">Python解析json</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/">Tcp Server使用kevent进行io复用</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp server使用select进行I/O复用</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp Client 使用select进行I/O复用</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2015/04/05/python-property-shu-xing-yong-fa/">Python Property 属性用法</a>
-      </li>
-    
-  </ul>
-</section>
-<section>
- <h1>分类目录</h1>
- <ul id="categories">
-	 <li class='category'><a href='/blog/categories/centos/'>centos (1)</a></li>
-<li class='category'><a href='/blog/categories/python/'>python (1)</a></li>
-<li class='category'><a href='/blog/categories/ji-zhu/'>技术 (2)</a></li>
-<li class='category'><a href='/blog/categories/cheng-xu-she-ji/'>程序设计 (1)</a></li>
-<li class='category'><a href='/blog/categories/wang-luo/'>网络 (6)</a></li>
-
- </ul>
-</section>
-<section>
-<h1>标签列表</h1>
-<ul class="tag-cloud">
-	<a style="font-size: NaN%" href="/blog/tags/python/">Python</a>
-
-</ul>
-</section>
-
-
-
-
-<section>
-	<h1>访问地图</h1>
-	<script type="text/javascript" src="//ra.revolvermaps.com/0/0/1.js?i=0n02omc7xd8&amp;s=220&amp;m=0&amp;v=true&amp;r=false&amp;b=000000&amp;n=false&amp;c=ff0000" async="async"></script>
-</section>
-
-  
-</aside>
-
-
-    </div>
-  </div>
-  <footer role="contentinfo"><p>
-  Copyright &copy; 2015 - jintao -
-  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
-</p>
-
-</footer>
-  
-
-
-
-
-
-
-
-
-
-
-
-</body>
-</html>
+</feed>
