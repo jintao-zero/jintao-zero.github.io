@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2015/06/02/linux-slash-unixshe-zhi-suid/</loc>
+    
+    <lastmod>2015-06-02T13:56:27+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2015/05/28/pythonjie-xi-json/</loc>
     
     <lastmod>2015-05-28T15:21:55+08:00</lastmod>
@@ -93,14 +101,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2015-05-31T08:04:25+08:00</lastmod>
+    <lastmod>2015-06-02T16:25:53+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2015-05-31T08:04:25+08:00</lastmod>
+    <lastmod>2015-06-02T16:25:53+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

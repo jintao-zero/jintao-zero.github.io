@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Linux/Unix设置SUID - 金涛的博客</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="非root用户运行tcpdump 有些时候，我们希望以非root用户运行一些程序，比如以普通用户运行tcpdump命令进行抓包时，系统报如下异常信息： Mac OS 系统： MacBook-Pro:plugins jintao$ tcpdump
+tcpdump: ioctl( &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/06/02/linux-slash-unixshe-zhi-suid">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="金涛的博客" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">金涛的博客</a></h1>
+  
+    <h2>积跬步、至百里</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Linux/Unix设置SUID</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-02T13:56:27+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>1:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>非root用户运行tcpdump</h1>
+
+<p>有些时候，我们希望以非root用户运行一些程序，比如以普通用户运行tcpdump命令进行抓包时，系统报如下异常信息：</p>
+
+<p>Mac OS 系统：</p>
+
+<pre><code>MacBook-Pro:plugins jintao$ tcpdump
+tcpdump: ioctl(SIOCIFCREATE): Operation not permitted
+MacBook-Pro:plugins jintao$
+</code></pre>
+
+<p>Ubuntu系统：</p>
+
+<pre><code>[app@mp5 ~]$ tcpdump
+tcpdump: no suitable device found
+[app@mp5 ~]$
+</code></pre>
+
+<p>为什么会出现上述异常信息呢？是否是因为普通用户没有执行权限？下面是系统中tcpdump命令的权限信息<br/>
+Mac OS 系统：</p>
+
+<pre><code>MacBook-Pro:plugins jintao$ which tcpdump
+/usr/sbin/tcpdump
+MacBook-Pro:plugins jintao$ ls -l /usr/sbin/tcpdump
+-rwxr-xr-x 1 root wheel 749040  9 10  2014 /usr/sbin/tcpdump*
+MacBook-Pro:plugins jintao$
+</code></pre>
+
+<p>Ubuntu系统：</p>
+
+<pre><code>[app@mp5 ~]$ which tcpdump
+/usr/sbin/tcpdump
+[app@mp5 ~]$ ls -l /usr/sbin/tcpdump
+-rwxr-xr-x. 1 root root 742080 3月  26 2012 /usr/sbin/ tcpdump
+[app@mp5 ~]$
+</code></pre>
+
+<p>根据tcpdump的权限位-rwxr-xr-x我们发现对于普通用户jintao、app是拥有可读和可执行权限的。以普通用户执行tcpdump时，tcpdump进程的实际运行用户和有效用户都是普通用户，tcpdump运行过程中需要获取系统网卡资源信息，而获取这些信息需要root权限，这样的话系统就禁止了tcpdump程序的运行。<br/>
+解决这样的问题，我们可以尝试以下三种方法：</p>
+
+<p>  <!-- more --></p>
+
+<ul>
+<li>su切换到root用户，然后再执行tcpdump，这一解决方案与我们以非root用户运行不符</li>
+<li>以root用户编辑/etc/sudoers文件，赋予普通用户执行tcpdump命令的权限</li>
+<li>设置tcpdump程序的用户ID权限位SUID</li>
+</ul>
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>MacBook-Pro:C++ jintao$ sudo chmod u+s /usr/sbin/tcpdump
+</span><span class='line'>Password:
+</span><span class='line'>MacBook-Pro:C++ jintao$ ls -l /usr/sbin/tcpdump
+</span><span class='line'>-rwsr-xr-x 1 root wheel 749040  9 10  2014 /usr/sbin/tcpdump*
+</span><span class='line'>MacBook-Pro:C++ jintao$ tcpdump
+</span><span class='line'>tcpdump: data link type PKTAP
+</span><span class='line'>tcpdump: verbose output suppressed, use -v or -vv for full protocol decode</span></code></pre></td></tr></table></div></figure>
+
+
+<p>下面着重介绍第三种方法：</p>
+
+<h1>什么是SUID</h1>
+
+<p>SUID(Set owner User ID)是赋予文件的一种特殊权限位。在UNIX系统中，特权（例如能改变当前日期的表示法以及访问控制（例如，能否读、写一特定文件））是基于用户和组ID的。用户运行某程序时，程序访问资源的权限基于运行此程序的用户来决定。SUID被用来赋予程序访问资源的权限与程序的拥有者相同，而不是实际执行者。一言以蔽之，运行设置SUID权限位的程序时，普通用户将会获取文件拥有者的用户ID(UID)和组ID(GID)。</p>
+
+<h2>Example1:passwd command</h2>
+
+<p>我们运行passwd来修改我们的登陆密码，passwd命令拥有者是root用户。passwd命令会尝试修改系统配置文件，比如/etc/passwd, /etc/shadow等。其中的一些文件，只有root权限才能访问，非root用户无法打开。如果去掉SUID权限位，只是设置passwd command文件的所有权限位，那这个命令无法访问/etc/shadow等文件，程序会返回权限禁止错误或者其他措施。所以passwd被设置SUID权限位来赋予非root用户更新/etc/shadow等文件的权限。</p>
+
+<h2>Example2: ping command</h2>
+
+<p>当我们运行ping命令时，ping命令会打开socket文件和端口用来发送和接收IP数据包。非root用户无法获取权限打开socket和端口。所以对ping命令文件设置SUID权限位，任何执行ping命令的用户都可以获取ping命令文件拥有者（root用户）的权限。当执行ping命令时就拥有root权限来打开socket和端口port</p>
+
+<h1>如何设置文件SUID权限位</h1>
+
+<p>与设置文件其他的读、写、可执行权限位类似，可以用以下方法设置</p>
+
+<pre><code>* 字符命令方式（s代表Set）
+* 八进制数字（4）
+</code></pre>
+
+<p>对file1.sh设置SUID</p>
+
+<p>字符模式：</p>
+
+<pre><code>chmod u+s file1.sh
+</code></pre>
+
+<p>设置owner可执行权限位为SUID位</p>
+
+<p>数字模式：</p>
+
+<pre><code>chmod 4750 file1.sh
+</code></pre>
+
+<p>4750，4代表设置SUID权限位，7代表owner可读、可写、可执行权限位，5代表组拥有可读、可执行权限位，0代表其他不会不具有任何权限。</p>
+
+<p>对于file1.sh文件，设置SUID前权限位：</p>
+
+<pre><code>MacBook-Pro:C++ jintao$ ls -l file1.sh
+-rwxr--r-- 1 jintao staff 0  6  2 15:57 file1.sh*
+MacBook-Pro:C++ jintao$
+</code></pre>
+
+<p>设置SUID权限位后：</p>
+
+<pre><code>MacBook-Pro:C++ jintao$ ls -l file1.sh
+-rwsr--r-- 1 jintao staff 0  6  2 15:57 file1.sh*
+MacBook-Pro:C++ jintao$
+</code></pre>
+
+<h1>何时使用SUID</h1>
+
+<p>1）当需要root用户登录来执行某些命令/程序/脚本<br/>
+2）不想赋予某些特殊用户信任，但是想以owner用户运行某些命令时<br/>
+3）不想使用SUDO命令而执行某些文件、脚本时</p>
+
+<h1>参考</h1>
+
+<p><a href="http://www.linuxnix.com/2011/12/suid-set-suid-linuxunix.html">http://www.linuxnix.com/2011/12/suid-set-suid-linuxunix.html</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-06-02T13:56:27+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>1:56 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/unixxiang-guan/'>unix相关</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/05/28/pythonjie-xi-json/" title="Previous Post: python解析json">&laquo; python解析json</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/">Linux/Unix设置SUID</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/05/28/pythonjie-xi-json/">Python解析json</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/">Tcp Server使用kevent进行io复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp server使用select进行I/O复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp Client 使用select进行I/O复用</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>分类目录</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/centos/'>centos (1)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (1)</a></li>
+<li class='category'><a href='/blog/categories/unixxiang-guan/'>unix相关 (1)</a></li>
+<li class='category'><a href='/blog/categories/ji-zhu/'>技术 (2)</a></li>
+<li class='category'><a href='/blog/categories/wang-luo/'>网络 (6)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>标签列表</h1>
+<ul class="tag-cloud">
+	<a style="font-size: NaN%" href="/blog/tags/python/">Python</a>
+<a style="font-size: NaN%" href="/blog/tags/unix/">Unix</a>
+
+</ul>
+</section>
+
+
+
+
+<section>
+	<h1>访问地图</h1>
+	<script type="text/javascript" src="//ra.revolvermaps.com/0/0/1.js?i=0n02omc7xd8&amp;s=220&amp;m=0&amp;v=true&amp;r=false&amp;b=000000&amp;n=false&amp;c=ff0000" async="async"></script>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
