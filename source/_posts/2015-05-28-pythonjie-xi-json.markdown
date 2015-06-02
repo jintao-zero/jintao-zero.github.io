@@ -3,7 +3,7 @@ layout: post
 title: "python解析json"
 date: 2015-05-28 15:21:55 +0800
 comments: true
-categories: ['程序设计']
+categories:
 tags: [Python]
 ---
 #JSON简介
