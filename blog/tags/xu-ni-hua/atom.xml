@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Tag: 虚拟化 | jintao的博客]]></title>
+  <link href="http://jintao-zero.github.io/blog/tags/xu-ni-hua/atom.xml" rel="self"/>
+  <link href="http://jintao-zero.github.io/"/>
+  <updated>2015-06-05T20:32:15+08:00</updated>
+  <id>http://jintao-zero.github.io/</id>
+  <author>
+    <name><![CDATA[jintao]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[kvm搭建host-only网络]]></title>
+    <link href="http://jintao-zero.github.io/blog/2015/06/04/kvmda-jian-host-onlywang-luo/"/>
+    <updated>2015-06-04T19:43:10+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2015/06/04/kvmda-jian-host-onlywang-luo</id>
+    <content type="html"><![CDATA[<h1>前言</h1>
+
+<p>我们在主机系统中利用虚拟机(KVM、VMware、VirtualBox)创建运行不同系统的客户机时，关于网络组网，会遇到不同的选择，比如桥接网络、NAT网络、Host－only网络，等等，关于各种网络模式的区别，可以查看这一篇博客<a href="http://blog.sina.com.cn/s/blog_6fe0d70d0101034l.html%EF%BC%8C%E6%9C%AC%E6%96%87%E4%B8%BB%E8%A6%81%E4%BB%8B%E7%BB%8D%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8KVM%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AAHost-only%E7%BD%91%E7%BB%9C">http://blog.sina.com.cn/s/blog_6fe0d70d0101034l.html%EF%BC%8C%E6%9C%AC%E6%96%87%E4%B8%BB%E8%A6%81%E4%BB%8B%E7%BB%8D%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8KVM%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AAHost-only%E7%BD%91%E7%BB%9C</a></p>
+
+<h1>KVM搭建Host-only网络</h1>
+
+<p>1、</p>
+]]></content>
+  </entry>
+  
+</feed>

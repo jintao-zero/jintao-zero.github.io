@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Category: Unix相关 - jintao的博客</title>
+  <title>Kvm搭建host-only网络 - jintao的博客</title>
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Category: unix相关">
+  <meta name="description" content="前言 我们在主机系统中利用虚拟机(KVM、VMware、VirtualBox)创建运行不同系统的客户机时，关于网络组网，会遇到不同的选择，比如桥接网络、NAT网络、Host－only网络，等等，关于各种网络模式的区别，可以查看这一篇博客http://blog.sina.com.cn/s/ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jintao-zero.github.io/blog/categories/unixxiang-guan">
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/06/04/kvmda-jian-host-onlywang-luo">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="jintao的博客" type="application/atom+xml">
@@ -64,35 +64,98 @@
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Category: Unix相关</h1>
+    
+      <h1 class="entry-title">Kvm搭建host-only网络</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-04T19:43:10+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>4</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:43 pm</span></time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="category">
 
 
+<div class="entry-content"><h1>前言</h1>
 
-  
-  <h2>2015</h2>
+<p>我们在主机系统中利用虚拟机(KVM、VMware、VirtualBox)创建运行不同系统的客户机时，关于网络组网，会遇到不同的选择，比如桥接网络、NAT网络、Host－only网络，等等，关于各种网络模式的区别，可以查看这一篇博客<a href="http://blog.sina.com.cn/s/blog_6fe0d70d0101034l.html%EF%BC%8C%E6%9C%AC%E6%96%87%E4%B8%BB%E8%A6%81%E4%BB%8B%E7%BB%8D%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8KVM%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AAHost-only%E7%BD%91%E7%BB%9C">http://blog.sina.com.cn/s/blog_6fe0d70d0101034l.html%EF%BC%8C%E6%9C%AC%E6%96%87%E4%B8%BB%E8%A6%81%E4%BB%8B%E7%BB%8D%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8KVM%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AAHost-only%E7%BD%91%E7%BB%9C</a></p>
 
-<article>
-  
-<h1><a href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/">Linux/Unix设置SUID</a></h1>
-<time datetime="2015-06-02T13:56:27+08:00" pubdate><span class='month'>Jun</span> <span class='day'>02</span> <span class='year'>2015</span></time>
+<h1>KVM搭建Host-only网络</h1>
 
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/unixxiang-guan/'>unix相关</a></span>
-</footer>
-
-
-</article>
-
+<p>1、</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-06-04T19:43:10+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>4</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:43 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/xu-ni-hua/'>虚拟化</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/" title="Previous Post: Linux/Unix设置SUID">&laquo; Linux/Unix设置SUID</a>
+      
+      
+    </p>
+  </footer>
 </article>
 
 </div>
