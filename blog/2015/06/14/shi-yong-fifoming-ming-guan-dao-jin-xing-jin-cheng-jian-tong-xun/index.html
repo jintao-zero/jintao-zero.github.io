@@ -1,0 +1,369 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>使用FIFO命名管道进行进程间通讯 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="管道是进程间通讯的一种方式。使用pipe，popen，pclose，等接口我们可以使用管道来进行进程间通讯。但是这一种管道只能由相关进程使用，这些相关进程的共同祖先进程创建了管道。通过FIFO，也称为命名管道，不相关的进程也可以进行通讯。 创建命名管道 调用mkfifo接口创建命名管道： # &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.useso.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="//fonts.useso.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.useso.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+    <h2>fun</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">使用FIFO命名管道进行进程间通讯</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-14T15:56:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>管道是进程间通讯的一种方式。使用<code>pipe</code>，<code>popen</code>，<code>pclose</code>，等接口我们可以使用管道来进行进程间通讯。但是这一种管道只能由相关进程使用，这些相关进程的共同祖先进程创建了管道。通过FIFO，也称为命名管道，不相关的进程也可以进行通讯。</p>
+
+<h1>创建命名管道</h1>
+
+<p>调用mkfifo接口创建命名管道：</p>
+
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+int mkfifo(const char *path, mode_t mode);
+</code></pre>
+
+<p>创建FIFO类似于创建文件。FIFO的路径名存在于文件系统中。FIFO是一种文件类型。stat结构成员st_mode的编码指明文件是否是FIFO类型。可以用S_ISFIFO宏对此进行测试。 mkfifo函数创建一个路径名为path的fifo。mode和umask掩码规定了命名管道的访问权限。<br/>
+参数：<br/>
+path是管道在文件系统中的存在路径。<br/>
+mode于open函数中定义的mode一样。</p>
+
+<p>返回值：<br/>
+成功返回0。失败返回-1，同时设置errno错误码。</p>
+
+<p>错误原因：</p>
+
+<ul>
+<li>ENOTSUP       系统内核不支持fifo</li>
+<li>ENOTDIR       path前缀不是合法目录</li>
+<li>ENAMETOOLONG  path路径太长</li>
+<li>EACCESS       用户对于path中的目录没有权限访问</li>
+<li>EROFS         path指定的目录在只读文件系统</li>
+<li><p>EEXIST        path指定文件已经存在</p>
+
+<p>  <!-- more --></p></li>
+</ul>
+
+
+<h1>注意事项</h1>
+
+<p>我们可以像访问普通文件一样访问命名管道文件。一般的文件I/O函数都可以用于FIFO。<br/>
+当打开一个FIFO，非阻塞标志（O_NONBLOCK）产生下列影响：</p>
+
+<ul>
+<li>在一般情况下（没有指定O_NOBLOCK），只读open要阻塞到某个其他进程为写而打开此FIFO。类似地，只写open要阻塞到某个进程为读而打开此FIFO。</li>
+<li>如果指定了O_NONBLOCK，则只读open立即返回。但是，如果没有进程已经为读而打开一个FIFO，那么只写open将出错返回-1，其errno是ENXIO。</li>
+</ul>
+
+
+<p>当多个写进程同时向同一FIFO进行写操作时，如果保证来自不同程序的数据块不相互交错，每个写操作必须原子话，FIFO的长度是需要考虑的一个很重要因素。系统对任一时刻在一个FIFO中可以存在的数据长度是有限制的。它由#define PIPE_BUF定义，在头文件limits.h中。在Linux和许多其他类UNIX系统中，它的值通常是4096字节，Red Hat Fedora9下是4096，但在某些系统中它可能会小到512字节。</p>
+
+<ul>
+<li>当要写入的数据量不大于PIPE_BUF时，Linux将保证写入的原子性。如果此时管道空闲缓冲区不足以容纳要写入的字节数，则进入睡眠，直到当缓冲区中能够容纳要写入的字节数时，才开始进行一次性写操作。即写入的数据长度小于等于PIPE_BUF时，那么或者写入全部字节，或者一个字节都不写入，它属于一个一次性行为，具体要看FIFO中是否有足够的缓冲区。</li>
+<li>当要写入的数据量大于PIPE_BUF时，Linux将不再保证写入的原子性。FIFO缓冲区一有空闲区域，写进程就会试图向管道写入数据，写操作在写完所有请求写的数据后返回。</li>
+</ul>
+
+
+<h1>FIFO示例</h1>
+
+<p>创建FIFO</p>
+
+<pre><code>ret = mkfifo(FIFO_NAME,0777);
+if ((-1 == ret) &amp;&amp; (errno != EEXIST)) {
+    perror("create fifo fail.\n");
+    exit(1);
+}
+</code></pre>
+
+<p>读FIFO进程代码</p>
+
+<pre><code>// create fifo
+int ret = mkfifo(FIFO_NAME,0777);
+if ((-1 == ret) &amp;&amp; (errno != EEXIST)) {
+    perror("create fifo fail.\n");
+    exit(1);
+}
+
+int fd = open(FIFO_NAME, O_RDONLY);
+// int fd = open(FIFO_NAME, O_RDWR);
+if (-1 == fd) {
+    printf("open fifo %s fail\n", FIFO_NAME);
+    exit(1);
+}
+printf("open fifo %s for read suc\n", FIFO_NAME);
+
+char buf[1024];
+while (1 ) {
+    ssize_t size = read(fd, buf, sizeof(buf));
+    if (size &gt; 0) {
+        buf[size] = '\0';
+        printf("read from fifo: %s\n", buf);
+    } else if(size == 0) {
+        printf("write end of fifo exit\n");
+        break;
+    } else {
+        perror("read fail from fifo:");
+        break;
+    }
+}
+close(fd);
+return 0;
+</code></pre>
+
+<p>写FIFO进程代码</p>
+
+<pre><code>// create fifo
+int ret = mkfifo(FIFO_NAME,0777);
+if ((-1 == ret) &amp;&amp; (errno != EEXIST)) {
+    perror("create fifo fail.\n");
+    exit(1);
+}
+
+int fd = open(FIFO_NAME, O_WRONLY);
+if (-1 == fd) {
+    printf("open fifo %s fail\n", FIFO_NAME);
+    exit(1);
+}
+printf("open fifo %s for write suc", FIFO_NAME);
+
+while (1) {
+    char buf[1024] = {0};
+    if (gets(buf) == NULL) {
+        break;
+    }
+    int len = strlen(buf);
+    if (0 == len)
+      break;
+    printf("%d\n", len);
+    ssize_t size = write(fd, buf, len);
+    if (size &gt;= 0) {
+        printf("write to fifo: %s, msg: %s, size:%ld \n", FIFO_NAME, buf, size);
+    } else {
+        perror("write fail\n");
+        break;
+    }
+}
+close(fd);
+return 0;
+</code></pre>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-06-14T15:56:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:56 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/unix/'>unix</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/" title="Previous Post: Linux/Unix设置SUID">&laquo; Linux/Unix设置SUID</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">使用FIFO命名管道进行进程间通讯</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/">Linux/Unix设置SUID</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/05/28/pythonjie-xi-json/">Python解析json</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/">Tcp Server使用kevent进行io复用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp server使用select进行I/O复用</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/centos-slash-ubuntu/'>centos/ubuntu (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (6)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (2)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 136%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 136%" href="/blog/tags/unix/">Unix</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2015 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
