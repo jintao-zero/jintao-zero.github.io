@@ -3,7 +3,7 @@ layout: post
 title: "hello world"
 date: 2014-10-17 16:46:20 +0800
 comments: true
-categories: ['技术']
+categories: Octopress  
 ---
 属于自己的个人博客终于搭建起来 ：）。
 利用这个博客，我首先是做一些自己学习、工作中的笔记，然后也希望能够写一些有价值的思考帮助到别人。

@@ -3,7 +3,8 @@ layout: post
 title: "tcp server使用select进行I/O复用"
 date: 2015-04-12 15:30:03 +0800
 comments: true
-categories: ['网络']
+categories: ['Network']
+tags: Network
 ---
 在[tcp服务端示例](http://jintao-zero.github.io/blog/2015/02/13/tcp-fu-wu-duan-li-zi/)中，接受一个客户端连接，调用accept函数返回后就对本客户端连接进行业务处理，如果业务逻辑比较复杂，那么服务端有可能就阻塞在某个客户端上，而不能处理其他客户端连接，解决此问题有多种模型可以采用：  
 1）多进程，为每个客户端连接创建一个子进程进行处理  

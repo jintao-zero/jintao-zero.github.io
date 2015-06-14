@@ -3,7 +3,8 @@ layout: post
 title: "tcp server使用kevent进行io复用"
 date: 2015-05-01 08:40:25 +0800
 comments: true
-categories: ['网络']
+categories: ['Network']
+tags: Network
 ---
 # 概述
 kqueue是FreeBSD系统中引入的可扩展事件通知接口，NetBSD，OpenBSD，DragonflyBSD和OS X这些系统也支持此接口。传统的io复用接口如select和poll存在以下两个缺点：  

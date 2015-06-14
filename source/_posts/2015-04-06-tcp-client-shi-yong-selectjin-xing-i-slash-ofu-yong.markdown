@@ -3,7 +3,8 @@ layout: post
 title: "tcp client 使用select进行I/O复用"
 date: 2015-04-06 11:49:13 +0800
 comments: true
-categories: ['网络']
+categories: ['Network']
+tags: Network
 ---
 在[tcp客户端示例](http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li/)中，存在以下两种情况时，示例代码不能更好的处理：  
 

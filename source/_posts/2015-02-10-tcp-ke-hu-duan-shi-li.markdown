@@ -3,7 +3,8 @@ layout: post
 title: "tcp 客户端示例"
 date: 2015-02-10 19:07:27 +0800
 comments: true
-categories: ['网络']
+categories: ['Network']
+tags: Network
 ---
 实现了一个简单客户端，使用tcp与服务端进行通讯。本片文章主要介绍在tcp客户端网络编程中用到的几个基本函数：  
 1、创建socket

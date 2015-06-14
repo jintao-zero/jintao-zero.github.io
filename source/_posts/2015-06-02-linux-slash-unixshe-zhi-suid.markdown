@@ -3,7 +3,7 @@ layout: post
 title: "Linux/Unix设置SUID"
 date: 2015-06-02 13:56:27 +0800
 comments: true
-categories: ['Unix相关']
+categories: ['Unix']
 tags: [Unix]
 ---
 #非root用户运行tcpdump
