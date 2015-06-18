@@ -9,7 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="管道是进程间通讯的一种方式。使用pipe，popen，pclose，等接口我们可以使用管道来进行进程间通讯。但是这一种管道只能由相关进程使用，这些相关进程的共同祖先进程创建了管道。通过FIFO，也称为命名管道，不相关的进程也可以进行通讯。 创建命名管道 调用mkfifo接口创建命名管道： # &hellip;">
+  <meta name="description" content="项目需要将某个进程发出的报文截获，待用户态业务处理后再将报文送回系统协议栈中处理。调研后，采用iptables添加防火墙规则截获报文传递到用户态队列，用户态进程使用libnetfilter_queue库接受报文，待业务处理后，将报文送回系统协议栈这样的方案完成。下面介绍下，学习的几个知识点： &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -69,6 +69,73 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Libnetfilter_queue学习笔记</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-16T18:53:42+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>6:53 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>项目需要将某个进程发出的报文截获，待用户态业务处理后再将报文送回系统协议栈中处理。调研后，采用iptables添加防火墙规则截获报文传递到用户态队列，用户态进程使用libnetfilter_queue库接受报文，待业务处理后，将报文送回系统协议栈这样的方案完成。下面介绍下，学习的几个知识点：</p>
+
+<h1>netfilter</h1>
+
+<h2>简介</h2>
+
+<p><a href="http://netfilter.org/">netfilter</a>是Linux 2.4.x开始以后内核版本中的报文过滤框架。netfilter框架的用户态工具是<a href="http://netfilter.org/projects/iptables/index.html">iptables</a>防火墙配置工具。<br/>
+netfilter框架实现了报文过滤，网络地址转换，端口转换和其他报文管理。它是对Linux 2.2.x ipchains和Linux 2.0.x ipfwadm系统的重构和显著改进。<br/>
+netfilter是位于Linux内核中的一组回调函数集合，各个模块可以在网络协议栈注册回调函数。每个报文到来时，将会遍历协议栈中的回调函数并调用。<br/>
+iptables定义了规则集的通用格式。IP table中的每一条规则是有一些分类和相关的目标组成。<br/>
+netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和NAT子系统是netfilter的主要组成部分。</p>
+
+<h2>主要特性</h2>
+
+<ul>
+<li>无状态报文过滤</li>
+<li>有状态报文过滤</li>
+<li>所有网络地址和端口转换，比如NAT/NAPT(IPv4和IPv6)</li>
+<li>灵活的、可扩展的框架</li>
+<li>为第三方扩展提供API访问网络各层</li>
+</ul>
+
+
+<h2>可以做哪些</h2>
+
+<ul>
+<li>基于无状态或者有状态报文过滤构建互联网防火墙</li>
+<li>托管高可用有状态或者无状态的防火墙集群</li>
+<li>使用NAT和ip伪装共享共网ip</li>
+<li>使用NAT实现传输代理</li>
+<li>与tc和iproute2系统一起构建复杂Qos和策略路由器</li>
+<li>更进一步进行报文管理，比如修改IP头中的TOS/DSCP/ECN</li>
+</ul>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -666,86 +733,6 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">Tcp 客户端示例</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-02-10T19:07:27+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:07 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>实现了一个简单客户端，使用tcp与服务端进行通讯。本片文章主要介绍在tcp客户端网络编程中用到的几个基本函数：<br/>
-1、创建socket</p>
-
-<pre><code>int socket(int domain, int type, int protocol)
-</code></pre>
-
-<p>socket函数创建一个通讯端并返回这个终端的文件描述符。</p>
-
-<p>参数domain指定发生整个通讯过程所在的协议域。协议域定义在&lt;sys/socket.h>头文件中，常用协议域名为：</p>
-
-<pre><code>PF_LOCAL 主机内部通讯协议，之前名为PF_UNIX
-PF_UNIX  主机内部通讯协议，废弃，使用PF_LOCAL
-PF_INET  IPV4通讯协议
-PF_INET6 IPV6通讯协议
-。。。
-</code></pre>
-
-<p>本例子中使用PF_INET ipv4通讯协议域</p>
-
-<p>参数type指定socket类型，目前定义类型为：</p>
-
-<pre><code>SOCK_STREAM                                      
-SOCK_DGRAM
-SOCK_RAW
-SOCK_SEQPACKET
-SOCK_RDM
-</code></pre>
-
-<p>SOCK_STREAM 类型提供序列化、可靠的、全双工字节流套接字
-SOCK_DGRAM 类型提供无连接的、不可靠的，有报文最大限制的数据报通讯套接字
-SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字，需要有超级用户权限<br/>
-本例子中使用SOCK_STREAM流套接字类型</p>
-
-<p>失败时，函数返回－1，成功时，返回套接字文件描述符</p>
-
-<p>2、connect连接服务端</p>
-
-<pre><code>int connect(int socket, const struct sockaddr *address, socklen_t address_len);
-</code></pre>
-
-<p>connect函数在一个socket上面初始化一个连接</p>
-
-<p>参数socket为要建立连接的套接字<br/>
-参数address为要对端连接的地址，不同协议域会有不同的方式解析这个参数内容
-参数address_len为传入的address地址所对应地址结构体占据的内存大小</p>
-
-<p>连接成功，函数返回0，失败，则返回－1，同时置错误码errno</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -759,6 +746,10 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Libnetfilter_queue学习笔记</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">使用FIFO命名管道进行进程间通讯</a>
@@ -776,17 +767,13 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
         <a href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/">Tcp Server使用kevent进行io复用</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp server使用select进行I/O复用</a>
-      </li>
-    
   </ul>
 </section>
 <section>
  <h1>Categories</h1>
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/centos-slash-ubuntu/'>centos/ubuntu (1)</a></li>
-<li class='category'><a href='/blog/categories/network/'>network (6)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/python/'>python (2)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -796,8 +783,10 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
 <section>
 <h1>Tags</h1>
 <ul class="tag-cloud">
-	<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+	<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
 <a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/network/">Network,</a>
 <a style="font-size: 136%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 136%" href="/blog/tags/unix/">Unix</a>
 
