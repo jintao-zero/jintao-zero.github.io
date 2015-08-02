@@ -4,7 +4,7 @@ title: "libnetfilter_queue学习笔记"
 date: 2015-06-16 18:53:42 +0800
 comments: true
 categories: Network
-tags: Network, Linux
+tags: Network Linux
 ---
 项目需要将某个进程发出的报文截获，待用户态业务处理后再将报文送回系统协议栈中处理。调研后，采用iptables添加防火墙规则截获报文传递到用户态队列，用户态进程使用libnetfilter_queue库接受报文，待业务处理后，将报文送回系统协议栈这样的方案完成。下面介绍下，学习的几个知识点：
 #netfilter  
