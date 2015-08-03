@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Alogrithm | blog of jintao]]></title>
+  <link href="http://jintao-zero.github.io/blog/categories/alogrithm/atom.xml" rel="self"/>
+  <link href="http://jintao-zero.github.io/"/>
+  <updated>2015-08-03T19:08:19+08:00</updated>
+  <id>http://jintao-zero.github.io/</id>
+  <author>
+    <name><![CDATA[jintao]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[冒泡、选择、插入、归并、快速、堆排序]]></title>
+    <link href="http://jintao-zero.github.io/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/"/>
+    <updated>2015-08-02T20:40:24+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu</id>
+    <content type="html"><![CDATA[<p>本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。</p>
+
+<h1>冒泡排序</h1>
+
+<p><a href="http://baike.baidu.com/view/254413.htm#ref_[1]_254413">冒泡排序算法</a>（百度百科）的运作如下：（从后往前）<br/>
+1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。<br/>
+2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。在这一点，最后的元素应该会是最大的数。<br/>
+3. 针对所有的元素重复以上的步骤，除了最后一个。<br/>
+4. 持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较。</p>
+
+<p>代码实现</p>
+
+<pre><code>void BubbleSort(int array[], int len)    
+{  
+    for (int i = 0; i &lt; len-1; i++) {
+        for (int j = 0; j &lt; len-i-1; j++) {
+            if (array[j+1] &lt; array[j]) {
+                int tmp = array[j+1];
+                array[j+1] = array[j];
+                array[j] = tmp;
+            }
+        }
+    }
+}
+</code></pre>
+
+<!-- more -->
+
+
+<h1>选择排序</h1>
+
+<p><a href="http://baike.baidu.com/view/547263.htm">选择排序（Selection sort）</a>（百度百科）是一种简单直观的排序算法。它的工作原理是每一次从待排序的数据元素中选出最小（或者最大）的一个元素，存放在序列的起始位置，直到全部待排序的数据元素排完。选择排序是不稳定的排序方法（比如序列[5, 5, 3]）第一次就将第一个[5]与[3]交换，导致第一个5挪到第二个5后面。<br/>
+代码实现：</p>
+
+<pre><code>void SelectSort(int array[], int len)
+{
+    for (int i = 0; i &lt; len-1; i++) {
+        int maxindex = 0;
+        int j;
+        for (j = 0; j &lt; len-i; j++) {
+            if (array[maxindex] &lt; array[j])
+            maxindex = j;
+        }
+        if (maxindex != j-1) {
+            int tmp = array[maxindex];
+            array[maxindex] = array[j-1];
+            array[j-1] = tmp;
+        }
+    }
+}
+</code></pre>
+
+<h1>插入排序</h1>
+
+<p><a href="http://baike.baidu.com/view/1443814.htm">插入排序</a>基本思想是，有一个已经有序的数据列表，要求在这个已经排好的数据序列中插入一个数，但要求插入后此数据序列依然有序，当最后一个元素放入合适位置时，该数组排序完毕。</p>
+
+<p>代码实现：</p>
+
+<pre><code>void InsertSort(int array[], int len)
+{
+    for (int i = 0; i &lt; len-1; i++) {
+        int tmp = array[i+1];
+        int j;
+        for (j = i; j &gt;= 0; j--) {
+            if (array[j] &gt; tmp)
+                array[j+1] = array[j];
+            else
+            break;
+        }
+        array[j+1] = tmp;
+    }
+}
+</code></pre>
+
+<h1>归并排序</h1>
+
+<p><a href="http://baike.baidu.com/link?url=ntO_kb7I3p3zA69jUzemm9fGlNCnRTYujLs3bOn8OSxJ_qQ8uWhIXYXEWAcuMnpLsBWkZ7cWVPG0z9OQGSBmklD2mMslu_ybumqBYdFvBkoRX0UIgDXg6rESkppoX4jX-1dwTRL-6_jlMQvghncKxUGEPA6MOVPjHsOEr3l8CiF0WLrbOgcaN_qOVrjxtbHBLUbEZ7AT_9PP8A6YhxTTmK">归并排序</a>是建立在归并操作上的一种有效的排序算法，该算法是采用分治法（Divide and Conquer）的一个非常典型的应用。将已有序的子序列合并，得到完全有序的序列；即先使每个子序列有序，再使子序列段间有序。若将两个有序表合并成一个有序表，称为二路归并。<br/>
+归并过程为：比较a[i]和a[j]的大小，若a[i]&lt;=a[j]，则将第一个有序表中的元素a[i]复制到r[k]中，并令i和k分别加上1；否则将第二个有序表中的元素a[j]复制到r[k]中，并令j和k分别加上1，如此循环下去，直到其中规格有序表取完，然后再将另一个有序表中剩余的元素复制到r中从下标k到下标t的单元。归并排序的算法我们通常用递归实现，先把待排序区间[s,t]以中点二分，接着把左边子区间排序，再把右边子区间排序，最后把左区间和右区间用一次归并操作合并成有序的区间[s,t]。</p>
+
+<p>代码实现：</p>
+
+<pre><code>void MergeSort(int array[], int low, int high)
+{   
+    if (low &lt; high) {
+        int mid = (low + high)/2;
+        MergeSort(array, low, mid);
+        MergeSort(array, mid+1, high);
+        Merge(array, low, mid, high);
+    }
+}
+
+void Merge(int array[], int low, int mid, int high)
+{
+    int tmp[high-low+1];
+    int i = low;
+    int j = mid+1;
+    int k = 0;
+    while((i &lt; mid+1) &amp;&amp; (j &lt; high+1)) {
+        if (array[i] &lt; array[j]) {
+            tmp[k++] = array[i++];
+        } else {
+            tmp[k++] = array[j++];
+        }
+    }
+    if (i &lt; mid+1)
+        memcpy(&amp;tmp[k], &amp;array[i], sizeof(int)*(mid+1-i));
+    else
+        memcpy(&amp;tmp[k], &amp;array[j], sizeof(int)*(high+1-j));
+    memcpy(&amp;array[low], tmp, sizeof(int)*(high-low+1));
+}
+</code></pre>
+
+<h1>快速排序</h1>
+
+<p><a href="http://baike.baidu.com/link?url=HP5tLiQM-gSmzKFE8mLK2iTkDvv6CfSE02u7ZGHoVYBJpPbFQTG9kr7hTGNYzHR-gejxXqfsyE46qW9yq58itjMK0nw0wwxqINW25Cfr-bypjbWHg35SSk9Sw7XCG0gJRnQEMcQJw_cObpiQDh77Si7o0w_CKa9jYtjOiAua6s1D5xOpgDbPCanOmgJiK6mY">快速排序</a>（Quicksort）使对冒泡排序的一种改进。<br/>
+快速排序由C.A.R.Hoare在1962年提出。它的基本思想是：通过一趟排序将要排序的数据分割成独立的两部分，其中一部分的所有数据都比另外一部分的所有数据都要笑，然后再按此方法对着两部分数据分别进行快速排序，整个排序过程可以递归进行，以此达到整个数据变成有序序列。</p>
+
+<p>算法介绍：
+设要排序的数组是A[0]&hellip;.A[N-1]，首先任意选取一个数据（通常选用数组的第一个数）作为关键数据，然后将所有比它小的数都放到它前面，所有比它大的数都放到它后面，整个过程称为一趟快速排序。值得注意的是，快速排序不是一种稳定的排序算法，也就是说，多个相同的值的相对位置也许会在算法结束时产生变动。<br/>
+一趟快速排序的算法是：<br/>
+1）设置两个变量i、j，排序开始的时候：i=0，j＝N-1;<br/>
+2）以第一个数组元素做为关键数据，赋值给key，即key＝A[0];<br/>
+3) 从j开始向前搜索，即由后开始向前搜索(j&ndash;),找到第一个小于key的值A[j], 将A[j]和A[j]互换；<br/>
+4）从i开始向后搜索，即由前开始向后搜索(i++),找到第一大于key的A[i],将A[i]和A[j]互换；<br/>
+5)重复第3、4步，直到i＝j；(3,4步中，没有找到符合条件的值，即3种A[j]步小于key，4中A[i]不大于key的时候改变j、i的值，使得j＝j-1, i = i+1,直到找到为止。找到符合条件的值，进行交换的时候i，j指针位置不变。另外，i＝＝j这一过程一定正好是i+或j-完成的时候，此时令循环结束)。</p>
+
+<p>代码实现：</p>
+
+<pre><code>void QuickSort(int array[], int low ,int high)
+{
+    if (low &gt;= high)
+    return;
+    int pivot = FindPivot(array, low, high);
+    QuickSort(array, low, pivot-1);
+    QuickSort(array, pivot+1, high);
+}
+
+int FindPivot(int array[], int low, int high)
+{
+    int i = low;
+    int j = high;
+    int tmp = array[low];
+    while(i &lt; j) {
+        while((i &lt; j) &amp;&amp; (array[j] &gt;= tmp))
+        j--;
+        array[i] = array[j];
+        while((i &lt; j) &amp;&amp; (array[i] &lt;= tmp))
+        i++;
+        array[j] = array[i];
+    }
+    array[i] = tmp;
+    return i;
+}   
+</code></pre>
+
+<h1>堆排序</h1>
+
+<p><a href="http://baike.baidu.com/link?url=MQ3FCTrGuunRTE_A8KhSLxF5JZtTAlbsSv5Otj1uB0l6xb2NsFCML-8zsQp0iZ6KC2RS4vSj7bvHoSfpnzudXa">堆排序</a>是指利用堆积树（堆）这种数据结构所设计的一种排序算法，它是选择排序的一种。可以利用数组的特点快速定位制定索引的元素。堆分为大根堆和小跟堆，是完全二叉树。大根堆的要求是每个节点的值都不大于其父节点的值，即A[PARENT[i]]&gt;=A[i]。在数组的非降序排序中，需要使用的就是大根堆，因为根据大根堆的要求可知，最大的值一定在堆顶。<br/>
+算法介绍：<br/>
+堆排序利用了大根堆（或小根堆）堆顶记录的关键字最大（或最小）这一特征，使得在当前无序区中选取最大（或最小）关键字的记录变得简单。
+基本操作：<br/>
+1）建堆，建堆是不断调整堆的过程，从len/2处开始调整，一直到第一个节点，此处len是堆中元素的个数。建堆的过程是线性的过程，从len/2到0处一直调用调整堆的过程，相当于o(h1)+o(h2)&hellip;+o(hlen/2)其中h表示节点的深度，len/2表示节点的个数，这是一个求和的过程，结果是线性的O(n)。<br/>
+2）调整堆：调整堆在构建堆的过程中会用到，而且在堆排序过程中也会用到。利用的思想是比较节点i和它的孩子节点left(i),right(i),选出三者最大（或者最小）者，如果最大（小）值不是节点i而是它的一个孩子节点，那边交换节点i和该节点，然后再调用调整堆过程，这是一个递归的过程。调整堆的过程时间复杂度与堆的深度有关系，是lgn的操作，因为是沿着深度方向进行调整的。
+3）堆排序：堆排序是利用上面的两个过程来进行的。首先是根据元素构建堆。然后将堆的根节点取出（一般是与最后一个节点进行交换），将前面len-1个节点继续继续堆调整的过程，然后再将根节点取出，这样一支到所有节点都取出。堆排序过程的时间复杂度时O(nlgn)。因为建堆的时间复杂度时O(n)(调整一次)；调整堆的时间复杂度时lgn，调整用了n-1次，所以堆排序的时间复杂度是O(nlgn)。
+代码实现：</p>
+
+<pre><code>void HeapAdjust(int array[], int begin, int high)
+{
+    int i = begin;
+    while(i &lt;= high) {
+        int max = i;
+        int leftchild = 2*i + 1;
+        int rightchild = 2*i +2;
+        if (leftchild &lt;= high &amp;&amp; array[max] &lt; array[leftchild])
+            max = leftchild;
+        if (rightchild &lt;= high &amp;&amp; array[max] &lt; array[rightchild])
+        max = rightchild;
+        if (i != max) {
+            int tmp = array[i];
+            array[i] = array[max];
+            array[max] = tmp;
+            i = max;
+        } else {
+            break;
+        }
+    }
+}
+
+void InitHeap(int array[], int low, int high)
+{
+    for (int i = high/2; i &gt;= low; i--) {
+        HeapAdjust(array, i, high);
+    }
+}
+
+void HeapSort(int array[], int low, int high)
+{
+    InitHeap(array, low, high);
+    for (int i = high; i &gt; low; i--) {
+        int tmp = array[i];
+        array[i] = array[low];
+        array[low] = tmp;
+        HeapAdjust(array, low, i-1);
+    }
+}   
+</code></pre>
+
+<p>测试代码：</p>
+
+<pre><code>int main()
+{
+    int a[] = {100, 2,4,5,1,10, -1};
+    //BubbleSort(a, sizeof(a)/sizeof(a[0]));
+    size_t len = sizeof(a)/sizeof(a[0]);
+    //InsertSort(a, len);
+    // SelectSort(a, len);
+    //MergeSort(a, 0, len-1);
+    // QuickSort(a, 0, len-1);
+    HeapSort(a, 0, len-1);
+    for (int i = 0; i &lt; len;  i++)
+    printf("%d: %d\n", i, a[i]);
+}
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>
