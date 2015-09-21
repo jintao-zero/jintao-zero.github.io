@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>blog of jintao</title>
+  <title>jintao&#8217;s blog</title>
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="实现了一个简单服务端，使用tcp与客户端进行通讯。本片文章主要介绍在tcp服务端网络编程中用到的几个基本函数：
-1、创建套接字socket函数 int socket(int domain, int type, int protocol) socket函数创建一个通讯端并返回这个终端的文件描述符。 &hellip;">
+  <meta name="description" content="上一篇博客中实现的tcp服务端每次只能处理一个客户端连接，如果有多个客户端同时与服务端进行通讯的话，那只能进行等待上一个客户端通讯完成才可以，那么如何修改服务端为并发服务器程序呢？Unix中编写并发服务器程序最简单的方法就是fork一个子进程来服务每个客户。以下为一个典型的并发服务器的轮廓： &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -22,7 +21,7 @@
   <link rel="canonical" href="http://jintao-zero.github.io/posts/2">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="blog of jintao" type="application/atom+xml">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
   <script src="/javascripts/modernizr-2.0.js"></script>
   <script src="//ajax.useso.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
@@ -41,7 +40,7 @@
 
 <body   >
   <header role="banner"><hgroup>
-  <h1><a href="/">blog of jintao</a></h1>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
   
     <h2>fun</h2>
   
@@ -70,6 +69,67 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Tcp服务端并发之子进程</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-17T14:56:56+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>上一篇博客中实现的tcp服务端每次只能处理一个客户端连接，如果有多个客户端同时与服务端进行通讯的话，那只能进行等待上一个客户端通讯完成才可以，那么如何修改服务端为并发服务器程序呢？Unix中编写并发服务器程序最简单的方法就是fork一个子进程来服务每个客户。以下为一个典型的并发服务器的轮廓：</p>
+
+<pre><code>pid_t pid;
+int listenfd, connfd;
+listenfd = Socket(...);
+    /* fill in sockaddr_in{} with server's well-known port */
+Bind*(listenfd, ...);
+Listen(listenfd, LISTENQ);
+for ( ; ; ) {
+    connfd = Accept(listenfd, ...);  /* probably blocks */
+    if ((pid = Fork()) == 0) {
+        Close(listenfd);    /* child close listening socket */
+        doit(connfd);       /* process the request */
+        close(connfd);      /* child terminates */
+        exit(0);            /* child terminate */
+    }
+    Close(connfd);          /* parent closes connected socket */
+}
+</code></pre>
+
+<p>fork函数</p>
+
+<pre><code>pid_t fork(void);
+</code></pre>
+
+<p>fork创建一个新进程。新进程是当前运行进程的一个拷贝。fork函数一次调用，两次返回。对于子进程返回值为0，对于父进程，返回值为子进程id。</p>
+
+<p>以下为根据上面的并发服务器轮廓代码修改的tcp客户端代码：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -369,6 +429,10 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Hadoop环境搭建</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">冒泡、选择、插入、归并、快速、堆排序</a>
       </li>
     
@@ -384,10 +448,6 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
         <a href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/">Linux/Unix设置SUID</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2015/05/28/pythonjie-xi-json/">Python解析json</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -395,6 +455,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/centos-slash-ubuntu/'>centos/ubuntu (1)</a></li>
+<li class='category'><a href='/blog/categories/cloudcomputing/'>cloudcomputing (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/python/'>python (2)</a></li>
@@ -406,6 +467,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <h1>Tags</h1>
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 90%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
 <a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
 <a style="font-size: 210%" href="/blog/tags/network/">Network</a>
