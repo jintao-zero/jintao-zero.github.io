@@ -184,4 +184,132 @@ hadoop守护进程日志输出到$HADOOP_LOG_DIR目录（默认在$HADOOP_HOME/l
 	
 	$ sbin/stop-yarn.sh
 	
-	 
+##集群环境
+搭建四台机器（node1、node2、node3、node4）的Hadoop集群环境：  
+1、node1部署NameNode和ResourceManager  
+2、node2、node3、node4作为slave节点部署DataNode和NodeManager  
+
+典型集群环境下，应该将单独一台机器运行NameNode，另外一台机器运行ResourceManager，这些是主控节点。其他服务（比如Web App Proxy Server和MapReduce Job History server）通常运行在一台指定机器或者共享设备上，依赖于系统负载。集群中其他机器都同时部署DataNode和NodeManager，这些都是slaves节点。
+
+
+###准备工作
+1、每台机器都安装JAVA环境  
+   参考上面单机环境搭建，进行安装、配置环境变量
+  
+2、编辑hosts文件
+	编辑每台机器的hosts文件，将hostname和ip的对应关系添加到/etc/hosts中
+	
+	192.168.88.120 node0
+	192.168.88.121 node1
+	192.168.88.122 node2
+	192.168.88.123 node3
+	
+在各台机器上通过主机名ping各台机器，查看是否能够ping通
+
+3、配置ssh无密码登录
+每台机上运行，生存密钥
+	
+	$ ssh-keygen -t dsa -P '' -f ~/.ssh/id_dsa
+	$ cat ~/.ssh/id_dsa.pub >> ~/.ssh/authorized_keys
+	
+ssh集群启动时，主控节点会通过ssh远程登录到slaves节点执行脚本启动slaves节点，因此我们需要配置主控节点到slaves节点的无密码登录：  
+将主控节点的pub密钥拷贝到各个slaves节点~/.ssh/目录下
+
+	scp id_rsa.pub jintao@node1:~/.ssh/node0.pub
+
+将node0.pub文件的内容追加到各个节点的authorized_keys文件中：
+	
+	cat node0.pub >> authorized_keys
+	
+从node0节点ssh到slaves节点上，查看是否不需要密码  
+
+4、创建hadoop工作目录
+
+	mkdir /home/jintao/hadoop_dir
+如果将hadoop工作目录配置在其他目录下，则需要使hadoop的运行账户对该目录具有读写权限
+	
+5、下载Hadoop安装程序  
+从官网下载安装程序，解压到~/toolkit/目录下，toolkit后面陆续会安装其他zookeeper、hbase等项目
+
+###配置Hadoop
+管理员应该使用etc/haddop-env.sh和etc/hadoop/mapred-env.sh和etc/hadoop/yarn-env.sh三个相关脚本来配置Hadoop进程环境。  
+
+1、打开安装目录下etc/hadoop/hadoop-env.sh
+
+	添加一句 export JAVA_HOME=/usr/local/lib/jdk1.8.0_45
+	
+2、vim core-site.xml
+	
+	<configuration>
+        <property>
+                <name>fs.defaultFS</name>
+                <value>hdfs://node0:9000</value>
+        </property>
+        <property>
+                <name>hadoop.tmp.dir</name>
+                <value>/home/jintao/hadoop_dir</value>
+                <description>A base for other temporary directories.</description>
+        </property>
+	</configuration>
+
+设置fs.defaultFS和hadoop.tmp.dir属性
+
+3、vim hdfs-site.xml
+
+	<property>
+    	<name>dfs.replication</name>
+        <value>2</value>
+    </property>
+
+4、vim mapred-site.xml
+
+	<property>
+    	<name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+
+5、vim yarn-site.xml
+
+	<property>
+    	<name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <property>
+    	<name>yarn.resourcemanager.hostname</name>
+        <value>node0</value>
+    </property>
+6、vim slaves
+	
+	ode1
+	node2
+	node3
+
+7、将配置好的hadoop程序同步到slaves节点上
+	
+	scp -r toolkit/ node1:~
+	scp -r toolkit/ node2:~
+	scp -r toolkit/ node3:~
+	
+8、启动namenode节点  
+
+	1、cd ~/toolkit/hadoop-2.7.1/
+	2、bin/hdfs namenode -format
+	3、sbin/start-all.sh
+	
+	
+9、node0上查看jps
+	
+	9904 Jps
+	9426 SecondaryNameNode
+	9190 NameNode
+	9607 ResourceManager
+
+10、node1、node2、node3上查看jps
+	
+	9507 Jps
+	9323 NodeManager
+	9213 DataNode
+	
+11、系统启动日志记录在hadoop-2.7.1/logs目录下
+	
+	
