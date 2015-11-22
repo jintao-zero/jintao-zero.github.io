@@ -5,12 +5,12 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Python Property 属性用法 - jintao&#8217;s blog</title>
+  <title>Crontab任务设置及路径、动态库、产生多个进程问题解决 - jintao&#8217;s blog</title>
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="python提供了一个property类： class property([fget[, fset[, fdel[, doc]]]]) property类为新式类（继承object）返回property属性
-fget函数用来获取属性值。fset设置属性值。fdel用来删除属性。 &hellip;">
+  <meta name="description" content="crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。 crontab [ -u user ] file
+crontab [ -u user ] [ -i ] { -e | -l | - &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -19,7 +19,7 @@ fget函数用来获取属性值。fset设置属性值。fdel用来删除属性�
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/04/05/python-property-shu-xing-yong-fa">
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
@@ -73,7 +73,7 @@ fget函数用来获取属性值。fset设置属性值。fdel用来删除属性�
   
   <header>
     
-      <h1 class="entry-title">Python Property 属性用法</h1>
+      <h1 class="entry-title">Crontab任务设置及路径、动态库、产生多个进程问题解决</h1>
     
     
       <p class="meta">
@@ -82,75 +82,109 @@ fget函数用来获取属性值。fset设置属性值。fdel用来删除属性�
 
 
 
-<time class='entry-date' datetime='2015-04-05T17:26:05+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>5:26 pm</span></time>
+<time class='entry-date' datetime='2015-11-21T11:17:04+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>11:17 am</span></time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>python提供了一个property类：</p>
+<div class="entry-content"><p>crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。</p>
 
-<pre><code>class property([fget[, fset[, fdel[, doc]]]])
+<pre><code>crontab [ -u user ] file
+crontab [ -u user ] [ -i ] { -e | -l | -r }
 </code></pre>
 
-<p>property类为新式类（继承object）返回property属性<br/>
-fget函数用来获取属性值。fset设置属性值。fdel用来删除属性。doc为属性创建docstring。<br/>
-property的典型应用是应用一个被管理的属性x：</p>
+<p>命令第一种形式是用file中的命令设置crontab任务<br/>
+-l 参数是打印当前crontab任务到标准输出<br/>
+-e 参数是使用VISUAL或者EDITOR环境变量定义的编辑器编辑当前crontab定时任务<br/>
+-r 参数删除当前定时任务<br/>
+-i 与用户进行交互</p>
 
-<pre><code>class C(object):
-def __init__(self):
-    self._x = None
+<h2>任务设置</h2>
 
-def getx(self):
-    return self._x
+<p>crontab文件中可以包含三种语句：<br/>
+1、注释
+以#开头的语句都是注释</p>
 
-def setx(self, value):
-    self._x = value
-
-def delx(self):
-    del self._x
-
-x = property(getx, setx, delx, "I'm the 'x' property.")
+<pre><code>#this is a comment in crontab 
 </code></pre>
 
-<p>如果c是类C的实例，c.x将会调用getx，c.x＝value将会调用setx，del c.x会调用用delx</p>
+<p>2、设置环境变量</p>
 
-<p>将property 用作decorrator可以定义只读properties：</p>
-
-<pre><code>class Parrot(object):
-    def __init__(self):
-        self._voltage = 100000
-
-    @property
-    def voltage(self):
-        """Get the current voltage."""
-        return self._voltage
+<pre><code>LD_LIBRARY_PATH = /homt/lib/
 </code></pre>
 
-<p>@property修饰符将voltage函数变为voltage函数的同名属性的只读getter函数，同时这只这个属性的docstring与voltage函数相同</p>
+<p>3、设置定时任务<br/>
+每一行定义一条定时任务，包括五个时间、日期字段，时间日期后面的内容都是命令<br/>
+时间日期包括分、时、天、月和一周某天字段：</p>
 
-<p>一个property对象具有getter，setter和deleter方法可以用当作修饰符将属性同名函数变为属性对应的访问函数，下面是例子：</p>
-
-<pre><code>class C(object):
-    def __init__(self):
-        self._x = None
-
-    @property
-    def x(self):
-        """I'm the 'x' property."""
-        return self._x
-
-    @x.setter
-    def x(self, value):
-        self._x = value
-
-    @x.deleter
-    def x(self):
-        del self._x
+<pre><code>ield          allowed values
+-----          --------------
+minute         0-59
+hour           0-23
+day of month   1-31
+month          1-12 (or names, see below)
+day of week    0-7 (0 or 7 is Sun, or use names)
 </code></pre>
 
-<p>上面的用法与第一个列子相同，需要注意的是几个函数的名字都相同</p>
+<p>字段可以是＊，代表范围内所有<br/>
+字段也可以是一个范围，比如hour字段8-10，代表8，9，10<br/>
+字段也可以是一个列表，比如hour字段8，9，10<br/>
+字段也可以是一个范围和列表的混合，比如hour字段1-7，9－12<br/>
+字段也可以为一个间隔，比如hour 1-8/2,代表1,3,5,7</p>
+
+<!-- more -->
+
+
+<h2>路径问题</h2>
+
+<p>crontab任务是根据所属用户从/etc/passwd文件中获取bashshell工具类型、logname和当前路径的。<br/>
+代码中如果使用的是相对路径，那么在会导致程序找不到文件，可以在程序入口处利用chdir类似功能函数修改程序的当前工作路径：</p>
+
+<pre><code>int chdir(const char *path);
+</code></pre>
+
+<h2>动态库问题</h2>
+
+<p>如果程序使用了动态库，而动态库放置的位置没有在等标准路径下的话，程序会因为加载不到动态库而执行失败，可能报如下的错误：</p>
+
+<pre><code>/root/server/demo_linux/server: error while loading shared libraries: libTDFAPI30.so: cannot open shared object file: No such file or directory
+</code></pre>
+
+<p>解决办法有两个：<br/>
+1、链接程序时指定绝对路径：</p>
+
+<pre><code>-Wl,-rpath=/root/server/lib
+</code></pre>
+
+<p>2、在crontab中设置LD_LIBRARY_PATH环境变量</p>
+
+<pre><code>LD_LIBRARY_PATH=/root/server/lib
+</code></pre>
+
+<h2>创建两个相关进程</h2>
+
+<pre><code>root     19400  0.0  0.0 113116  1208 ?        Ss   18:10   0:00 /bin/sh -c /root/test/cron 1&gt; stdout 2&gt; stderr
+root     19402  0.0  0.0  12620  1072 ?        S    18:10   0:00 /root/test/cron
+</code></pre>
+
+<p>看到两个进程是因为crontab使用/bin/sh来启动定时任务程序:</p>
+
+<pre><code>[root@iZ235ne7v0iZ demo_linux]# ps -o ppid -p 19402
+PPID
+19400
+</code></pre>
+
+<p>可以将crontab任务修改为下列情况：</p>
+
+<pre><code>10 18  * * * exec /root/test/cron 1&gt; stdout 2&gt; stderr
+</code></pre>
+
+<p>或者</p>
+
+<pre><code>10 18  * * * bash -c '/root/test/cron 1&gt; stdout 2&gt; stderr'
+</code></pre>
 </div>
 
 
@@ -166,12 +200,12 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
 
 
 
-<time class='entry-date' datetime='2015-04-05T17:26:05+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>5:26 pm</span></time>
+<time class='entry-date' datetime='2015-11-21T11:17:04+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>11:17 am</span></time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/python/'>python</a>
+    <a class='category' href='/blog/categories/linux/'>linux</a>
   
 </span>
 
@@ -211,10 +245,8 @@ var jiathis_config = {data_track_clickback:'true'};
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/" title="Previous Post: tcp服务端并发之子进程">&laquo; tcp服务端并发之子进程</a>
+        <a class="basic-alignment left" href="/blog/2015/09/19/hadoophuan-jing-da-jian/" title="Previous Post: hadoop环境搭建">&laquo; hadoop环境搭建</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/" title="Next Post: tcp client 使用select进行I/O复用">tcp client 使用select进行I/O复用 &raquo;</a>
       
     </p>
   </footer>
