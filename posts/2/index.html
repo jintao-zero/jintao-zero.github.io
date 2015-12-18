@@ -9,8 +9,8 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="python提供了一个property类： class property([fget[, fset[, fdel[, doc]]]]) property类为新式类（继承object）返回property属性
-fget函数用来获取属性值。fset设置属性值。fdel用来删除属性。 &hellip;">
+  <meta name="description" content="在tcp客户端示例中，存在以下两种情况时，示例代码不能更好的处理： 目前客户端输入一条数据并发送，等待服务端返回后，才能继续输入数据 这样的设计不利于客户端批量处理数据
+当服务端出现异常（如服务进程退出或者服务端主机崩溃等异常情况），客户端也许正在等待输入，不能够及时感知到服务端的异常， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -70,6 +70,77 @@ fget函数用来获取属性值。fset设置属性值。fdel用来删除属性�
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp Client 使用select进行I/O复用</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-04-06T11:49:13+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:49 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>在<a href="http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">tcp客户端示例</a>中，存在以下两种情况时，示例代码不能更好的处理：</p>
+
+<ul>
+<li><p>目前客户端输入一条数据并发送，等待服务端返回后，才能继续输入数据
+ 这样的设计不利于客户端批量处理数据</p></li>
+<li><p>当服务端出现异常（如服务进程退出或者服务端主机崩溃等异常情况），客户端也许正在等待输入，不能够及时感知到服务端的异常，只有从send返回错误时，才能感知到服务端故障</p></li>
+</ul>
+
+
+<h1>select 函数介绍</h1>
+
+<p>上面实现的客户端示例中，客户端只能处理一个描述符，我们需要修改客户端使其可以同时处理标准输入和套接字描述符，达到I/O复用：</p>
+
+<pre><code>#include &lt;sys/select.h&gt;
+#include &lt;sys/time.h&gt;
+int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict errorfds,
+     struct timeval *restrict timeout);
+</code></pre>
+
+<ul>
+<li><p>timeout参数，它告知内核等待所有描述符中的一个就绪可花多长时间<br/>
+  struct timeval {<br/>
+      long tv_sec;  /* seconds*/<br/>
+      long tv_usec; /* microseconds*/<br/>
+  }   <br/>
+  (1) 永远等待下去：仅在有一个描述符准备好时返回。为此，将timeout设置为   空指针<br/>
+  (2) 等待一段固定时间：在有一个描述符准备好I/O时返回，但是不超过由该参数所指向的timeval结构中指定的秒数和微秒数<br/>
+  (3) 根本不等待：检查描述符后立即返回，这称为轮询。为此，该参数必须指向一个timeval结构，而且其中的定时器值必须为0</p></li>
+<li><p>readfds, writefds, errorfds参数，这三个参数指定了，需要内核测试读、写     和异常条件的描述符集合。
+系统提供了以下宏来对描述符进行操作：<br/>
+void FD_CLR(fd, fd_set <em>fdset)<br/>
+void FD_COPY(fd_set </em>fdest_orig, fd_set <em>fdset_copy)<br/>
+int FD_ISSET(fd, fd_set </em>fdset)<br/>
+void FD_SET(fd, fd_set <em>fdset)<br/>
+void FD_ZERO(fd_set </em>fdset)</p></li>
+<li><p>nfds参数，指定待测试的描述符个数，它的值是待测试的最大描述符加1</p></li>
+</ul>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -520,6 +591,10 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/">Hiredis C语言Redis客户端库使用</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Crontab任务设置及路径、动态库、产生多个进程问题解决</a>
       </li>
     
@@ -535,10 +610,6 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
         <a href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Libnetfilter_queue学习笔记</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">使用FIFO命名管道进行进程间通讯</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -549,6 +620,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <li class='category'><a href='/blog/categories/cloudcomputing/'>cloudcomputing (1)</a></li>
 <li class='category'><a href='/blog/categories/linux/'>linux (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/python/'>python (2)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -563,7 +635,9 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <a style="font-size: 133%" href="/blog/tags/linux/">Linux</a>
 <a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
 <a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
 <a style="font-size: 133%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
 <a style="font-size: 133%" href="/blog/tags/unix/">Unix</a>
 
 </ul>

@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/</loc>
+    
+    <lastmod>2015-11-22T11:21:43+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/</loc>
     
     <lastmod>2015-11-21T11:17:04+08:00</lastmod>
@@ -141,14 +149,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2015-11-22T11:17:29+08:00</lastmod>
+    <lastmod>2015-12-18T17:54:04+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2015-11-22T11:17:29+08:00</lastmod>
+    <lastmod>2015-12-18T17:54:04+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
