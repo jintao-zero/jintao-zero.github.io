@@ -1,0 +1,384 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Hdfs文件系统java Api介绍 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="Hadoop Filesystems Hadoop对于文件系统有一个抽象设计，HDFS只是一个实现。客户端使用Java 抽象类org.apache.hadoop.fs.FileSystem来访问Hadoop中的文件系统，有多个具体实现类: FileSystem URI scheme Java &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.useso.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="//fonts.useso.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.useso.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+    <h2>fun</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Hdfs文件系统java Api介绍</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-21T17:29:19+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>5:29 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>Hadoop Filesystems</h1>
+
+<p>Hadoop对于文件系统有一个抽象设计，HDFS只是一个实现。客户端使用Java 抽象类org.apache.hadoop.fs.FileSystem来访问Hadoop中的文件系统，有多个具体实现类:</p>
+
+<pre><code>FileSystem      URI scheme      Java implementaion  
+Local           file            fs.LocalFileSystem  
+
+HDFS            hdfs            hdfs.DistributedFileSystem
+
+WebHDFS         webhdfs         hdfs.web.WebHdfsFileSystem
+
+Secure
+WebHDFs         swebhdfs        hdfs.web.SWebHdfsFileSystem
+
+HAR             har             fs.HarFileSystem
+
+View            viewfs          viewfs.ViewFileSystem
+
+FTP             ftp             fs.ftp.FTPFileSystem
+
+S3              s3a             fs.s3a.S3AFileSystem
+
+Azure           wasb            fs.azure.NativeAzureFileSystem
+
+Swift           swift           fs.swift.snative.SwiftNative
+</code></pre>
+
+<p>Hadoop提供多个接口访问文件系统，接口利用URI的scheme来创建对应的实例与文件系统进行通讯。hdfs命令可以用来操作Hadoop各种文件系统，比如列出本地文件系统根目录内容：</p>
+
+<pre><code>[root@yun1 ~]# hdfs dfs -ls file:///
+Found 25 items
+-rw-r--r--   1 root root          0 2015-10-19 11:06 file:///.autofsck
+-rw-r--r--   1 root root          0 2014-07-04 14:16 file:///.autorelabel
+dr-xr-xr-x   - root root       4096 2014-07-04 14:36 file:///bin
+dr-xr-xr-x   - root root       1024 2014-09-17 15:54 file:///boot
+drwxr-xr-x   - root root       4096 2014-07-04 09:17 file:///data
+-rw-r--r--   1 root root       1001 2014-07-29 16:28 file:///dataplatform.log
+drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
+</code></pre>
+
+<h1>Java Interface</h1>
+
+<!-- more -->
+
+
+<p>访问HDFS文件系统需要先获取一个文件系统实例，FileSystem是一个文件系统统一访问接口。通过以下接口可以获取访问hdfs文件系统的实例：</p>
+
+<pre><code>public static FileSystem get(Configuration conf) throws IOException
+public static FileSystem get(URI uri, Configuration conf) throws IOException
+public static FileSystem get(URI uri, Configuration conf, String user) throws IOException
+</code></pre>
+
+<p>Configuration对象封装客户端或者服务端的配置信息，这些信息由classpath目录下配置文件初始化，比如etc/hadoop/core-site.xml。第一个接口根据conf中的信息，返回文件系统。第二个接口使用URI的scheme和授权来觉得使用哪个文件系统，如果没有设置scheme，则使用conf中配置的文件系统。第三个接口是以user用户的身份获取文件系统。 使用FileSystem实例，调用open方法可以获取一个输入文件流：</p>
+
+<pre><code>public FSDataInputStream open(Path f) throws IOException
+public abstract FSDataInputStream open(Path f, int bufferSize) throws IOException 
+</code></pre>
+
+<p>下面的代码实例用于读取hdfs文件输出到标准输出：</p>
+
+<pre><code>public class FileSystemCat {
+
+    public static void main(String[] args) throws Exception {
+        String uri = args[0];
+        Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(URI.create(uri), conf);
+        InputStream in = null;
+        try {
+            in = fs.open(new Path(uri));
+            IOUtils.copyBytes(in, System.out, 4096, false);
+        } finally {
+            IOUtils.closeStream(in);
+        }
+    }
+}
+</code></pre>
+
+<p>编译文件后，使用hadoop命令运行class文件：</p>
+
+<pre><code># hadoop FileSystemCat hdfs://localhost/user/tom/quangle.txt
+On the top of the Crumpetty Tree
+The Quangle Wangle sat, 
+But his face you could not see,
+On account of his Beaver Hat.
+</code></pre>
+
+<h2>Writing Data</h2>
+
+<p>FileSystem提供多个接口来创建文件，最简单的是输入一个路径作为参数，返回一个输出流：</p>
+
+<pre><code>public FSDataOutputStream create(Path f) throws IOException 存在多个重载接口，允许指定是否重写已存在文件，文件的副本个数，写文件的缓冲区大小，文件的块大小和文件权限等等。存在append接口对已存在文件进行追加：
+public FSDataOutputStream append(Path f) throws IOException
+</code></pre>
+
+<p>下面的代码实例是拷贝一个本地文件到Hadoop文件系统中：</p>
+
+<pre><code>public class FileCopyWithProgress {
+    public static void main(String []args) throws Exception {
+        String localSrc = args[0];
+        String dst = args[1];
+
+        InputStream in = new BufferedInputStream(new FileInputStream(localSrc));
+
+        Configuration conf = new Configuration();
+        FileSystem fs = FileSystem.get(URI.create(dst), conf);
+        OutputStream out = fs.create(new Path(dst), new Progressable() {
+            public void progress() {
+                System.out.print(".");
+            }
+        });
+
+        IOUtils.copyBytes(in, out, 4096, true);
+    }
+}
+</code></pre>
+
+<p>运行程序结果如下：
+    #hadoop FileCopyWithProgress input/docs/1400-8.txt hdfs://localhost/user/tom/1400-8.txt</p>
+
+<p>创建目录使用下面的接口：</p>
+
+<pre><code>public boolean mkdirs(Path f) throws IOException
+</code></pre>
+
+<h2>Quering the FileSystem</h2>
+
+<p>FilsSystem提供了接口来获取文件或者文件夹信息，信息包括文件长度，块大小，复制，修改时间，所有权，访问权限属性。</p>
+
+<pre><code>abstract FileStatus getFileStatus(Path f)
+</code></pre>
+
+<p>FileSystem提供了接口来列出一个目录中包含的内容：</p>
+
+<pre><code>abstract FileStatus[]   listStatus(Path f)
+FileStatus[]    listStatus(Path[] files)
+FileStatus[]    listStatus(Path[] files, PathFilter filter)
+FileStatus[]    listStatus(Path f, PathFilter filter)
+</code></pre>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-21T17:29:19+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>5:29 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/bigdata/'>bigdata</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/" title="Previous Post: hiredis C语言Redis客户端库使用">&laquo; hiredis C语言Redis客户端库使用</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao/">Hdfs文件系统java Api介绍</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/">Hiredis C语言Redis客户端库使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Crontab任务设置及路径、动态库、产生多个进程问题解决</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Hadoop环境搭建</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">冒泡、选择、插入、归并、快速、堆排序</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (1)</a></li>
+<li class='category'><a href='/blog/categories/centos-slash-ubuntu/'>centos/ubuntu (1)</a></li>
+<li class='category'><a href='/blog/categories/cloudcomputing/'>cloudcomputing (1)</a></li>
+<li class='category'><a href='/blog/categories/linux/'>linux (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/python/'>python (2)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 133%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 133%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 133%" href="/blog/tags/unix/">Unix</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
