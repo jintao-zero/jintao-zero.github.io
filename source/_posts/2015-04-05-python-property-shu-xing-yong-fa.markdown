@@ -3,7 +3,7 @@ layout: post
 title: "python property 属性用法"
 date: 2015-04-05 17:26:05 +0800
 comments: true
-categories: ['Python']
+categories: DevOps
 tags: Python
 ---
 python提供了一个property类：

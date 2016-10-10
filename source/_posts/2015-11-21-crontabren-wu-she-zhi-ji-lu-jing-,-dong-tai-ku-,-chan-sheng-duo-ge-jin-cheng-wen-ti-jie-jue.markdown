@@ -3,8 +3,8 @@ layout: post
 title: "crontab任务设置及路径、动态库、产生多个进程问题解决"
 date: 2015-11-21 11:17:04 +0800
 comments: true
-categories: Linux
-tags: Linux
+categories: DevOps 
+tags: DevOps 
 ---
 crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。
 	

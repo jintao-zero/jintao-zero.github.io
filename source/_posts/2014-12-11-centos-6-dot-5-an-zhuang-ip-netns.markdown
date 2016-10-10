@@ -3,7 +3,8 @@ layout: post
 title: "CentOS 6.5 安装ip netns"
 date: 2014-12-11 16:42:57 +0800
 comments: true
-categories: ['CentOS/Ubuntu'] 
+categories: DevOps 
+tag: 
 ---
 项目需要用到网络空间这一个技术，但是在CentOS 6.x版本中，ip命令并不能够使用netns这个参数：    
 

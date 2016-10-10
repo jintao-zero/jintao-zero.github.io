@@ -3,7 +3,7 @@ layout: post
 title: "hadoop环境搭建"
 date: 2015-09-19 15:41:51 +0800
 comments: true
-categories: CloudComputing
+categories: bigdata 
 tags: Hadoop
 ---
 最近开始进行Hadoop分布式计算相关内容的学习，先从搭建开发环境开始。下面记录一下搭建Hadoop开发环境的过程，以及注意点。
