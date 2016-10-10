@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Tag: DevOps | jintao's blog]]></title>
+  <link href="http://jintao-zero.github.io/blog/tags/devops/atom.xml" rel="self"/>
+  <link href="http://jintao-zero.github.io/"/>
+  <updated>2016-10-10T21:38:52+08:00</updated>
+  <id>http://jintao-zero.github.io/</id>
+  <author>
+    <name><![CDATA[jintao]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[grep命令]]></title>
+    <link href="http://jintao-zero.github.io/blog/2016/10/05/grepming-ling/"/>
+    <updated>2016-10-05T20:48:14+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2016/10/05/grepming-ling</id>
+    <content type="html"><![CDATA[<h1>grep命令</h1>
+
+<p>grep, egrep, fgrep, zgrep, zegrep, zfgrep 文件模式搜索</p>
+
+<pre><code>grep [-abcdDEFGHhIiJLlmnOopqRSsUVvwxZ] [-A num] [-B num] [-C[num]] [-e pattern] [-f file] [--binary-files=value] [--color[=when]]
+          [--colour[=when]] [--context[=num]] [--label] [--line-buffered] [--null] [pattern] [file ...]
+</code></pre>
+
+<p>grep搜索输入文件，输出匹配一个或者多个模式的文件行。通常情况，不包括结尾换行符的文件行匹配指定模式中的表达式即为匹配成功。空表达式匹配所有行。匹配行将会打印到标准输出。<br/>
+grep命令用于简单模式和基本正则表达式（BRES）；egrep命令可以处理扩展正则表达式。查看re_format(7）关于正则表达式的详细信息。fgre较grep和egrep更快，但是只能处理固定模式（比如，它不能解析正则表达式）。匹配模式可以由一行或者多行组成，以便于匹配输入内容的一部分。<br/>
+zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以接收由compress或者gzip压缩工具压缩过的文件作为输入。</p>
+
+<!-- more -->
+
+
+<h2>参数</h2>
+
+<pre><code>-A num, --after-context=num
+</code></pre>
+
+<p>打印匹配行后面的num行文本，与-B和-C选项功能类似</p>
+
+<pre><code>-a, --text
+</code></pre>
+
+<p>将所有输入当作文本文件处理。如果文件包含二进制字符，grep简单打印<code>Binary file ... matches</code>。使用这个参数强制grep输出匹配行。</p>
+
+<pre><code>-B num, --before-context=num
+</code></pre>
+
+<p>打印每个匹配行前面num行文本。</p>
+
+<pre><code>-b, --byte-offset  
+</code></pre>
+
+<p>打印匹配模式在文件中的字节偏移数</p>
+
+<pre><code>-C[num, --context=num]
+</code></pre>
+
+<p>指定打印匹配行前后文本行数。默认为2，相当于设置-A 2 -B 2</p>
+
+<pre><code>-c, --count
+</code></pre>
+
+<p>只向标准输出打印匹配文本行的行数</p>
+
+<pre><code>--colour=[when, --color=[when]]
+</code></pre>
+
+<p>打印时，用GREP_COLOR环境变量里面保存的颜色设置标记匹配到的模式</p>
+
+<pre><code>-D action, --devices=action
+</code></pre>
+
+<p>为devices，FIFOS和sockets指定动作。默认动作是读，把他们当作普通文件处理。如果action指定为skip，这些设备将会被跳过。</p>
+
+<pre><code>-d action, --directories=action
+</code></pre>
+
+<p>为目录指定特殊的动作。默认是读动作，把目录当作普通文件处理。<code>skip</code>动作是默默跳过目录，<code>recurse</code>动作是循环读取目录。</p>
+
+<pre><code>-E, --extended-regexp
+</code></pre>
+
+<p>按照扩展正则表达式来解析pattern模式（强制grep表现为egrep）</p>
+
+<pre><code>-e pattern, --regexp=pattern
+</code></pre>
+
+<p>指定匹配用的模式。可以多次使用-e选项来指定多个模式串</p>
+
+<pre><code>--exclude
+</code></pre>
+
+<p>使用此选项将匹配参数模式的文件去除，不尽兴模式串的匹配。</p>
+
+<pre><code>--exclude-dir
+</code></pre>
+
+<p>将某些目录去除，不进行模式匹配</p>
+
+<pre><code>-F, --fixed-strings
+</code></pre>
+
+<p>将模式解析为固定字符串集合（强制grep为fgrep）</p>
+
+<pre><code>-f file, --file=file
+</code></pre>
+
+<p>从file文件中读取匹配用的模式串</p>
+
+<pre><code>-G, --basic-regexp
+</code></pre>
+
+<p>按照基本正则表达式解析模式串（强制grep工作模式为传统grep）</p>
+
+<pre><code>-H
+</code></pre>
+
+<p>在匹配文本行前头打印所属文件名</p>
+
+<pre><code>-h, --no-filename
+</code></pre>
+
+<p>在匹配文本行前头不打印文件名</p>
+
+<pre><code>--help
+</code></pre>
+
+<p>打印简要帮助信息</p>
+
+<pre><code>-I
+</code></pre>
+
+<p>忽略二进制文件</p>
+
+<pre><code>-i, --ignore-case
+</code></pre>
+
+<p>进行大小无关匹配，grep默认是大小相关</p>
+
+<pre><code>--include
+</code></pre>
+
+<p>指定符合文件名模式的文件进行模式匹配</p>
+
+<pre><code>--include-dir
+</code></pre>
+
+<p>如果指定-R参数，只有符合模式的目录才进行模式匹配</p>
+
+<pre><code>-J, --bz2decompress
+</code></pre>
+
+<p>进行文本匹配之前，解压bzip压缩过的文件</p>
+
+<pre><code>-L, --files-without-match
+</code></pre>
+
+<p>只打印不包含指定模式文本行文件的文件名</p>
+
+<pre><code>-l, --files-with-matches
+</code></pre>
+
+<p>只打印包含指定模式文本行文件的文件名，不打印文本行</p>
+
+<pre><code>--mmap
+</code></pre>
+
+<p>使用mmap代替read来读取输入，在某些环境下能够达到更高性能，也可能引起为定义行为</p>
+
+<pre><code>-m num, --max-count=num
+</code></pre>
+
+<p>达到<code>num</code>处匹配后，停止继续读取输入</p>
+
+<pre><code>-n, --line-number
+</code></pre>
+
+<p>输出结果时，每行前面打印匹配行在文件中的行数。</p>
+
+<pre><code>--null
+</code></pre>
+
+<p>打印文件名时，后面跟零字节</p>
+
+<pre><code>-O
+</code></pre>
+
+<p>8888</p>
+
+<pre><code>-o, --only-matching
+</code></pre>
+
+<p>只打印每行中匹配的部分</p>
+
+<pre><code>-p
+</code></pre>
+
+<p>如果指定<code>-R</code>选项，不跟随符号链接，这个是默认选项</p>
+
+<pre><code>-q, --quiet, --silent
+</code></pre>
+
+<p>安静模式：压制正常输出。grep程序只是搜索文件，直到达到一个匹配，使grep命令更少的花销。</p>
+
+<pre><code>-R, -r, --recursive
+</code></pre>
+
+<p>循环搜索子文件夹</p>
+
+<pre><code>-S
+</code></pre>
+
+<p>如果指定<code>-R</code>参数，所有符号连接也会参与匹配，默认不匹配符号连接</p>
+
+<pre><code>-s, --no-messages
+</code></pre>
+
+<p>安静模式。不存在或者不可达的文件将被忽略</p>
+
+<pre><code>-U, --binary
+</code></pre>
+
+<p>搜索二进制文件，但是不尝试打印他们</p>
+
+<pre><code>-V, --version
+</code></pre>
+
+<p>打印版本信息</p>
+
+<pre><code>-v, --invert-match
+</code></pre>
+
+<p>搜索不匹配给定模式的行文本</p>
+
+<pre><code>-w, --word-regexp
+</code></pre>
+
+<p>表达式被当做是一个单词来进行匹配（形如被<code>[[:&lt;:]]</code>和<code>[[:&gt;:]]</code>包裹）</p>
+
+<pre><code>-x, --line-regexp
+</code></pre>
+
+<p>只有一整行匹配给定模式才算成功匹配行</p>
+
+<pre><code>-Z, -z, --decompress
+</code></pre>
+
+<p>强制grep像zgrep</p>
+
+<pre><code>--binary-files=value
+</code></pre>
+
+<p>控制搜索和打印二进制文件。选项<code>binary</code>，默认选项，搜索但是不打印；<code>without-match</code>:不搜索二进制文件；<code>text</code>：将二进制文件视为文本文件</p>
+
+<pre><code>--context[=num]
+</code></pre>
+
+<p>打印匹配行前后文本，默认是2行</p>
+
+<pre><code>--line-buffered
+</code></pre>
+
+<p>强制输出行缓存。</p>
+
+<h2>例子</h2>
+
+<p>搜索一个文件中的单词</p>
+
+<pre><code>grep 'patricia' myfile
+</code></pre>
+
+<p>所有行首包含<code>.Pp</code>的行</p>
+
+<pre><code>grep '^\.Pp' myfile
+</code></pre>
+
+<p>搜索不包含<code>foo</code>和<code>bar</code>的所有行</p>
+
+<pre><code>grep -v -e 'foo' -e 'bar' myfile
+</code></pre>
+
+<p>扩展正则表达式</p>
+
+<pre><code>egrep '19|20|25' calendar
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[crontab任务设置及路径、动态库、产生多个进程问题解决]]></title>
+    <link href="http://jintao-zero.github.io/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/"/>
+    <updated>2015-11-21T11:17:04+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue</id>
+    <content type="html"><![CDATA[<p>crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。</p>
+
+<pre><code>crontab [ -u user ] file
+crontab [ -u user ] [ -i ] { -e | -l | -r }
+</code></pre>
+
+<p>命令第一种形式是用file中的命令设置crontab任务<br/>
+-l 参数是打印当前crontab任务到标准输出<br/>
+-e 参数是使用VISUAL或者EDITOR环境变量定义的编辑器编辑当前crontab定时任务<br/>
+-r 参数删除当前定时任务<br/>
+-i 与用户进行交互</p>
+
+<h2>任务设置</h2>
+
+<p>crontab文件中可以包含三种语句：<br/>
+1、注释
+以#开头的语句都是注释</p>
+
+<pre><code>#this is a comment in crontab 
+</code></pre>
+
+<p>2、设置环境变量</p>
+
+<pre><code>LD_LIBRARY_PATH = /homt/lib/
+</code></pre>
+
+<p>3、设置定时任务<br/>
+每一行定义一条定时任务，包括五个时间、日期字段，时间日期后面的内容都是命令<br/>
+时间日期包括分、时、天、月和一周某天字段：</p>
+
+<pre><code>ield          allowed values
+-----          --------------
+minute         0-59
+hour           0-23
+day of month   1-31
+month          1-12 (or names, see below)
+day of week    0-7 (0 or 7 is Sun, or use names)
+</code></pre>
+
+<p>字段可以是＊，代表范围内所有<br/>
+字段也可以是一个范围，比如hour字段8-10，代表8，9，10<br/>
+字段也可以是一个列表，比如hour字段8，9，10<br/>
+字段也可以是一个范围和列表的混合，比如hour字段1-7，9－12<br/>
+字段也可以为一个间隔，比如hour 1-8/2,代表1,3,5,7</p>
+
+<!-- more -->
+
+
+<h2>路径问题</h2>
+
+<p>crontab任务是根据所属用户从/etc/passwd文件中获取bashshell工具类型、logname和当前路径的。<br/>
+代码中如果使用的是相对路径，那么在会导致程序找不到文件，可以在程序入口处利用chdir类似功能函数修改程序的当前工作路径：</p>
+
+<pre><code>int chdir(const char *path);
+</code></pre>
+
+<h2>动态库问题</h2>
+
+<p>如果程序使用了动态库，而动态库放置的位置没有在等标准路径下的话，程序会因为加载不到动态库而执行失败，可能报如下的错误：</p>
+
+<pre><code>/root/server/demo_linux/server: error while loading shared libraries: libTDFAPI30.so: cannot open shared object file: No such file or directory
+</code></pre>
+
+<p>解决办法有两个：<br/>
+1、链接程序时指定绝对路径：</p>
+
+<pre><code>-Wl,-rpath=/root/server/lib
+</code></pre>
+
+<p>2、在crontab中设置LD_LIBRARY_PATH环境变量</p>
+
+<pre><code>LD_LIBRARY_PATH=/root/server/lib
+</code></pre>
+
+<h2>创建两个相关进程</h2>
+
+<pre><code>root     19400  0.0  0.0 113116  1208 ?        Ss   18:10   0:00 /bin/sh -c /root/test/cron 1&gt; stdout 2&gt; stderr
+root     19402  0.0  0.0  12620  1072 ?        S    18:10   0:00 /root/test/cron
+</code></pre>
+
+<p>看到两个进程是因为crontab使用/bin/sh来启动定时任务程序:</p>
+
+<pre><code>[root@iZ235ne7v0iZ demo_linux]# ps -o ppid -p 19402
+PPID
+19400
+</code></pre>
+
+<p>可以将crontab任务修改为下列情况：</p>
+
+<pre><code>10 18  * * * exec /root/test/cron 1&gt; stdout 2&gt; stderr
+</code></pre>
+
+<p>或者</p>
+
+<pre><code>10 18  * * * bash -c '/root/test/cron 1&gt; stdout 2&gt; stderr'
+</code></pre>
+]]></content>
+  </entry>
+  
+</feed>

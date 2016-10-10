@@ -1,0 +1,515 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Grep命令 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="grep命令 grep, egrep, fgrep, zgrep, zegrep, zfgrep 文件模式搜索 1
+2
+grep [-abcdDEFGHhIiJLlmnOopqRSsUVvwxZ] [-A num] [-B num] [-C[num]] [-e pattern] [-f file &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2016/10/05/grepming-ling">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Grep命令</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-10-05T20:48:14+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:48 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>grep命令</h1>
+
+<p>grep, egrep, fgrep, zgrep, zegrep, zfgrep 文件模式搜索</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>grep [-abcdDEFGHhIiJLlmnOopqRSsUVvwxZ] [-A num] [-B num] [-C[num]] [-e pattern] [-f file] [--binary-files=value] [--color[=when]]
+</span><span class='line'>          [--colour[=when]] [--context[=num]] [--label] [--line-buffered] [--null] [pattern] [file ...]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>grep搜索输入文件，输出匹配一个或者多个模式的文件行。通常情况，不包括结尾换行符的文件行匹配指定模式中的表达式即为匹配成功。空表达式匹配所有行。匹配行将会打印到标准输出。<br/>
+grep命令用于简单模式和基本正则表达式（BRES）；egrep命令可以处理扩展正则表达式。查看re_format(7）关于正则表达式的详细信息。fgre较grep和egrep更快，但是只能处理固定模式（比如，它不能解析正则表达式）。匹配模式可以由一行或者多行组成，以便于匹配输入内容的一部分。<br/>
+zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以接收由compress或者gzip压缩工具压缩过的文件作为输入。</p>
+
+<!-- more -->
+
+
+<h2>参数</h2>
+
+<pre><code>-A num, --after-context=num
+</code></pre>
+
+<p>打印匹配行后面的num行文本，与-B和-C选项功能类似</p>
+
+<pre><code>-a, --text
+</code></pre>
+
+<p>将所有输入当作文本文件处理。如果文件包含二进制字符，grep简单打印<code>Binary file ... matches</code>。使用这个参数强制grep输出匹配行。</p>
+
+<pre><code>-B num, --before-context=num
+</code></pre>
+
+<p>打印每个匹配行前面num行文本。</p>
+
+<pre><code>-b, --byte-offset  
+</code></pre>
+
+<p>打印匹配模式在文件中的字节偏移数</p>
+
+<pre><code>-C[num, --context=num]
+</code></pre>
+
+<p>指定打印匹配行前后文本行数。默认为2，相当于设置-A 2 -B 2</p>
+
+<pre><code>-c, --count
+</code></pre>
+
+<p>只向标准输出打印匹配文本行的行数</p>
+
+<pre><code>--colour=[when, --color=[when]]
+</code></pre>
+
+<p>打印时，用GREP_COLOR环境变量里面保存的颜色设置标记匹配到的模式</p>
+
+<pre><code>-D action, --devices=action
+</code></pre>
+
+<p>为devices，FIFOS和sockets指定动作。默认动作是读，把他们当作普通文件处理。如果action指定为skip，这些设备将会被跳过。</p>
+
+<pre><code>-d action, --directories=action
+</code></pre>
+
+<p>为目录指定特殊的动作。默认是读动作，把目录当作普通文件处理。<code>skip</code>动作是默默跳过目录，<code>recurse</code>动作是循环读取目录。</p>
+
+<pre><code>-E, --extended-regexp
+</code></pre>
+
+<p>按照扩展正则表达式来解析pattern模式（强制grep表现为egrep）</p>
+
+<pre><code>-e pattern, --regexp=pattern
+</code></pre>
+
+<p>指定匹配用的模式。可以多次使用-e选项来指定多个模式串</p>
+
+<pre><code>--exclude
+</code></pre>
+
+<p>使用此选项将匹配参数模式的文件去除，不尽兴模式串的匹配。</p>
+
+<pre><code>--exclude-dir
+</code></pre>
+
+<p>将某些目录去除，不进行模式匹配</p>
+
+<pre><code>-F, --fixed-strings
+</code></pre>
+
+<p>将模式解析为固定字符串集合（强制grep为fgrep）</p>
+
+<pre><code>-f file, --file=file
+</code></pre>
+
+<p>从file文件中读取匹配用的模式串</p>
+
+<pre><code>-G, --basic-regexp
+</code></pre>
+
+<p>按照基本正则表达式解析模式串（强制grep工作模式为传统grep）</p>
+
+<pre><code>-H
+</code></pre>
+
+<p>在匹配文本行前头打印所属文件名</p>
+
+<pre><code>-h, --no-filename
+</code></pre>
+
+<p>在匹配文本行前头不打印文件名</p>
+
+<pre><code>--help
+</code></pre>
+
+<p>打印简要帮助信息</p>
+
+<pre><code>-I
+</code></pre>
+
+<p>忽略二进制文件</p>
+
+<pre><code>-i, --ignore-case
+</code></pre>
+
+<p>进行大小无关匹配，grep默认是大小相关</p>
+
+<pre><code>--include
+</code></pre>
+
+<p>指定符合文件名模式的文件进行模式匹配</p>
+
+<pre><code>--include-dir
+</code></pre>
+
+<p>如果指定-R参数，只有符合模式的目录才进行模式匹配</p>
+
+<pre><code>-J, --bz2decompress
+</code></pre>
+
+<p>进行文本匹配之前，解压bzip压缩过的文件</p>
+
+<pre><code>-L, --files-without-match
+</code></pre>
+
+<p>只打印不包含指定模式文本行文件的文件名</p>
+
+<pre><code>-l, --files-with-matches
+</code></pre>
+
+<p>只打印包含指定模式文本行文件的文件名，不打印文本行</p>
+
+<pre><code>--mmap
+</code></pre>
+
+<p>使用mmap代替read来读取输入，在某些环境下能够达到更高性能，也可能引起为定义行为</p>
+
+<pre><code>-m num, --max-count=num
+</code></pre>
+
+<p>达到<code>num</code>处匹配后，停止继续读取输入</p>
+
+<pre><code>-n, --line-number
+</code></pre>
+
+<p>输出结果时，每行前面打印匹配行在文件中的行数。</p>
+
+<pre><code>--null
+</code></pre>
+
+<p>打印文件名时，后面跟零字节</p>
+
+<pre><code>-O
+</code></pre>
+
+<p>8888</p>
+
+<pre><code>-o, --only-matching
+</code></pre>
+
+<p>只打印每行中匹配的部分</p>
+
+<pre><code>-p
+</code></pre>
+
+<p>如果指定<code>-R</code>选项，不跟随符号链接，这个是默认选项</p>
+
+<pre><code>-q, --quiet, --silent
+</code></pre>
+
+<p>安静模式：压制正常输出。grep程序只是搜索文件，直到达到一个匹配，使grep命令更少的花销。</p>
+
+<pre><code>-R, -r, --recursive
+</code></pre>
+
+<p>循环搜索子文件夹</p>
+
+<pre><code>-S
+</code></pre>
+
+<p>如果指定<code>-R</code>参数，所有符号连接也会参与匹配，默认不匹配符号连接</p>
+
+<pre><code>-s, --no-messages
+</code></pre>
+
+<p>安静模式。不存在或者不可达的文件将被忽略</p>
+
+<pre><code>-U, --binary
+</code></pre>
+
+<p>搜索二进制文件，但是不尝试打印他们</p>
+
+<pre><code>-V, --version
+</code></pre>
+
+<p>打印版本信息</p>
+
+<pre><code>-v, --invert-match
+</code></pre>
+
+<p>搜索不匹配给定模式的行文本</p>
+
+<pre><code>-w, --word-regexp
+</code></pre>
+
+<p>表达式被当做是一个单词来进行匹配（形如被<code>[[:&lt;:]]</code>和<code>[[:&gt;:]]</code>包裹）</p>
+
+<pre><code>-x, --line-regexp
+</code></pre>
+
+<p>只有一整行匹配给定模式才算成功匹配行</p>
+
+<pre><code>-Z, -z, --decompress
+</code></pre>
+
+<p>强制grep像zgrep</p>
+
+<pre><code>--binary-files=value
+</code></pre>
+
+<p>控制搜索和打印二进制文件。选项<code>binary</code>，默认选项，搜索但是不打印；<code>without-match</code>:不搜索二进制文件；<code>text</code>：将二进制文件视为文本文件</p>
+
+<pre><code>--context[=num]
+</code></pre>
+
+<p>打印匹配行前后文本，默认是2行</p>
+
+<pre><code>--line-buffered
+</code></pre>
+
+<p>强制输出行缓存。</p>
+
+<h2>例子</h2>
+
+<p>搜索一个文件中的单词</p>
+
+<pre><code>grep 'patricia' myfile
+</code></pre>
+
+<p>所有行首包含<code>.Pp</code>的行</p>
+
+<pre><code>grep '^\.Pp' myfile
+</code></pre>
+
+<p>搜索不包含<code>foo</code>和<code>bar</code>的所有行</p>
+
+<pre><code>grep -v -e 'foo' -e 'bar' myfile
+</code></pre>
+
+<p>扩展正则表达式</p>
+
+<pre><code>egrep '19|20|25' calendar
+</code></pre>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-10-05T20:48:14+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:48 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/devops/'>devops</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/03/06/mapreduce-wordcountshi-li/" title="Previous Post: MapReduce WordCount实例">&laquo; MapReduce WordCount实例</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/10/05/grepming-ling/">Grep命令</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/03/06/mapreduce-wordcountshi-li/">MapReduce WordCount实例</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao/">Hdfs文件系统java Api介绍</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/">Hiredis C语言Redis客户端库使用</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Crontab任务设置及路径、动态库、产生多个进程问题解决</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (5)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 133%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 133%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

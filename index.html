@@ -9,7 +9,9 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="搭建开发环境，开发mapreduce job程序，部署mapreduce程序。 开发环境搭建 开发mapreduce程序的环境有可能与运行环境不同，我是Windows环境上开发mapreduce job程序，编译没有错误后，打包放到hadoop集群中调试和运行。这样就要求开发环境依赖的jar包， &hellip;">
+  <meta name="description" content="grep命令 grep, egrep, fgrep, zgrep, zegrep, zfgrep 文件模式搜索 1
+2
+grep [-abcdDEFGHhIiJLlmnOopqRSsUVvwxZ] [-A num] [-B num] [-C[num]] [-e pattern] [-f file &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +69,52 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/10/05/grepming-ling/">Grep命令</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-10-05T20:48:14+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:48 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>grep命令</h1>
+
+<p>grep, egrep, fgrep, zgrep, zegrep, zfgrep 文件模式搜索</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>grep [-abcdDEFGHhIiJLlmnOopqRSsUVvwxZ] [-A num] [-B num] [-C[num]] [-e pattern] [-f file] [--binary-files=value] [--color[=when]]
+</span><span class='line'>          [--colour[=when]] [--context[=num]] [--label] [--line-buffered] [--null] [pattern] [file ...]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>grep搜索输入文件，输出匹配一个或者多个模式的文件行。通常情况，不包括结尾换行符的文件行匹配指定模式中的表达式即为匹配成功。空表达式匹配所有行。匹配行将会打印到标准输出。<br/>
+grep命令用于简单模式和基本正则表达式（BRES）；egrep命令可以处理扩展正则表达式。查看re_format(7）关于正则表达式的详细信息。fgre较grep和egrep更快，但是只能处理固定模式（比如，它不能解析正则表达式）。匹配模式可以由一行或者多行组成，以便于匹配输入内容的一部分。<br/>
+zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以接收由compress或者gzip压缩工具压缩过的文件作为输入。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/10/05/grepming-ling/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -672,53 +720,6 @@ MacBook-Pro:plugins jintao$
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/05/28/pythonjie-xi-json/">Python解析json</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-05-28T15:21:55+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:21 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h1>JSON简介</h1>
-
-<p>JSON(JavaScript Object Notation)是一个轻量级的数据交换格式。方便人类读写。方便机器解析和产生。它基于<a href="http://javascript.crockford.com/">JavaScript Programming Language</a>的子集，<a href="http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf">Standard ECMA-262 3rd Edition - December 1999.</a>。JSON使用完全独立于各种语言的文本格式，但是也使用了类似C语言家族的习惯，包括C,C++,C#,Java,JavaScript,Perl,Python以及其他语言。这些特性使得JSON成为理想的数据交换语言。</p>
-
-<p>JSON基于两种结构：</p>
-
-<ul>
-<li>一个name/value对集合。在各种语言中，这种集合被认为是一个对象，记录，结构体，字典，哈希表，有键列表，或者关联数组</li>
-<li>一个有序列表。在大多数语言中，这种列表被认为是一个数组，向量，列表，或者序列。</li>
-</ul>
-
-
-<p>这些都是常见的数据结构。事实上大部分现代计算机语言都以某种形式支持它们。这使得一种数据格式在同样基于这些结构的编程语言之间交换成为可能。
-关于JSON格式中各个基本类型和数据结构的详细描述，可以参考<a href="http://www.json.org/">json</a></p>
-
-<p>  </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/05/28/pythonjie-xi-json/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -732,6 +733,10 @@ MacBook-Pro:plugins jintao$
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/10/05/grepming-ling/">Grep命令</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/03/06/mapreduce-wordcountshi-li/">MapReduce WordCount实例</a>
@@ -749,24 +754,17 @@ MacBook-Pro:plugins jintao$
         <a href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Crontab任务设置及路径、动态库、产生多个进程问题解决</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Hadoop环境搭建</a>
-      </li>
-    
   </ul>
 </section>
 <section>
  <h1>Categories</h1>
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
-<li class='category'><a href='/blog/categories/bigdata/'>bigdata (2)</a></li>
-<li class='category'><a href='/blog/categories/centos-slash-ubuntu/'>centos/ubuntu (1)</a></li>
-<li class='category'><a href='/blog/categories/cloudcomputing/'>cloudcomputing (1)</a></li>
-<li class='category'><a href='/blog/categories/linux/'>linux (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (5)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/python/'>python (2)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
  </ul>
@@ -775,9 +773,10 @@ MacBook-Pro:plugins jintao$
 <h1>Tags</h1>
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
 <a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
-<a style="font-size: 133%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
 <a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
 <a style="font-size: 210%" href="/blog/tags/network/">Network</a>
 <a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
