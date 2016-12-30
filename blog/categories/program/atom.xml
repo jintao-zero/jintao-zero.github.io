@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Program | jintao's blog]]></title>
+  <link href="http://jintao-zero.github.io/blog/categories/program/atom.xml" rel="self"/>
+  <link href="http://jintao-zero.github.io/"/>
+  <updated>2016-12-30T17:26:08+08:00</updated>
+  <id>http://jintao-zero.github.io/</id>
+  <author>
+    <name><![CDATA[jintao]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Golang日期转化处理]]></title>
+    <link href="http://jintao-zero.github.io/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li/"/>
+    <updated>2016-10-30T22:13:12+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li</id>
+    <content type="html"><![CDATA[<p>golang中time包提供了时间操作函数。</p>
+
+<h2>获取时间</h2>
+
+<pre><code>type Time struct {
+    // contains filtered or unexported fields
+}
+
+func Date(year int, month Month, day, hour, min, sec, nsec int, loc *Location) Time
+func Now() Time
+</code></pre>
+
+<p>一个Time结构体代表一个纳米精度的时间实例。now函数可以获取当前时间：</p>
+
+<pre><code>now := time.Now()
+fmt.Println(now)
+</code></pre>
+
+<p>结果如下：</p>
+
+<pre><code>2016-11-27 22:46:17.666418725 +0800 CST 
+</code></pre>
+
+<!-- more -->
+
+
+<h2>格式化时间</h2>
+
+<pre><code>func (t Time) Format(layout string) string
+</code></pre>
+
+<p>Format方法可以按照layout定义的格式格式化时间字符串。<br/>
+Golang中以2006 01 02 03 04 05 分别定义年、月、日 时、分、秒字段，03的24表示法为15。<br/>
+比如将当前时间格式化为YYYY-mm-dd hh:MM:ss，则layout为<code>2006-01-02 15:04:05</code></p>
+
+<pre><code>now := time.Now()
+fmt.Println(now.Format("2006-01-02 15:04:05"))
+</code></pre>
+
+<p> 输出为：</p>
+
+<pre><code>2016-11-27 22:56:40
+</code></pre>
+
+<p>控制精度的方法为在秒后面加0, 000、000000、000000000分别代表毫秒、微秒、纳秒：</p>
+
+<pre><code>now := time.Now()
+fmt.Println(now.Format("2006-01-02 15:04:05"))
+fmt.Println(now.Format("2006-01-02 15:04:05.000"))
+fmt.Println(now.Format("2006-01-02 15:04:05.000000"))
+fmt.Println(now.Format("2006-01-02 15:04:05.000000000"))
+</code></pre>
+
+<p>输出：</p>
+
+<pre><code>now := time.Now()
+fmt.Println(now.Format("2006-01-02 15:04:05"))
+fmt.Println(now.Format("2006-01-02 15:04:05.000"))
+fmt.Println(now.Format("2006-01-02 15:04:05.000000"))
+fmt.Println(now.Format("2006-01-02 15:04:05.000000000"))
+</code></pre>
+
+<h2>解析时间</h2>
+
+<pre><code>func Parse(layout, value string) (Time, error)
+func ParseInLocation(layout, value string, loc *Location) (Time, error)
+</code></pre>
+
+<p>Parse函数将格式化字符串解析为一个时间实例。<code>layout</code>定义了时间字符串的表现格式，比如：</p>
+
+<pre><code>Mon Jan 2 15:04:05 -0700 MST 2006
+</code></pre>
+
+<p>当待解析时间字符串中没有时区时，<code>Parse</code>默认按照<code>UTC</code>时区解析时间。<code>ParseInLocation</code>按照loc参数指定的的location解析时间。</p>
+
+<h2>定时器</h2>
+
+<p>定时器通过<code>NewTimer</code>或者<code>AfterFunc</code>创建，用AfterFunc创建的定时器超时后，在定时器goroutine中调用func函数，其他定时器则通过C通道发送一个时间对象。</p>
+
+<pre><code>type Timer struct {
+    C &lt;-chan Time
+    // contains filtered or unexported fields
+}
+
+func AfterFunc(d Duration, f func()) *Timer  
+func NewTimer(d Duration) *Timer
+</code></pre>
+
+<p>定时器在使用过程中需要注意<code>Reset</code>和<code>Stop</code>方法的使用：</p>
+
+<pre><code>func (t *Timer) Stop() bool
+</code></pre>
+
+<p>Stop方法用来停止定时器触发。停止定时器则返回true，如果定时器已经超时或者已经被停止则返回false。Stop方法不关闭定时器中的channel。<br/>
+为了防止调用Stop方法后，定时器仍然触发，需要检查方法返回值并且读取定时器时间channel，代码片段：</p>
+
+<pre><code>if !t.Stop() {
+    &lt;-t.C
+}
+
+func (t *Timer) Reset(d Duration) bool
+</code></pre>
+
+<p><strong>需要特别注意的是，不要并发执行上面的代码。</strong></p>
+
+<p>Reset修改定时器的超时时间为d。修改成功则返回true，如果定时器已经超时或者被停止则返回false。</p>
+
+<pre><code>func (t *Timer) Reset(d Duration) bool
+</code></pre>
+
+<p>为了重复一个已经激活的定时器，需要先调用定时器<code>Stop</code>方法，如果定时器已经超时，则例如一下代码片段，先读取channel中的时间：</p>
+
+<pre><code>if !t.Stop() {
+    &lt;-t.C
+}
+t.Reset(d)
+</code></pre>
+
+<p><strong>需要特别注意的是，不要并发执行上面的代码。</strong>  <br/>
+在读取通道和定时器超时之间存在竞态条件，所以几乎不可能正确使用Reset方法的返回值。Reset方法应该总是与Stop方法一起使用。</p>
+]]></content>
+  </entry>
+  
+</feed>
