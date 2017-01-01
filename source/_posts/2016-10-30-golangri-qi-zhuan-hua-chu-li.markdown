@@ -4,7 +4,7 @@ title: "Golang日期转化处理"
 date: 2016-10-30 22:13:12 +0800
 comments: true
 categories: program
-tags: Golang
+tags: golang
 ---
 
 golang中time包提供了时间操作函数。  
