@@ -9,8 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="golang中time包提供了时间操作函数。 获取时间 type Time struct { // contains filtered or unexported fields
-} func Date(year int, month Month, day, hour, min, sec, nsec &hellip;">
+  <meta name="description" content="本文根据Profiling Go Programs文章，进行演示如何利用Golang性能工具进行cpu性能统计和优化。 准备工作 1、Golang编译运行环境。 go version go1.7 darwin/amd64 2、下载测试源码 -rw-r--r-- 1 jintao staff &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +67,90 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Golang Cpu性能优化</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-01T17:18:20+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2017</span></span> <span class='time'>5:18 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>本文根据<a href="https://blog.golang.org/profiling-go-programs">Profiling Go Programs</a>文章，进行演示如何利用Golang性能工具进行cpu性能统计和优化。</p>
+
+<h2>准备工作</h2>
+
+<p>1、Golang编译运行环境。</p>
+
+<pre><code>go version go1.7 darwin/amd64
+</code></pre>
+
+<p>2、下载<a href="https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/benchgraffiti/source-archive.zip">测试源码</a></p>
+
+<pre><code>-rw-r--r-- 1 jintao staff 16594  1  1 16:58 havlak1.go
+-rw-r--r-- 1 jintao staff 16597  1  1 16:58 havlak2.go
+-rw-r--r-- 1 jintao staff 16832  1  1 16:58 havlak3.go
+-rw-r--r-- 1 jintao staff 16905  1  1 16:58 havlak4.go
+-rw-r--r-- 1 jintao staff 17501  1  1 16:58 havlak5.go
+-rw-r--r-- 1 jintao staff  9467  1  1 16:58 havlak6.go
+</code></pre>
+
+<p>havlak1-6是源文件，以及优化后的源文件</p>
+
+<h2>采集CPU性能数据</h2>
+
+<p>优化程序之前，需要采集性能数据。多种方法可以使用，本文中采用的方法是引入<code>runtime/pprof</code>包，在代码文件main函数中添加如下代码片段:</p>
+
+<pre><code>var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
+func main() {
+    flag.Parse()
+    if *cpuprofile != "" {
+        f, err := os.Create(*cpuprofile)
+        if err != nil {
+          log.Fatal(err)
+        }
+        pprof.StartCPUProfile(f)
+        defer pprof.StopCPUProfile()
+    }
+    ... 
+</code></pre>
+
+<p>利用flag包设置并解析cpuprofile参数，传入文件名，创建文件，调用<code>ppfof.StartCPUProfile</code>方法开始进行采样，并将采样结果保存在文件中，在程序返回之前调用<code>pprof.StopCPUProfile</code>方法确保所有采样数据刷新到结果文件中。</p>
+
+<pre><code>MacBook-Pro-2:havlak_new jintao$ time ./havlak1 -cpuprofile=havlak1.prof
+# of loops: 76000 (including 1 artificial root node)
+
+real    0m21.768s
+user    0m31.026s
+sys 0m0.284s
+</code></pre>
+
+<p>产生性能文件havlak1.prof</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -641,67 +724,6 @@ netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和N
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">使用FIFO命名管道进行进程间通讯</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-06-14T15:56:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:56 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>管道是进程间通讯的一种方式。使用<code>pipe</code>，<code>popen</code>，<code>pclose</code>，等接口我们可以使用管道来进行进程间通讯。但是这一种管道只能由相关进程使用，这些相关进程的共同祖先进程创建了管道。通过FIFO，也称为命名管道，不相关的进程也可以进行通讯。</p>
-
-<h1>创建命名管道</h1>
-
-<p>调用mkfifo接口创建命名管道：</p>
-
-<pre><code>#include &lt;sys/types.h&gt;
-#include &lt;sys/stat.h&gt;
-int mkfifo(const char *path, mode_t mode);
-</code></pre>
-
-<p>创建FIFO类似于创建文件。FIFO的路径名存在于文件系统中。FIFO是一种文件类型。stat结构成员st_mode的编码指明文件是否是FIFO类型。可以用S_ISFIFO宏对此进行测试。 mkfifo函数创建一个路径名为path的fifo。mode和umask掩码规定了命名管道的访问权限。<br/>
-参数：<br/>
-path是管道在文件系统中的存在路径。<br/>
-mode于open函数中定义的mode一样。</p>
-
-<p>返回值：<br/>
-成功返回0。失败返回-1，同时设置errno错误码。</p>
-
-<p>错误原因：</p>
-
-<ul>
-<li>ENOTSUP       系统内核不支持fifo</li>
-<li>ENOTDIR       path前缀不是合法目录</li>
-<li>ENAMETOOLONG  path路径太长</li>
-<li>EACCESS       用户对于path中的目录没有权限访问</li>
-<li>EROFS         path指定的目录在只读文件系统</li>
-<li><p>EEXIST        path指定文件已经存在</p>
-
-<p>  </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -715,6 +737,10 @@ mode于open函数中定义的mode一样。</p>
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Golang Cpu性能优化</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li/">Golang日期转化处理</a>
@@ -732,10 +758,6 @@ mode于open函数中定义的mode一样。</p>
         <a href="/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao/">Hdfs文件系统java Api介绍</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/">Hiredis C语言Redis客户端库使用</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -747,7 +769,7 @@ mode于open函数中定义的mode一样。</p>
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/program/'>program (3)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (4)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
  </ul>
@@ -767,6 +789,7 @@ mode于open函数中定义的mode一样。</p>
 <a style="font-size: 133%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
 <a style="font-size: 133%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 
 </ul>
@@ -778,7 +801,7 @@ mode于open函数中定义的mode一样。</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2016 - jintao -
+  Copyright &copy; 2017 - jintao -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2017/01/01/golang-cpuxing-neng-you-hua/</loc>
+    
+    <lastmod>2017-01-01T17:18:20+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li/</loc>
     
     <lastmod>2016-10-30T22:13:12+08:00</lastmod>
@@ -181,14 +189,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2016-12-30T17:31:50+08:00</lastmod>
+    <lastmod>2017-01-01T22:58:49+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2016-12-30T17:31:50+08:00</lastmod>
+    <lastmod>2017-01-01T22:58:49+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
