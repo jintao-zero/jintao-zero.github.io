@@ -5,13 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Tcp server使用select进行I/O复用 - jintao&#8217;s blog</title>
+  <title>golang创建、解压.tar.gz文件简单库 - jintao&#8217;s blog</title>
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="在tcp服务端示例中，接受一个客户端连接，调用accept函数返回后就对本客户端连接进行业务处理，如果业务逻辑比较复杂，那么服务端有可能就阻塞在某个客户端上，而不能处理其他客户端连接，解决此问题有多种模型可以采用：
-1）多进程，为每个客户端连接创建一个子进程进行处理
-2）多线程， &hellip;">
+  <meta name="description" content="golang提供了tar包和compress/gzip包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。 tar打包功能 利用tar中Writer和Reader可以实现将文件和文件夹进行打包的功能。 打包 创建目标文件 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -20,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong">
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
@@ -72,7 +70,7 @@
   
   <header>
     
-      <h1 class="entry-title">Tcp server使用select进行I/O复用</h1>
+      <h1 class="entry-title">golang创建、解压.tar.gz文件简单库</h1>
     
     
       <p class="meta">
@@ -81,83 +79,207 @@
 
 
 
-<time class='entry-date' datetime='2015-04-12T15:30:03+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:30 pm</span></time>
+<time class='entry-date' datetime='2017-01-05T19:17:06+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>在<a href="http://jintao-zero.github.io/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">tcp服务端示例</a>中，接受一个客户端连接，调用accept函数返回后就对本客户端连接进行业务处理，如果业务逻辑比较复杂，那么服务端有可能就阻塞在某个客户端上，而不能处理其他客户端连接，解决此问题有多种模型可以采用：<br/>
-1）多进程，为每个客户端连接创建一个子进程进行处理<br/>
-2）多线程，多个线程并行处理客户端连接<br/>
-3）I/O多路复用，服务器采用单线程模型，使用I/O多路复用模型，并行处理多个客户端文件描述符<br/>
-在上一篇示例<a href="http://jintao-zero.github.io/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">tcp client 使用select进行I/O复用</a>中介绍的select函数同样适用与对tcp server端的I/O多路复用改造，改造主要设计几下几个方面：</p>
+<div class="entry-content"><p>golang提供了<code>tar</code>包和<code>compress/gzip</code>包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。</p>
 
-<!-- more -->
+<h2>tar打包功能</h2>
 
+<p>利用tar中<code>Writer</code>和<code>Reader</code>可以实现将文件和文件夹进行打包的功能。</p>
 
-<p>1）将server监听套接字添加到readfds套接字集合中，监听套接字可读时，调用accept接受一个新的客户端连接，并将添加到readfds套接字集合中</p>
+<h3>打包</h3>
 
-<pre><code>if (FD_ISSET(sock_server, &amp;rfds)) {
-    struct sockaddr_in clientaddr;
-    socklen_t clientaddr_len = sizeof(clientaddr);
-    int clientsock = accept(sock_server, (struct sockaddr *)&amp;clientaddr, &amp;clientaddr_len);
-    if (clientsock &lt; 0) {
-        printf("accept fail. reason:%s\n", strerror(errno));
-        continue;
-    } else {
-        printf("new client connected, %s:%d \n", inet_ntoa(clientaddr.sin_addr), clientaddr.sin_port);
-        int i;
-        for (i = 0; i &lt; FD_SETSIZE; i++) {
-            if (clientfds[i] == -1) {
-                clientfds[i] = clientsock;
-                break;
-            }
-        }
-        if (i == FD_SETSIZE) {
-            printf("too many clients, ignore this one\n");
-            continue;
-        }
-        FD_SET(clientfds[i], &amp;allfds);
-        if (clientfds[i] &gt; maxfd)
-            maxfd = clientfds[i];
-    }
-}  
+<p>创建目标文件</p>
+
+<pre><code>f, err := os.Create(dstPath)
 </code></pre>
 
-<p>2）当每个客户端套接字可读时，对套接字调用read操作后，继续执行select判断是否有套接字可读，而不是处理一个客户端连接直到完成。</p>
+<p>创建<code>Writer</code></p>
 
-<pre><code>for (int i = 0; i &lt; FD_SETSIZE; i++) {
-    if (readyfds == 0)
-        break;
-    if (clientfds[i] &lt; 0)
-        continue;
-    if (FD_ISSET(clientfds[i], &amp;rfds)) {
-        readyfds--;
-        char buf[LINE_MAX];
-        ssize_t rcv_len;
-        rcv_len = recv(clientfds[i], buf, sizeof(buf), 0);
-        if (rcv_len &gt; 0) {
-            buf[rcv_len] = '\0';
-            printf("recv from client(%d), msg: %s\n", clientfds[i], buf);
-            for (int i = 0; i &lt; rcv_len; i++)
-                buf[i] = toupper(buf[i]);
-                send(clientfds[i], buf, rcv_len, 0);
-                printf("send to client:%s", buf);
-            } else if (rcv_len == 0) {
-                printf("recv_len == 0 from client:%d\n", clientfds[i]);
-                FD_CLR(clientfds[i], &amp;allfds);
-                close(clientfds[i]);
-                clientfds[i] = -1;
-            } else {
-                printf("recv from clientfd(%d) fail. reason:%s\n", clientfds[i], strerror(errno));
-                continue;
-            }
+<pre><code>tw := tar.NewWriter(f)
+</code></pre>
+
+<p>循环遍历文件夹，写入Writer</p>
+
+<pre><code>fileInfo, err := os.Stat(path)
+if err != nil {
+    return err
+}
+if fileInfo.Mode().IsRegular() {
+    header, err := tar.FileInfoHeader(fileInfo, "")
+    if err != nil {
+        return err
+    }
+    header.Name = path
+    if err = tw.WriteHeader(header); err != nil {
+        return err
+    }
+    file, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    if _, err = io.Copy(tw, file); err != nil {
+        return err
+    }
+}
+
+if fileInfo.Mode().IsDir() {
+    // tar each file and dir in the dir
+    var file *os.File
+    if file, err = os.Open(path); err != nil {
+        return err
+    }
+    fileInfos, err := file.Readdir(0)
+    if err != nil {
+        return err
+    }
+    for _, info := range fileInfos {
+        if err = tarPath(filepath.Join(path, info.Name()), tw); err != nil {
+            return err
         }
     }
 }
 </code></pre>
+
+<!-- more -->
+
+
+<h3>解包</h3>
+
+<p>打开源文件</p>
+
+<pre><code>tarFile, err := os.Open(srcPath)
+</code></pre>
+
+<p>创建Reader</p>
+
+<pre><code>tr := tar.NewReader(tarFile)
+</code></pre>
+
+<p>循环遍历解压文件</p>
+
+<pre><code>for {
+    hdr, err := tr.Next()
+    if err == io.EOF {
+        break
+    }
+    fullPath := filepath.Join(dstPath, hdr.Name)
+    os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
+    log.Println("fullPath", fullPath)
+    file, err := os.Create(fullPath)
+    if err != nil {
+        return err
+    }
+    if _, err := io.Copy(file, tr); err != nil {
+        return err
+    }
+    file.Close()
+}
+</code></pre>
+
+<h2>Gzip压缩功能</h2>
+
+<h3>压缩</h3>
+
+<p>创建目标文件</p>
+
+<pre><code>dstFile, err := os.Create(dstPath)
+</code></pre>
+
+<p>创建Writer</p>
+
+<pre><code>gw := gzip.NewWriter(dstFile)
+</code></pre>
+
+<p>将源内容写入Writer</p>
+
+<pre><code>if _, err = io.Copy(gw, srcFile); err != nil {
+    return err
+}
+</code></pre>
+
+<h3>解压</h3>
+
+<p>打开源文件</p>
+
+<pre><code>srcFile, err := os.Open(srcPath)
+</code></pre>
+
+<p>创建Reader</p>
+
+<pre><code>gr, err := gzip.NewReader(srcFile)
+</code></pre>
+
+<p>进行解压</p>
+
+<pre><code>if _, err = io.Copy(dstFile, gr); err != nil {
+    return err
+}
+</code></pre>
+
+<h2>.tar.gz文件</h2>
+
+<p>将上面tar包进行打包和解包湿的的<code>io.Writer</code>和 <code>io.Reader</code>实参传入<code>gzip.Writer</code>和<code>gzip.Reader</code> ，即可将打包的目的文件进行压缩和解包时的源文件进行解压</p>
+
+<h3>打包压缩</h3>
+
+<pre><code>func Targz(srcPath, dstPath string) error {
+dstFile, err := os.Create(dstPath)
+if err != nil {
+    return err
+}
+defer dstFile.Close()
+gw := gzip.NewWriter(dstFile)
+defer gw.Close()
+tw := tar.NewWriter(gw)
+defer tw.Close()
+if err = tarPath(srcPath, tw); err != nil {
+    dstFile.Close()
+    os.Remove(dstPath)
+    return err
+}
+return nil
+</code></pre>
+
+<p>}</p>
+
+<h3>解压解包</h3>
+
+<pre><code>srcFile, err := os.Open(srcPath)
+if err != nil {
+    return err
+}
+gr, err := gzip.NewReader(srcFile)
+if err != nil {
+    return err
+}
+tr := tar.NewReader(gr)
+for {
+    hdr, err := tr.Next()
+    if err == io.EOF {
+        break
+    }
+    fullPath := filepath.Join(dstPath, hdr.Name)
+    os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
+    file, err := os.Create(fullPath)
+    if err != nil {
+        return err
+    }
+    if _, err := io.Copy(file, tr); err != nil {
+        return err
+    }
+    file.Close()
+}
+</code></pre>
+
+<h3>备注</h3>
+
+<p>完整源代码请参考<a href="https://github.com/jintao-zero/targz">targz</a></p>
 </div>
 
 
@@ -173,12 +295,12 @@
 
 
 
-<time class='entry-date' datetime='2015-04-12T15:30:03+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:30 pm</span></time>
+<time class='entry-date' datetime='2017-01-05T19:17:06+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/network/'>network</a>
+    <a class='category' href='/blog/categories/program/'>program</a>
   
 </span>
 
@@ -218,10 +340,8 @@ var jiathis_config = {data_track_clickback:'true'};
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/" title="Previous Post: tcp client 使用select进行I/O复用">&laquo; tcp client 使用select进行I/O复用</a>
+        <a class="basic-alignment left" href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/" title="Previous Post: golang cpu性能优化">&laquo; golang cpu性能优化</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/" title="Next Post: tcp server使用kevent进行io复用">tcp server使用kevent进行io复用 &raquo;</a>
       
     </p>
   </footer>

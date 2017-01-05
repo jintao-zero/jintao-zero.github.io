@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Program | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/categories/program/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-01-01T23:04:46+08:00</updated>
+  <updated>2017-01-05T19:48:26+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,208 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[golang创建、解压.tar.gz文件简单库]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/"/>
+    <updated>2017-01-05T19:17:06+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian</id>
+    <content type="html"><![CDATA[<p>golang提供了<code>tar</code>包和<code>compress/gzip</code>包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。</p>
+
+<h2>tar打包功能</h2>
+
+<p>利用tar中<code>Writer</code>和<code>Reader</code>可以实现将文件和文件夹进行打包的功能。</p>
+
+<h3>打包</h3>
+
+<p>创建目标文件</p>
+
+<pre><code>f, err := os.Create(dstPath)
+</code></pre>
+
+<p>创建<code>Writer</code></p>
+
+<pre><code>tw := tar.NewWriter(f)
+</code></pre>
+
+<p>循环遍历文件夹，写入Writer</p>
+
+<pre><code>fileInfo, err := os.Stat(path)
+if err != nil {
+    return err
+}
+if fileInfo.Mode().IsRegular() {
+    header, err := tar.FileInfoHeader(fileInfo, "")
+    if err != nil {
+        return err
+    }
+    header.Name = path
+    if err = tw.WriteHeader(header); err != nil {
+        return err
+    }
+    file, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    if _, err = io.Copy(tw, file); err != nil {
+        return err
+    }
+}
+
+if fileInfo.Mode().IsDir() {
+    // tar each file and dir in the dir
+    var file *os.File
+    if file, err = os.Open(path); err != nil {
+        return err
+    }
+    fileInfos, err := file.Readdir(0)
+    if err != nil {
+        return err
+    }
+    for _, info := range fileInfos {
+        if err = tarPath(filepath.Join(path, info.Name()), tw); err != nil {
+            return err
+        }
+    }
+}
+</code></pre>
+
+<!-- more -->
+
+
+<h3>解包</h3>
+
+<p>打开源文件</p>
+
+<pre><code>tarFile, err := os.Open(srcPath)
+</code></pre>
+
+<p>创建Reader</p>
+
+<pre><code>tr := tar.NewReader(tarFile)
+</code></pre>
+
+<p>循环遍历解压文件</p>
+
+<pre><code>for {
+    hdr, err := tr.Next()
+    if err == io.EOF {
+        break
+    }
+    fullPath := filepath.Join(dstPath, hdr.Name)
+    os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
+    log.Println("fullPath", fullPath)
+    file, err := os.Create(fullPath)
+    if err != nil {
+        return err
+    }
+    if _, err := io.Copy(file, tr); err != nil {
+        return err
+    }
+    file.Close()
+}
+</code></pre>
+
+<h2>Gzip压缩功能</h2>
+
+<h3>压缩</h3>
+
+<p>创建目标文件</p>
+
+<pre><code>dstFile, err := os.Create(dstPath)
+</code></pre>
+
+<p>创建Writer</p>
+
+<pre><code>gw := gzip.NewWriter(dstFile)
+</code></pre>
+
+<p>将源内容写入Writer</p>
+
+<pre><code>if _, err = io.Copy(gw, srcFile); err != nil {
+    return err
+}
+</code></pre>
+
+<h3>解压</h3>
+
+<p>打开源文件</p>
+
+<pre><code>srcFile, err := os.Open(srcPath)
+</code></pre>
+
+<p>创建Reader</p>
+
+<pre><code>gr, err := gzip.NewReader(srcFile)
+</code></pre>
+
+<p>进行解压</p>
+
+<pre><code>if _, err = io.Copy(dstFile, gr); err != nil {
+    return err
+}
+</code></pre>
+
+<h2>.tar.gz文件</h2>
+
+<p>将上面tar包进行打包和解包湿的的<code>io.Writer</code>和 <code>io.Reader</code>实参传入<code>gzip.Writer</code>和<code>gzip.Reader</code> ，即可将打包的目的文件进行压缩和解包时的源文件进行解压</p>
+
+<h3>打包压缩</h3>
+
+<pre><code>func Targz(srcPath, dstPath string) error {
+dstFile, err := os.Create(dstPath)
+if err != nil {
+    return err
+}
+defer dstFile.Close()
+gw := gzip.NewWriter(dstFile)
+defer gw.Close()
+tw := tar.NewWriter(gw)
+defer tw.Close()
+if err = tarPath(srcPath, tw); err != nil {
+    dstFile.Close()
+    os.Remove(dstPath)
+    return err
+}
+return nil
+</code></pre>
+
+<p>}</p>
+
+<h3>解压解包</h3>
+
+<pre><code>srcFile, err := os.Open(srcPath)
+if err != nil {
+    return err
+}
+gr, err := gzip.NewReader(srcFile)
+if err != nil {
+    return err
+}
+tr := tar.NewReader(gr)
+for {
+    hdr, err := tr.Next()
+    if err == io.EOF {
+        break
+    }
+    fullPath := filepath.Join(dstPath, hdr.Name)
+    os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
+    file, err := os.Create(fullPath)
+    if err != nil {
+        return err
+    }
+    if _, err := io.Copy(file, tr); err != nil {
+        return err
+    }
+    file.Close()
+}
+</code></pre>
+
+<h3>备注</h3>
+
+<p>完整源代码请参考<a href="https://github.com/jintao-zero/targz">targz</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Golang Cpu性能优化]]></title>
