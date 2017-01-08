@@ -9,7 +9,9 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="项目需要将某个进程发出的报文截获，待用户态业务处理后再将报文送回系统协议栈中处理。调研后，采用iptables添加防火墙规则截获报文传递到用户态队列，用户态进程使用libnetfilter_queue库接受报文，待业务处理后，将报文送回系统协议栈这样的方案完成。下面介绍下，学习的几个知识点： &hellip;">
+  <meta name="description" content="本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。 冒泡排序 冒泡排序算法（百度百科）的运作如下：（从后往前）
+1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。
+2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +69,64 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">冒泡、选择、插入、归并、快速、堆排序</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-08-02T20:40:24+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>8:40 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。</p>
+
+<h1>冒泡排序</h1>
+
+<p><a href="http://baike.baidu.com/view/254413.htm#ref_[1]_254413">冒泡排序算法</a>（百度百科）的运作如下：（从后往前）<br/>
+1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。<br/>
+2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。在这一点，最后的元素应该会是最大的数。<br/>
+3. 针对所有的元素重复以上的步骤，除了最后一个。<br/>
+4. 持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较。</p>
+
+<p>代码实现</p>
+
+<pre><code>void BubbleSort(int array[], int len)    
+{  
+    for (int i = 0; i &lt; len-1; i++) {
+        for (int j = 0; j &lt; len-i-1; j++) {
+            if (array[j+1] &lt; array[j]) {
+                int tmp = array[j+1];
+                array[j+1] = array[j];
+                array[j] = tmp;
+            }
+        }
+    }
+}
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -652,85 +712,6 @@ for ( ; ; ) {
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">Tcp 服务端例子</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-02-13T11:04:43+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:04 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>实现了一个简单服务端，使用tcp与客户端进行通讯。本片文章主要介绍在tcp服务端网络编程中用到的几个基本函数：<br/>
-1、创建套接字socket函数</p>
-
-<pre><code>int socket(int domain, int type, int protocol)
-</code></pre>
-
-<p>socket函数创建一个通讯端并返回这个终端的文件描述符。</p>
-
-<p>参数domain指定发生整个通讯过程所在的协议域。协议域定义在&lt;sys/socket.h>头文件中，常用协议域名为：</p>
-
-<pre><code>PF_LOCAL 主机内部通讯协议，之前名为PF_UNIX
-PF_UNIX  主机内部通讯协议，废弃，使用PF_LOCAL
-PF_INET  IPV4通讯协议
-PF_INET6 IPV6通讯协议
-。。。
-</code></pre>
-
-<p>本例子中使用PF_INET ipv4通讯协议域</p>
-
-<p>参数type指定socket类型，目前定义类型为：</p>
-
-<pre><code>SOCK_STREAM                                      
-SOCK_DGRAM
-SOCK_RAW
-SOCK_SEQPACKET
-SOCK_RDM
-</code></pre>
-
-<p>SOCK_STREAM 类型提供序列化、可靠的、全双工字节流套接字
-SOCK_DGRAM 类型提供无连接的、不可靠的，有报文最大限制的数据报通讯套接字
-SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字，需要有超级用户权限<br/>
-本例子中使用SOCK_STREAM流套接字类型</p>
-
-<p>失败时，函数返回-1，成功时，返回套接字文件描述符</p>
-
-<p>2、bind函数</p>
-
-<pre><code>int bind(int socket, const struct sockaddr *address, socklen_t address_len);
-</code></pre>
-
-<p>bind函数把一个本地协议地址赋予一个套接字。
-参数socket，为需要赋予地址的套接字。
-参数address，为赋予到套接字的地址结构，有ip和端口号标识。
-参数address_len, 为该地址结构大小</p>
-
-<p>对于服务端来讲，在调用监听函数之前，都需要bind到特定地址和端口</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -748,6 +729,10 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">golang创建、解压.tar.gz文件简单库</a>
       </li>
     
@@ -763,10 +748,6 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
         <a href="/blog/2016/10/05/grepming-ling/">Grep命令</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2016/03/06/mapreduce-wordcountshi-li/">MapReduce WordCount实例</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -778,7 +759,7 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/program/'>program (5)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (6)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
  </ul>
@@ -788,6 +769,7 @@ SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字�
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
 <a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 90%" href="/blog/tags/golang/">Golang</a>
 <a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>

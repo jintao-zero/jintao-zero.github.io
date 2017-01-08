@@ -9,7 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="golang提供了tar包和compress/gzip包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。 tar打包功能 利用tar中Writer和Reader可以实现将文件和文件夹进行打包的功能。 打包 创建目标文件 &hellip;">
+  <meta name="description" content="Golang标准库net/http/pprof通过HTTP服务对外提供性能统计数据，以便pprof这样的可视化工具使用。 引入此pprof库向http服务注册路径处理函数。此库注册的http服务路径都是以/debug/pprof开头。 使用方法 方式引入库 import _ "net/http/ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +67,90 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-08T22:55:07+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>10:55 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Golang标准库<code>net/http/pprof</code>通过HTTP服务对外提供性能统计数据，以便<code>pprof</code>这样的可视化工具使用。</p>
+
+<p>引入此<code>pprof</code>库向http服务注册路径处理函数。此库注册的http服务路径都是以<code>/debug/pprof</code>开头。</p>
+
+<h2>使用方法</h2>
+
+<h3>方式引入库</h3>
+
+<pre><code>import _ "net/http/pprof"
+</code></pre>
+
+<h3>开启HTTP服务</h3>
+
+<p>如果程序中已经运行了一个或者多个HTTP服务，那么就无需再开启HTTP服务，否则需要像如下代码片段，开启一个HTTP服务：</p>
+
+<pre><code>go func() {
+    log.Println(http.ListenAndServe("localhost:6060",   nil))
+}()
+</code></pre>
+
+<p>其中地址也可以不绑定到localhost,可以选择监听所有端口,比如:</p>
+
+<pre><code>go func() {
+    log.Println(http.ListenAndServe(":6060",    nil))
+}()
+</code></pre>
+
+<h3>获取性能数据</h3>
+
+<p>1、查看堆栈性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/heap
+</code></pre>
+
+<p>2、查看30s CPU性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/profile
+</code></pre>
+
+<p>3、查看goroutine阻塞性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/block
+</code></pre>
+
+<p>4、查看5s执行栈</p>
+
+<pre><code>wget http://localhost:6060/debug/pprof/trace?seconds=5
+</code></pre>
+
+<p>5、查看所有可用性能数据</p>
+
+<pre><code>浏览器打开  http://localhost:6060/debug/pprof/
+</code></pre>
+
+<p>参考：<br/>
+<a href="https://golang.org/pkg/net/http/pprof/">Golang官博</a></p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -691,64 +775,6 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">冒泡、选择、插入、归并、快速、堆排序</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-08-02T20:40:24+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>8:40 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。</p>
-
-<h1>冒泡排序</h1>
-
-<p><a href="http://baike.baidu.com/view/254413.htm#ref_[1]_254413">冒泡排序算法</a>（百度百科）的运作如下：（从后往前）<br/>
-1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。<br/>
-2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。在这一点，最后的元素应该会是最大的数。<br/>
-3. 针对所有的元素重复以上的步骤，除了最后一个。<br/>
-4. 持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较。</p>
-
-<p>代码实现</p>
-
-<pre><code>void BubbleSort(int array[], int len)    
-{  
-    for (int i = 0; i &lt; len-1; i++) {
-        for (int j = 0; j &lt; len-i-1; j++) {
-            if (array[j+1] &lt; array[j]) {
-                int tmp = array[j+1];
-                array[j+1] = array[j];
-                array[j] = tmp;
-            }
-        }
-    }
-}
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -762,6 +788,10 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">golang创建、解压.tar.gz文件简单库</a>
@@ -779,10 +809,6 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
         <a href="/blog/2016/10/05/grepming-ling/">Grep命令</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2016/03/06/mapreduce-wordcountshi-li/">MapReduce WordCount实例</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -794,7 +820,7 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/program/'>program (5)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (6)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
  </ul>
@@ -804,6 +830,7 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
 <a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 90%" href="/blog/tags/golang/">Golang</a>
 <a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>

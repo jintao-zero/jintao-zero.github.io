@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/</loc>
+    
+    <lastmod>2017-01-08T22:55:07+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/</loc>
     
     <lastmod>2017-01-05T19:17:06+08:00</lastmod>
@@ -197,14 +205,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2017-01-05T19:48:26+08:00</lastmod>
+    <lastmod>2017-01-08T23:11:27+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2017-01-05T19:48:26+08:00</lastmod>
+    <lastmod>2017-01-08T23:11:27+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
