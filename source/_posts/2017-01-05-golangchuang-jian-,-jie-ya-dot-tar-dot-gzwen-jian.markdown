@@ -4,7 +4,7 @@ title: "golang创建、解压.tar.gz文件简单库"
 date: 2017-01-05 19:17:06 +0800
 comments: true
 categories: program
-tags: golang
+tags: Golang
 ---
 golang提供了`tar`包和`compress/gzip`包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。
 ##tar打包功能

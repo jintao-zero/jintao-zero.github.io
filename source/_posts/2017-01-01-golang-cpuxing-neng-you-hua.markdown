@@ -4,7 +4,7 @@ title: "golang cpu性能优化"
 date: 2017-01-01 17:18:20 +0800
 comments: true
 categories: program
-tags: golang
+tags: Golang
 ---
 本文根据[Profiling Go Programs](https://blog.golang.org/profiling-go-programs)文章，进行演示如何利用Golang性能工具进行cpu性能统计和优化。  
 ##准备工作
