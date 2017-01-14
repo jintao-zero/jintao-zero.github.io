@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-01-08T23:20:46+08:00</updated>
+  <updated>2017-01-14T21:23:28+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,177 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Golang Go命令详解]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/01/13/golang-goming-ling-xiang-jie/"/>
+    <updated>2017-01-13T19:17:12+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/01/13/golang-goming-ling-xiang-jie</id>
+    <content type="html"><![CDATA[<h1>go命令</h1>
+
+<p><a href="#compile">Compile packages and dependencies</a>    <br/>
+<a href="#clean">Remove object files</a></p>
+
+<p><code>Go</code>工具用来管理Go语音源代码。
+使用：</p>
+
+<pre><code>go command [arguments]
+</code></pre>
+
+<p>命令为：</p>
+
+<pre><code>build       compile packages and dependencies
+clean       remove object files
+doc         show documentation for package or symbol
+env         print Go environment information
+fix         run go tool fix on packages
+fmt         run gofmt on package sources
+generate    generate Go files by processing source
+get         download and install packages and dependencies
+install     compile and install packages and dependencies
+list        list packages
+run         compile and run Go program
+test        test packages
+tool        run specified go tool
+version     print Go version
+vet         run go tool vet on packages
+</code></pre>
+
+<p>使用<code>go help [command]</code>查看命令相信信息。<br/>
+更多topic：</p>
+
+<pre><code>c           calling between Go and C
+buildmode   description of build modes
+filetype    file types
+gopath      GOPATH environment variable
+environment environment variables
+importpath  import path syntax
+packages    description of package lists
+testflag    description of testing flags
+testfunc    description of testing functions
+</code></pre>
+
+<p>使用<code>go help [topic]</code>查看topic帮助信息</p>
+
+<!-- more -->
+
+
+<h2><a name="compile"></a>编译包及其依赖</h2>
+
+<p>使用：</p>
+
+<pre><code>go build [-o output] [-i] [build flags] [packages]
+</code></pre>
+
+<p><code>Build</code>编译包，及其依赖，但是不进行安装。</p>
+
+<p>如果输入的是一些.go文件，build认为是编译由这些文件组成的单独包。
+当单独编译main包时，build将可执行程序写入输出文件，输出文件以列出的第一个.go源文件名称命名，或者以main包源文件所在的文件夹名称命名，Windows环境下，可执行成后后缀为.exe。</p>
+
+<p>当编译多个包或者一个非main包，build命令只是编译这些包，丢弃结果文件，只是查看包是否能够编译成功。</p>
+
+<p>编译包时，build忽略以<code>_test.go</code>为后缀的文件。</p>
+
+<p><code>-o</code>参数，可以用来指定编译结果存放路径。<br/>
+<code>-i</code>参数，设置将目标程序依赖的包进行安装。</p>
+
+<p>build 标志是<code>build,clean,get,install,list,run,test</code>共享的：</p>
+
+<pre><code>-a
+    force rebuilding of packages that are already up-to-date.
+-n
+    print the commands but do not run them.
+-p n
+    the number of programs, such as build commands or
+    test binaries, that can be run in parallel.
+    The default is the number of CPUs available.
+-race
+    enable data race detection.
+    Supported only on linux/amd64, freebsd/amd64, darwin/amd64 and windows/amd64.
+-msan
+    enable interoperation with memory sanitizer.
+    Supported only on linux/amd64,
+    and only with Clang/LLVM as the host C compiler.
+-v
+    print the names of packages as they are compiled.
+-work
+    print the name of the temporary work directory and
+    do not delete it when exiting.
+-x
+    print the commands.
+
+-asmflags 'flag list'
+    arguments to pass on each go tool asm invocation.
+-buildmode mode
+    build mode to use. See 'go help buildmode' for more.
+-compiler name
+    name of compiler to use, as in runtime.Compiler (gccgo or gc).
+-gccgoflags 'arg list'
+    arguments to pass on each gccgo compiler/linker invocation.
+-gcflags 'arg list'
+    arguments to pass on each go tool compile invocation.
+-installsuffix suffix
+    a suffix to use in the name of the package installation directory,
+    in order to keep output separate from default builds.
+    If using the -race flag, the install suffix is automatically set to race
+    or, if set explicitly, has _race appended to it.  Likewise for the -msan
+    flag.  Using a -buildmode option that requires non-default compile flags
+    has a similar effect.
+-ldflags 'flag list'
+    arguments to pass on each go tool link invocation.
+-linkshared
+    link against shared libraries previously created with
+    -buildmode=shared.
+-pkgdir dir
+    install and load all packages from dir instead of the usual locations.
+    For example, when building with a non-standard configuration,
+    use -pkgdir to keep generated packages in a separate location.
+-tags 'tag list'
+    a list of build tags to consider satisfied during the build.
+    For more information about build tags, see the description of
+    build constraints in the documentation for the go/build package.
+-toolexec 'cmd args'
+    a program to use to invoke toolchain programs like vet and asm.
+    For example, instead of running asm, the go command will run
+    'cmd args /path/to/asm &lt;arguments for asm&gt;'.
+</code></pre>
+
+<p>上面列的参数标志接收以空格为分隔符的字符串列表。如果参数中包含空格，那么需要将参数用单引号或者双引号包裹。</p>
+
+<p>使用<code>go help packages</code>查看更多关于包的信息，使用<code>go help gopath</code>查看更多关于编译和安装路径的信息，使用<code>go help c</code>查看更多关于Go和C/C++调用的帮助信息。</p>
+
+<p><code>Build</code>依附于<code>go help gopath</code>中描述的惯例。并不是所有项目遵从惯例。使用不同构建惯例或者构建系统可能会选择使用更低层的构建工具如<code>go tool compile</code>和<code>go tool link</code>。</p>
+
+<h2><a name="clean"></a>删除目标文件</h2>
+
+<p>使用：</p>
+
+<pre><code>go clean [-i] [-r] [-n] [-x] [build flags] [packages]
+</code></pre>
+
+<p>将包源代码路径中的目标文件删除。<code>go</code>命令通常在临时目录构建目标对象，所以<code>go clean</code>通常用来删除其他工具或者手动执行<code>go build</code>生成的结果文件。</p>
+
+<p>特别的，clena命令将包源码路径下生成的如下文件删除：</p>
+
+<pre><code>_obj/            old object directory, left from Makefiles
+_test/           old test directory, left from Makefiles
+_testmain.go     old gotest file, left from Makefiles
+test.out         old test log, left from Makefiles
+build.out        old test log, left from Makefiles
+*.[568ao]        object files, left from Makefiles
+
+DIR(.exe)        from go build
+DIR.test(.exe)   from go test -c
+MAINFILE(.exe)   from go build MAINFILE.go
+*.so             from SWIG
+</code></pre>
+
+<p><code>-i</code>参数指定go clean 命令将go install命令安装的包文件或者二进制文件删除。 <br/>
+<code>-n</code>参数指定go clean把要执行的删除命令打印，但是不实际执行。<br/>
+<code>-r</code>参数指定go clean对于指定包的所有依赖进行go clean命令。<br/>
+<code>-x</code>参数指定go clean在执行删除操作时将命令打印。</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Golang 通过http服务获取程序性能统计数据]]></title>
@@ -3899,188 +4070,6 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
 </code></pre>
 
 <p>上面的用法与第一个列子相同，需要注意的是几个函数的名字都相同</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Tcp服务端并发之子进程]]></title>
-    <link href="http://jintao-zero.github.io/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/"/>
-    <updated>2015-02-17T14:56:56+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng</id>
-    <content type="html"><![CDATA[<p>上一篇博客中实现的tcp服务端每次只能处理一个客户端连接，如果有多个客户端同时与服务端进行通讯的话，那只能进行等待上一个客户端通讯完成才可以，那么如何修改服务端为并发服务器程序呢？Unix中编写并发服务器程序最简单的方法就是fork一个子进程来服务每个客户。以下为一个典型的并发服务器的轮廓：</p>
-
-<pre><code>pid_t pid;
-int listenfd, connfd;
-listenfd = Socket(...);
-    /* fill in sockaddr_in{} with server's well-known port */
-Bind*(listenfd, ...);
-Listen(listenfd, LISTENQ);
-for ( ; ; ) {
-    connfd = Accept(listenfd, ...);  /* probably blocks */
-    if ((pid = Fork()) == 0) {
-        Close(listenfd);    /* child close listening socket */
-        doit(connfd);       /* process the request */
-        close(connfd);      /* child terminates */
-        exit(0);            /* child terminate */
-    }
-    Close(connfd);          /* parent closes connected socket */
-}
-</code></pre>
-
-<p>fork函数</p>
-
-<pre><code>pid_t fork(void);
-</code></pre>
-
-<p>fork创建一个新进程。新进程是当前运行进程的一个拷贝。fork函数一次调用，两次返回。对于子进程返回值为0，对于父进程，返回值为子进程id。</p>
-
-<p>以下为根据上面的并发服务器轮廓代码修改的tcp客户端代码：</p>
-
-<!-- more -->
-
-
-<pre><code>for (; ; ) {
-
-    if ((connsock = accept(sock_server, (struct sockaddr *)&amp;clientaddr, &amp;clientaddr_len)) &lt; 0) {
-        if (errno == EINTR) {
-            continue;
-        }
-        else {
-            printf("accept fail. reason:%s \n", strerror(errno));
-            close(sock_server);
-            exit(0);
-        }
-    }
-    printf("new client connected, %s:%d \n", inet_ntoa(clientaddr.sin_addr), clientaddr.sin_port);
-
-    int child = fork();
-    if (child == 0) { // child process
-
-        close(sock_server);
-        printf("child process:%d \n", getpid());
-        // recv data from client
-        char buf[1024];
-        ssize_t rcv_len;
-        while ((rcv_len = recv(connsock, buf, sizeof(buf), 0)) &gt; 0) {
-            printf("recv from client:%s\n", buf);
-            for (int i = 0; i &lt; rcv_len; i++)
-                buf[i] = toupper(buf[i]);
-            send(connsock, buf, rcv_len, 0);
-            printf("send to  client:%s\n", buf);
-        }
-        printf("len:%ld \n", rcv_len);
-        close(connsock);
-        exit(0);
-    }
-
-    // parent process
-    close(connsock);
-}
-</code></pre>
-
-<p>以上tcp服务端程序可以并发处理多个客户端请求，但是在通讯结束，子进程调用exit函数退出后，会产生僵死进程, 使用ps命令可以看到多个server进程状态为Z+：<br/>
-<img src="http://jintao-zero.github.io/images/zombie.png">
-设置僵死状态的目的是维护子进程的信息，以便父进程在以后某个时候获取。这些信息包括子进程的进程ID、终止状态以及资源利用信息（CPU时间、内存使用量等等）。如果一个进程终止，而该进程有子进程处于僵死状态，那么它的所有僵死子进程的富进程ID将被重置为1（init进程）。继承这些子进程的init进程将清理它们。<br/>
-僵死进程占用内核中的空间，最终可能导致我们耗尽进程资源，因此我们需要及时的清理僵死子进程，无论何时我们fork子进程都得wait它们，以防它们变成僵死进程。每个子进程在退出时，内核都会向父进程发送SIGCHLD信号，因此父进程需要建立一个俘获SIGCHLD信号的信号处理函数，在函数体中调用wait。</p>
-
-<p>wait函数</p>
-
-<pre><code>pid_t wait(int *stat_loc);
-</code></pre>
-
-<p>wait函数阻塞调用进程直到获取到一个退出子进程的信息，成功返回后，stat_loc返回退出子进程的退出信息。SIGCHILD信号处理函数为：</p>
-
-<pre><code>void chld_sig_handler(int signo)
-{
-    int stat_loc;
-    wait(&amp;stat_loc);
-    return ;
-}
-</code></pre>
-
-<p>sigaction函数</p>
-
-<pre><code>struct  sigaction {
-         union __sigaction_u __sigaction_u;  /* signal handler */
-         sigset_t sa_mask;               /* signal mask to apply */
-         int     sa_flags;               /* see signal options below */
- };
-
- union __sigaction_u {
-         void    (*__sa_handler)(int);
-         void    (*__sa_sigaction)(int, struct __siginfo *,
-                        void *);
- };
-
-#define sa_handler      __sigaction_u.__sa_handler
-#define sa_sigaction    __sigaction_u.__sa_sigaction
-
-int sigaction(int sig, const struct sigaction *restrict act, struct sigaction *restrict oact);
-</code></pre>
-
-<p>sigaction函数用来修改进程对于某个信号的处理函数
-参数sig为需要修改处理函数的信号id
-参数act说明了该信号处理函数，以及进入处理函数时的信号掩码</p>
-
-<pre><code>// register SIGCHLD process handler
-struct sigaction act;
-struct sigaction oact;
-act.sa_handler = chld_sig_handler;
-sigemptyset(&amp;act.sa_mask);
-act.sa_flags = 0;
-if (sigaction(SIGCHLD, &amp;act, &amp;oact) &lt; 0) {
-    printf("set SIGCHLD handler fail. reason:%s \n", strerror(errno));
-    close(sock_server);
-    return -1;
-}
-</code></pre>
-
-<p>在tcp服务代码中添加了SIGCHLD信号处理函数后，重新测试，但是发现仍然会出现僵死子进程：<br/>
-<img src="http://jintao-zero.github.io/images/zombie_wait.png"><br/>
-Unix信号处理机制中，<br/>
-1、当一个信号达到后，进入该信号的处理函数后，进程将屏蔽该信号 <br/>
-2、多个同样类型信号同时到达时，信号处理函数只执行一次，其他的信号不进行排队</p>
-
-<p>这样当多个客户端连接同时结束时，会导致服务端子进程同时退出，多个SIGCHLD信号同时产生递送到服务端父进程，那么一种可能的情况是，在信号处理函数被调用之前，信号都到达，那么只有一个信号被处理，其他信号不会排队，将会被丢弃，这样仍然产生僵死子进程。<br/>
-为了解决这样问题，可以在信号处理函数中多次执行wait操作，获取已经结束子进程的退出信息。但是上面的wait接口是阻塞等待、直到有新退出进程，这样的话就会影响进程的正常执行，下面介绍另外一个</p>
-
-<pre><code>pid_t waitpid(pid_t pid, int *stat_loc, int options);
-</code></pre>
-
-<p>参数pid指定需要等待的进程集。pid为-1时，等待任何子进程。pid为0时，等待调用者进程组里面的任何子进程。pid大于0时，等待进程号为pid的子进程。
-参数stat_loc用来保存进程退出状态。
-参数options,为WNOHANG、WUNTRACED选项的或。指定WNOHANG操作时，如果尚没有退出的子进程，你们waitp函数不阻塞等待，会返回0。指定WUNTRACED选项时，如果子进程是由于SIGTTIN,SIGTTOU,SIGTSTP,SIGSTOP信号而处于stopped状态，那么wait操作也会获取到这些进程的状态信息。<br/>
-需要修改SIGCHLD信号处理函数，使用waitp函数，设置options位WNOHANG来读取所有已经退出子进程的进程状态，防止变为僵尸进程。</p>
-
-<pre><code>void chld_sig_handler(int signo)
-{
-    int stat_loc;
-    int options = WNOHANG;
-    int pid;
-    while ((pid = waitpid(-1, &amp;stat_loc, options)) &gt; 0) {
-        printf("wait pid:%d suc\n", pid);   // normally we should call i/o func in signal handler
-    }
-return ;
-}
-</code></pre>
-
-<p>对于服务器主进程而言，大部分的时间都是阻塞在accept系统调用上，这一类的系统调用也称为慢系统调用（slow system call），适用与慢系统调用的一个规则是：当阻塞与某个慢系统调用的一个进程捕获某个信号且相应信号处理函数返回时，该系统调用可能返回一个EINTR错误。有些内核自动重启某些被中断的系统调用。为了便于移植，当我们编写捕获信号的程序时（多数并发服务器捕获SIGCHLD），我们必须对慢系统调用返回EINTR有所准备。修改服务器代码为：</p>
-
-<pre><code>if ((connsock = accept(sock_server, (struct sockaddr *)&amp;clientaddr, &amp;clientaddr_len)) &lt; 0) {
-    if (errno == EINTR) {
-        continue;
-    } else {
-        printf("accept fail. reason:%s \n", strerror(errno));
-        close(sock_server);
-        exit(0);
-    }
-}
-</code></pre>
-
-<p>本片文章的目的时总结我们在网络编程时可能会遇到的三种情况：
-(1) 当fork子进程时，必须捕获SIGCHLD信号
-(2) 当捕获信号时，必须处理被中断的系统调用
-(3) SIGCHLD的信号处理函数必须正确编写，应适用waitpid函数以免留下僵尸进程</p>
 ]]></content>
   </entry>
   

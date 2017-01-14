@@ -1,0 +1,409 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Golang Go命令详解 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="go命令 Compile packages and dependencies Remove object files Go工具用来管理Go语音源代码。
+使用： go command [arguments] 命令为： build compile packages and dependencies &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/01/13/golang-goming-ling-xiang-jie">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Golang Go命令详解</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-13T19:17:12+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>go命令</h1>
+
+<p><a href="#compile">Compile packages and dependencies</a>    <br/>
+<a href="#clean">Remove object files</a></p>
+
+<p><code>Go</code>工具用来管理Go语音源代码。
+使用：</p>
+
+<pre><code>go command [arguments]
+</code></pre>
+
+<p>命令为：</p>
+
+<pre><code>build       compile packages and dependencies
+clean       remove object files
+doc         show documentation for package or symbol
+env         print Go environment information
+fix         run go tool fix on packages
+fmt         run gofmt on package sources
+generate    generate Go files by processing source
+get         download and install packages and dependencies
+install     compile and install packages and dependencies
+list        list packages
+run         compile and run Go program
+test        test packages
+tool        run specified go tool
+version     print Go version
+vet         run go tool vet on packages
+</code></pre>
+
+<p>使用<code>go help [command]</code>查看命令相信信息。<br/>
+更多topic：</p>
+
+<pre><code>c           calling between Go and C
+buildmode   description of build modes
+filetype    file types
+gopath      GOPATH environment variable
+environment environment variables
+importpath  import path syntax
+packages    description of package lists
+testflag    description of testing flags
+testfunc    description of testing functions
+</code></pre>
+
+<p>使用<code>go help [topic]</code>查看topic帮助信息</p>
+
+<!-- more -->
+
+
+<h2><a name="compile"></a>编译包及其依赖</h2>
+
+<p>使用：</p>
+
+<pre><code>go build [-o output] [-i] [build flags] [packages]
+</code></pre>
+
+<p><code>Build</code>编译包，及其依赖，但是不进行安装。</p>
+
+<p>如果输入的是一些.go文件，build认为是编译由这些文件组成的单独包。
+当单独编译main包时，build将可执行程序写入输出文件，输出文件以列出的第一个.go源文件名称命名，或者以main包源文件所在的文件夹名称命名，Windows环境下，可执行成后后缀为.exe。</p>
+
+<p>当编译多个包或者一个非main包，build命令只是编译这些包，丢弃结果文件，只是查看包是否能够编译成功。</p>
+
+<p>编译包时，build忽略以<code>_test.go</code>为后缀的文件。</p>
+
+<p><code>-o</code>参数，可以用来指定编译结果存放路径。<br/>
+<code>-i</code>参数，设置将目标程序依赖的包进行安装。</p>
+
+<p>build 标志是<code>build,clean,get,install,list,run,test</code>共享的：</p>
+
+<pre><code>-a
+    force rebuilding of packages that are already up-to-date.
+-n
+    print the commands but do not run them.
+-p n
+    the number of programs, such as build commands or
+    test binaries, that can be run in parallel.
+    The default is the number of CPUs available.
+-race
+    enable data race detection.
+    Supported only on linux/amd64, freebsd/amd64, darwin/amd64 and windows/amd64.
+-msan
+    enable interoperation with memory sanitizer.
+    Supported only on linux/amd64,
+    and only with Clang/LLVM as the host C compiler.
+-v
+    print the names of packages as they are compiled.
+-work
+    print the name of the temporary work directory and
+    do not delete it when exiting.
+-x
+    print the commands.
+
+-asmflags 'flag list'
+    arguments to pass on each go tool asm invocation.
+-buildmode mode
+    build mode to use. See 'go help buildmode' for more.
+-compiler name
+    name of compiler to use, as in runtime.Compiler (gccgo or gc).
+-gccgoflags 'arg list'
+    arguments to pass on each gccgo compiler/linker invocation.
+-gcflags 'arg list'
+    arguments to pass on each go tool compile invocation.
+-installsuffix suffix
+    a suffix to use in the name of the package installation directory,
+    in order to keep output separate from default builds.
+    If using the -race flag, the install suffix is automatically set to race
+    or, if set explicitly, has _race appended to it.  Likewise for the -msan
+    flag.  Using a -buildmode option that requires non-default compile flags
+    has a similar effect.
+-ldflags 'flag list'
+    arguments to pass on each go tool link invocation.
+-linkshared
+    link against shared libraries previously created with
+    -buildmode=shared.
+-pkgdir dir
+    install and load all packages from dir instead of the usual locations.
+    For example, when building with a non-standard configuration,
+    use -pkgdir to keep generated packages in a separate location.
+-tags 'tag list'
+    a list of build tags to consider satisfied during the build.
+    For more information about build tags, see the description of
+    build constraints in the documentation for the go/build package.
+-toolexec 'cmd args'
+    a program to use to invoke toolchain programs like vet and asm.
+    For example, instead of running asm, the go command will run
+    'cmd args /path/to/asm &lt;arguments for asm&gt;'.
+</code></pre>
+
+<p>上面列的参数标志接收以空格为分隔符的字符串列表。如果参数中包含空格，那么需要将参数用单引号或者双引号包裹。</p>
+
+<p>使用<code>go help packages</code>查看更多关于包的信息，使用<code>go help gopath</code>查看更多关于编译和安装路径的信息，使用<code>go help c</code>查看更多关于Go和C/C++调用的帮助信息。</p>
+
+<p><code>Build</code>依附于<code>go help gopath</code>中描述的惯例。并不是所有项目遵从惯例。使用不同构建惯例或者构建系统可能会选择使用更低层的构建工具如<code>go tool compile</code>和<code>go tool link</code>。</p>
+
+<h2><a name="clean"></a>删除目标文件</h2>
+
+<p>使用：</p>
+
+<pre><code>go clean [-i] [-r] [-n] [-x] [build flags] [packages]
+</code></pre>
+
+<p>将包源代码路径中的目标文件删除。<code>go</code>命令通常在临时目录构建目标对象，所以<code>go clean</code>通常用来删除其他工具或者手动执行<code>go build</code>生成的结果文件。</p>
+
+<p>特别的，clena命令将包源码路径下生成的如下文件删除：</p>
+
+<pre><code>_obj/            old object directory, left from Makefiles
+_test/           old test directory, left from Makefiles
+_testmain.go     old gotest file, left from Makefiles
+test.out         old test log, left from Makefiles
+build.out        old test log, left from Makefiles
+*.[568ao]        object files, left from Makefiles
+
+DIR(.exe)        from go build
+DIR.test(.exe)   from go test -c
+MAINFILE(.exe)   from go build MAINFILE.go
+*.so             from SWIG
+</code></pre>
+
+<p><code>-i</code>参数指定go clean 命令将go install命令安装的包文件或者二进制文件删除。 <br/>
+<code>-n</code>参数指定go clean把要执行的删除命令打印，但是不实际执行。<br/>
+<code>-r</code>参数指定go clean对于指定包的所有依赖进行go clean命令。<br/>
+<code>-x</code>参数指定go clean在执行删除操作时将命令打印。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-01-13T19:17:12+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/" title="Previous Post: Golang 通过http服务获取程序性能统计数据">&laquo; Golang 通过http服务获取程序性能统计数据</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">golang创建、解压.tar.gz文件简单库</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Golang Cpu性能优化</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li/">Golang日期转化处理</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (7)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 189%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 133%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 133%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

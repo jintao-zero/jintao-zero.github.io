@@ -9,7 +9,8 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Golang标准库net/http/pprof通过HTTP服务对外提供性能统计数据，以便pprof这样的可视化工具使用。 引入此pprof库向http服务注册路径处理函数。此库注册的http服务路径都是以/debug/pprof开头。 使用方法 方式引入库 import _ "net/http/ &hellip;">
+  <meta name="description" content="go命令 Compile packages and dependencies Remove object files Go工具用来管理Go语音源代码。
+使用： go command [arguments] 命令为： build compile packages and dependencies &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +68,84 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-13T19:17:12+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>go命令</h1>
+
+<p><a href="#compile">Compile packages and dependencies</a>    <br/>
+<a href="#clean">Remove object files</a></p>
+
+<p><code>Go</code>工具用来管理Go语音源代码。
+使用：</p>
+
+<pre><code>go command [arguments]
+</code></pre>
+
+<p>命令为：</p>
+
+<pre><code>build       compile packages and dependencies
+clean       remove object files
+doc         show documentation for package or symbol
+env         print Go environment information
+fix         run go tool fix on packages
+fmt         run gofmt on package sources
+generate    generate Go files by processing source
+get         download and install packages and dependencies
+install     compile and install packages and dependencies
+list        list packages
+run         compile and run Go program
+test        test packages
+tool        run specified go tool
+version     print Go version
+vet         run go tool vet on packages
+</code></pre>
+
+<p>使用<code>go help [command]</code>查看命令相信信息。<br/>
+更多topic：</p>
+
+<pre><code>c           calling between Go and C
+buildmode   description of build modes
+filetype    file types
+gopath      GOPATH environment variable
+environment environment variables
+importpath  import path syntax
+packages    description of package lists
+testflag    description of testing flags
+testfunc    description of testing functions
+</code></pre>
+
+<p>使用<code>go help [topic]</code>查看topic帮助信息</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -706,75 +785,6 @@ day of week    0-7 (0 or 7 is Sun, or use names)
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Hadoop环境搭建</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-09-19T15:41:51+08:00'><span class='date'><span class='date-month'>Sep</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:41 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>最近开始进行Hadoop分布式计算相关内容的学习，先从搭建开发环境开始。下面记录一下搭建Hadoop开发环境的过程，以及注意点。
-本节介绍如何快速搭建和配置一个单节点Hadoop环境，便于使用Hadoop MapReduce和Hadoop Distributed File System(HDFS)。</p>
-
-<h2>依赖条件</h2>
-
-<p>支持的操作系统平台  <br/>
-GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以在GNU/Linux集群上运行2000节点。本文使用Ubuntu操作系统做为实验环境。</p>
-
-<pre><code>Linux node8 3.16.0-30-generic #40~14.04.1-Ubuntu SMP Thu Jan 15 17:43:14 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
-</code></pre>
-
-<p>Windows系统也可以搭建Hadoop集群，本文暂时没有涉及，可以参考<a href="http://wiki.apache.org/hadoop/Hadoop2OnWindows">wiki page</a></p>
-
-<p>依赖的软件</p>
-
-<ul>
-<li><p>Java环境<br/>
-  安装方法：</p>
-
-<p>  1、到oracle官网下载<a href="http://download.oracle.com/otn-pub/java/jdk/8u60-b27/jdk-8u60-linux-x64.tar.gz">JDK二进制压缩包</a><br/>
-  2、将压缩包解压到/usr/local/lib/目录下，安装目录也可以换到其他路径  <br/>
-      sudo tar xzvf jdk-8u45-linux-x64.tar.gz -C /usr/local/lib/<br/>
-  3、修改/etc/profile文件配置JAVA_HOME、PATH、CLASSPATH环境变量<br/>
-      JAVA_HOME=/usr/local/lib/jdk1.8.0_45<br/>
-      PATH=$JAVA_HOME/bin:$PATH<br/>
-      CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar <br/>
-  4、运行java -version查看是否显示java版本信息</p></li>
-<li><p>ssh远程控制软件<br/>
-  如果系统没有运行sshd服务，则Ubuntu下运行apt-get命令安装ssh服务端
-  sudo apt-get install openssh-server</p></li>
-</ul>
-
-
-<h2>下载Hadoop软件</h2>
-
-<p>本文采用的是Hadoop最新的稳定版本<a href="http://apache.fayea.com/hadoop/common/current/hadoop-2.7.1.tar.gz">2.7.1</a></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -788,6 +798,10 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a>
@@ -805,10 +819,6 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
         <a href="/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li/">Golang日期转化处理</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2016/10/05/grepming-ling/">Grep命令</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -820,7 +830,7 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/program/'>program (6)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (7)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
  </ul>
@@ -830,7 +840,7 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
 <a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
-<a style="font-size: 175%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 189%" href="/blog/tags/golang/">Golang</a>
 <a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
