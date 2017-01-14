@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Octopress | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/categories/octopress/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-01-14T21:47:36+08:00</updated>
+  <updated>2017-01-14T21:53:05+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -19,6 +19,10 @@
     <updated>2014-11-03T20:23:52+08:00</updated>
     <id>http://jintao-zero.github.io/blog/2014/11/03/xue-xi-markdownyu-fa</id>
     <content type="html"><![CDATA[<p>学习Markdown基本语法</p>
+
+<p><a href="#pagelink">点击这里页内跳转</a></p>
+
+<h2><a name="pagelink"></a>页内跳转到这里</h2>
 ]]></content>
   </entry>
   
