@@ -9,8 +9,9 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="go命令 Compile packages and dependencies Remove object files Go工具用来管理Go语音源代码。
-使用： go command [arguments] 命令为： build compile packages and dependencies &hellip;">
+  <meta name="description" content="go命令 Compile packages and dependencies Remove object files
+Description of testing flags Go工具用来管理Go语音源代码。
+使用： go command [arguments] 命令为： build &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -90,7 +91,8 @@
 <div class="entry-content"><h1>go命令</h1>
 
 <p><a href="#compile">Compile packages and dependencies</a>    <br/>
-<a href="#clean">Remove object files</a></p>
+<a href="#clean">Remove object files</a><br/>
+<a href="#testing">Description of testing flags</a></p>
 
 <p><code>Go</code>工具用来管理Go语音源代码。
 使用：</p>
@@ -250,6 +252,98 @@ MAINFILE(.exe)   from go build MAINFILE.go
 <code>-n</code>参数指定go clean把要执行的删除命令打印，但是不实际执行。<br/>
 <code>-r</code>参数指定go clean对于指定包的所有依赖进行go clean命令。<br/>
 <code>-x</code>参数指定go clean在执行删除操作时将命令打印。</p>
+
+<h2><a name="testing"></a>Description of testing flags</h2>
+
+<pre><code>-bench regexp
+    Run (sub)benchmarks matching a regular expression.
+    The given regular expression is split into smaller ones by top-level '/', where each must match the corresponding part of a benchmark's identifier.
+    By default, no benchmarks run. To run all benchmarks,
+    use '-bench .' or '-bench=.'.
+
+-benchmem
+    Print memory allocation statistics for benchmarks.
+
+-benchtime t
+    Run enough iterations of each benchmark to take t, specified as a time.Duration (for example, -benchtime 1h30s).
+    The default is 1 second (1s).
+
+-blockprofile block.out
+    Write a goroutine blocking profile to the specified file when all tests are complete.
+    Writes test binary as -c would.
+
+-blockprofilerate n
+    Control the detail provided in goroutine blocking profiles by calling runtime.SetBlockProfileRate with n.
+    See 'go doc runtime.SetBlockProfileRate'.
+    The profiler aims to sample, on average, one blocking event every n nanoseconds the program spends blocked.  By default, if -test.blockprofile is set without this flag, all blocking events are recorded, equivalent to -test.blockprofilerate=1.
+
+-count n
+    Run each test and benchmark n times (default 1).
+    If -cpu is set, run n times for each GOMAXPROCS value.
+    Examples are always run once.
+
+-cover
+    Enable coverage analysis.
+
+-covermode set,count,atomic
+    Set the mode for coverage analysis for the package[s] being tested. The default is "set" unless -race is enabled, in which case it is "atomic".
+    The values:
+        set: bool: does this statement run?
+        count: int: how many times does this statement run?
+        atomic: int: count, but correct in multithreaded tests; significantly more expensive.
+    Sets -cover.
+
+-coverpkg pkg1,pkg2,pkg3
+    Apply coverage analysis in each test to the given list of packages.
+    The default is for each test to analyze only the package being tested.
+    Packages are specified as import paths.
+    Sets -cover.
+
+-coverprofile cover.out
+    Write a coverage profile to the file after all tests have passed.
+    Sets -cover.
+
+-cpu 1,2,4
+    Specify a list of GOMAXPROCS values for which the tests or benchmarks should be executed.  The default is the current value of GOMAXPROCS.
+
+-cpuprofile cpu.out
+    Write a CPU profile to the specified file before exiting.
+    Writes test binary as -c would.
+
+-memprofile mem.out
+    Write a memory profile to the file after all tests have passed.
+    Writes test binary as -c would.
+
+-memprofilerate n
+    Enable more precise (and expensive) memory profiles by setting runtime.MemProfileRate.  See 'go doc runtime.MemProfileRate'.
+    To profile all memory allocations, use -test.memprofilerate=1 and pass --alloc_space flag to the pprof tool.
+
+-outputdir directory
+    Place output files from profiling in the specified directory, by default the directory in which "go test" is running.
+
+-parallel n
+    Allow parallel execution of test functions that call t.Parallel. The value of this flag is the maximum number of tests to run simultaneously; by default, it is set to the value of GOMAXPROCS.
+    Note that -parallel only applies within a single test binary.
+    The 'go test' command may run tests for different packages in parallel as well, according to the setting of the -p flag
+    (see 'go help build').
+
+-run regexp
+    Run only those tests and examples matching the regular expression.
+    For tests the regular expression is split into smaller ones by top-level '/', where each must match the corresponding part of a test's identifier.
+
+-short
+    Tell long-running tests to shorten their run time.
+    It is off by default but set during all.bash so that installing the Go tree can run a sanity check but not spend time running exhaustive tests.
+
+-timeout t
+    If a test runs longer than t, panic. The default is 10 minutes (10m).
+
+-trace trace.out
+    Write an execution trace to the specified file before exiting.
+
+-v
+    Verbose output: log all tests as they are run. Also print all text from Log and Logf calls even if the test succeeds.
+</code></pre>
 </div>
 
 
