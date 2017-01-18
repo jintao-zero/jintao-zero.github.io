@@ -1,0 +1,417 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Go并发模型之Context - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="Go语言中go和channel是开发高并发程序的基础。我们使用channel进行goroutine程序通讯，传送数据和控制信号，Pipelines and Cancelation向我们讲解了如何利用Done通道来向goroutine发送结束信号： func main() { var done = &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/01/18/gobing-fa-mo-xing-zhi-context">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Go并发模型之Context</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-18T15:26:37+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>18</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:26 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Go语言中go和channel是开发高并发程序的基础。我们使用channel进行goroutine程序通讯，传送数据和控制信号，<a href="https://blog.golang.org/pipelines">Pipelines and Cancelation</a>向我们讲解了如何利用Done通道来向goroutine发送结束信号：</p>
+
+<pre><code>func main() {
+    var done = make(chan struct {})
+    go func(done chan struct{}) {
+        select {
+        case &lt;- done:
+            fmt.Println("receive exit signal")
+        }
+    }(done)
+
+    done &lt;- struct {}{}
+    time.Sleep(3 * time.Second)
+}
+</code></pre>
+
+<p>在Go服务端，每一个请求都对应会有一个goroutine进行处理。处理函数通常又会开启另外的goroutine去访问后段服务，比如数据库和RPC服务。对应一个请求创建的这一系列的goroutine通常会需要访问请求相关的信息，比如终端用户名，授权token和请求的deadline等等。当一个请求被取消或者处理超时，与这个请求相关的一些列goroutine应该尽快退出，以便系统回收资源。<br/>
+Go中<code>context</code>包提供了这样的功能，利用context包可以进行请求范围内的数据传递，发送请求信号和deadline查看。本文简单示例如何使用<code>context</code>包进行goroutine并发编程。</p>
+
+<!-- more -->
+
+
+<h2>Context</h2>
+
+<p><code>Context</code>接口定义如下：</p>
+
+<pre><code>// A Context carries a deadline, cancelation signal, and request-scoped values
+// across API boundaries. Its methods are safe for simultaneous use by multiple
+// goroutines.
+type Context interface {
+    // Done returns a channel that is closed when this Context is canceled
+    // or times out.
+    Done() &lt;-chan struct{}
+
+    // Err indicates why this context was canceled, after the Done channel
+    // is closed.
+    Err() error
+
+    // Deadline returns the time when this Context will be canceled, if any.
+    Deadline() (deadline time.Time, ok bool)
+
+    // Value returns the value associated with key or nil if none.
+    Value(key interface{}) interface{}
+}
+</code></pre>
+
+<p><code>Context</code>接口包含四个方法。<br/>
+当Context被取消或者超时时，<code>Done</code>返回的通道将会被关闭。<br/>
+<code>Err</code>函数返回关闭原因。  <br/>
+<code>Deadline</code>返回Context将要被取消的时间，如果设置了超时时间的话,程序可以利用Deadline的返回值判断是否需要有必要开始操作，或者利用返回值设置I/O超时时间。<br/>
+<code>Value</code>方法返回与key相对应的value数据。<br/>
+<code>Context</code>接口是并发安全的。可以将同一个Context对象传递给任意goroutine。</p>
+
+<h3>派生contexts</h3>
+
+<p>context包提供函数从已存在Conext接口对象派生新接口对象。这些对象形成了一个树，当一个Context被取消时，所有从此Context对象派生的对象都被取消。<br/>
+<code>Background</code>是任何Context树的根；Background永远不会被取消</p>
+
+<pre><code>// Background returns an empty Context. It is never canceled, has no deadline,
+// and has no values. Background is typically used in main, init, and tests,
+// and as the top-level Context for incoming requests.
+func Background() Context
+</code></pre>
+
+<p><code>WithCancle</code>和<code>WithTimeout</code>返回一个可以比parent Context更早取消的Context接口对象。</p>
+
+<h3>WithCancle示例</h3>
+
+<pre><code>func f1(ctx context.Context) {
+    fmt.Println("f1 running...")
+    withCancel, cancel := context.WithCancel(ctx)
+    defer cancel()
+    go f2(withCancel)
+    // wait f2 to run
+    time.Sleep(time.Second)
+    fmt.Println("f1 cancel f2", )
+    cancel()
+    ticker := time.NewTicker(time.Second)
+    for ; ;  {
+        select {
+        case &lt;- ctx.Done():
+            fmt.Println("f1, parent call canceled", ctx.Err())
+        case t := &lt;- ticker.C:
+            fmt.Println("f1 running at ", t)
+        }
+
+    }
+}
+
+func f2(ctx context.Context)  {
+    fmt.Println("f2 running...")
+    ticker := time.NewTicker(time.Second)
+    for ; ;  {
+        select {
+        case &lt;- ctx.Done():
+            fmt.Println("f2, parent call canceled", ctx.Err())
+            return
+        case t := &lt;- ticker.C:
+            fmt.Println("f2 running at", t)
+        }
+    }
+}
+
+func main()  {
+    ctx, cancel := context.WithCancel(context.Background())
+    defer cancel()
+
+    go f1(ctx)
+    for {
+        time.Sleep(5 * time.Second)
+    }
+    //cancel()
+    //time.Sleep(5 * time.Second)
+}
+</code></pre>
+
+<p><code>WithCancel</code>从parent派生出一个新Context接口对象和一个CancelFunc函数。调用CancelFunc函数时关闭<code>Done</code>返回的通道，通知子goroutine退出。</p>
+
+<h3>WithDeadline</h3>
+
+<p><code>WithDeadline</code> 返回一个Context接口对象，当设置的deadline时间到达时，<code>Context</code>对象<code>Done</code>可读。</p>
+
+<pre><code>func main()  {
+    n := time.Now()
+    ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5 * time.Second))
+    defer cancel()
+    ticker := time.NewTicker(1 * time.Second)
+    for {
+        select {
+        case &lt;-ticker.C:
+            fmt.Println("ticker timeout")
+        case &lt;-ctx.Done():
+            fmt.Println("context timeout", time.Since(n))
+            return
+        }
+    }
+}                                                                                                }
+</code></pre>
+
+<h3>WithTimeout示例</h3>
+
+<p><code>WithTimeout</code>与<code>WithDeadline</code>类似，当设置的超时时间到达时，<code>Done</code>可读  <br/>
+    func main()  {
+        ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+        defer cancel()
+        ticker := time.NewTicker(1 * time.Second)
+        for {
+            select {
+            case &lt;-ticker.C:
+                fmt.Println(&ldquo;ticker timeout&rdquo;)
+            case &lt;-ctx.Done():
+                fmt.Println(&ldquo;context timeout&rdquo;)
+                return
+            }
+        }
+    }</p>
+
+<h3>WithValue示例</h3>
+
+<p>使用<code>WithValue</code>来传递请求相关数据</p>
+
+<pre><code>func WithValue(parent Context, key, val interface{}) Context
+func main()  {
+    ctx := context.WithValue(context.Background(), "test", "value")
+    go func(ctx context.Context) {
+        fmt.Println(ctx.Value("test"))
+    }(ctx)
+    time.Sleep(5 * time.Second)
+}
+</code></pre>
+
+<h2>参考</h2>
+
+<p>更多关于Go并发模型的讲解：<br/>
+<a href="https://blog.golang.org/pipelines">Go Concurrency Patterns: Pipelines and cancellation</a>         <br/>
+<a href="http://talks.golang.org/2012/concurrency.slide#1">Go Concurrency Patterns</a>         <br/>
+<a href="http://blog.golang.org/advanced-go-concurrency-patterns">Advanced Go Concurrency Patterns</a>      <br/>
+<a href="https://blog.golang.org/context">Go Concurrency Patterns: Context</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-01-18T15:26:37+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>18</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:26 pm</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/01/13/golang-goming-ling-xiang-jie/" title="Previous Post: golang go命令详解">&laquo; golang go命令详解</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">golang创建、解压.tar.gz文件简单库</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Golang Cpu性能优化</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (7)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 189%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 133%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 133%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

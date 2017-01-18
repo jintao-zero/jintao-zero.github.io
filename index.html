@@ -9,9 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="go命令 Compile packages and dependencies Remove object files
-Description of testing flags Go工具用来管理Go语音源代码。
-使用： go command [arguments] 命令为： build &hellip;">
+  <meta name="description" content="Go语言中go和channel是开发高并发程序的基础。我们使用channel进行goroutine程序通讯，传送数据和控制信号，Pipelines and Cancelation向我们讲解了如何利用Done通道来向goroutine发送结束信号： func main() { var done = &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -69,6 +67,57 @@ Description of testing flags Go工具用来管理Go语音源代码。
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-18T15:26:37+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>18</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:26 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Go语言中go和channel是开发高并发程序的基础。我们使用channel进行goroutine程序通讯，传送数据和控制信号，<a href="https://blog.golang.org/pipelines">Pipelines and Cancelation</a>向我们讲解了如何利用Done通道来向goroutine发送结束信号：</p>
+
+<pre><code>func main() {
+    var done = make(chan struct {})
+    go func(done chan struct{}) {
+        select {
+        case &lt;- done:
+            fmt.Println("receive exit signal")
+        }
+    }(done)
+
+    done &lt;- struct {}{}
+    time.Sleep(3 * time.Second)
+}
+</code></pre>
+
+<p>在Go服务端，每一个请求都对应会有一个goroutine进行处理。处理函数通常又会开启另外的goroutine去访问后段服务，比如数据库和RPC服务。对应一个请求创建的这一系列的goroutine通常会需要访问请求相关的信息，比如终端用户名，授权token和请求的deadline等等。当一个请求被取消或者处理超时，与这个请求相关的一些列goroutine应该尽快退出，以便系统回收资源。<br/>
+Go中<code>context</code>包提供了这样的功能，利用context包可以进行请求范围内的数据传递，发送请求信号和deadline查看。本文简单示例如何使用<code>context</code>包进行goroutine并发编程。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -710,83 +759,6 @@ redis&gt; get foo
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Crontab任务设置及路径、动态库、产生多个进程问题解决</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-11-21T11:17:04+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>11:17 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。</p>
-
-<pre><code>crontab [ -u user ] file
-crontab [ -u user ] [ -i ] { -e | -l | -r }
-</code></pre>
-
-<p>命令第一种形式是用file中的命令设置crontab任务<br/>
--l 参数是打印当前crontab任务到标准输出<br/>
--e 参数是使用VISUAL或者EDITOR环境变量定义的编辑器编辑当前crontab定时任务<br/>
--r 参数删除当前定时任务<br/>
--i 与用户进行交互</p>
-
-<h2>任务设置</h2>
-
-<p>crontab文件中可以包含三种语句：<br/>
-1、注释
-以#开头的语句都是注释</p>
-
-<pre><code>#this is a comment in crontab 
-</code></pre>
-
-<p>2、设置环境变量</p>
-
-<pre><code>LD_LIBRARY_PATH = /homt/lib/
-</code></pre>
-
-<p>3、设置定时任务<br/>
-每一行定义一条定时任务，包括五个时间、日期字段，时间日期后面的内容都是命令<br/>
-时间日期包括分、时、天、月和一周某天字段：</p>
-
-<pre><code>ield          allowed values
------          --------------
-minute         0-59
-hour           0-23
-day of month   1-31
-month          1-12 (or names, see below)
-day of week    0-7 (0 or 7 is Sun, or use names)
-</code></pre>
-
-<p>字段可以是＊，代表范围内所有<br/>
-字段也可以是一个范围，比如hour字段8-10，代表8，9，10<br/>
-字段也可以是一个列表，比如hour字段8，9，10<br/>
-字段也可以是一个范围和列表的混合，比如hour字段1-7，9－12<br/>
-字段也可以为一个间隔，比如hour 1-8/2,代表1,3,5,7</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -802,6 +774,10 @@ day of week    0-7 (0 or 7 is Sun, or use names)
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a>
       </li>
     
@@ -815,10 +791,6 @@ day of week    0-7 (0 or 7 is Sun, or use names)
     
       <li class="post">
         <a href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Golang Cpu性能优化</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li/">Golang日期转化处理</a>
       </li>
     
   </ul>
