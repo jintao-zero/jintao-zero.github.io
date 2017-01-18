@@ -3,7 +3,8 @@ layout: post
 title: "Go并发模型之Context"
 date: 2017-01-18 15:26:37 +0800
 comments: true
-categories: 
+categories: program
+tags: Golang
 ---
 Go语言中go和channel是开发高并发程序的基础。我们使用channel进行goroutine程序通讯，传送数据和控制信号，[Pipelines and Cancelation](https://blog.golang.org/pipelines)向我们讲解了如何利用Done通道来向goroutine发送结束信号：  
 	
