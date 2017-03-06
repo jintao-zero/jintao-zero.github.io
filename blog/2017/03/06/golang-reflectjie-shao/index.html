@@ -132,6 +132,11 @@ fmt.Println("value:", reflect.ValueOf(x))
 <pre><code>value: &lt;float64 Value&gt;
 </code></pre>
 
+<!-- more -->
+
+
+<p></p>
+
 <h2>从反射对象逆转回接口值</h2>
 
 <p>给定一个<code>reflect.Value</code>对象，调用<code>Interface</code>方法可以恢复一个接口值。实际上，<code>Interface</code>方法将Value对象的值和类型信息打包到一个接口值中并返回：</p>

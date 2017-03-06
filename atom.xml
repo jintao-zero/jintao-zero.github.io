@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-03-06T20:30:52+08:00</updated>
+  <updated>2017-03-06T20:33:30+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -61,6 +61,11 @@ fmt.Println("value:", reflect.ValueOf(x))
 
 <pre><code>value: &lt;float64 Value&gt;
 </code></pre>
+
+<!-- more -->
+
+
+<p></p>
 
 <h2>从反射对象逆转回接口值</h2>
 
