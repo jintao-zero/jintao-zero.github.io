@@ -1,0 +1,425 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Golang Reflect介绍 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="Golang reflect包实现了运行时反射，允许程序管理任意类型对象。典型应用是使用TypeOf从静态类型interface{}中抽取动态类型信息。
+使用ValueOf返回一个Value类型变量代表运行时数据。
+The Laws of Reflection介绍了Golang &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/03/06/golang-reflectjie-shao">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Golang Reflect介绍</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-06T17:44:02+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>5:44 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Golang <a href="https://golang.org/pkg/reflect/">reflect</a>包实现了运行时反射，允许程序管理任意类型对象。典型应用是使用<code>TypeOf</code>从静态类型<code>interface{}</code>中抽取动态类型信息。<br/>
+使用<code>ValueOf</code>返回一个<code>Value</code>类型变量代表运行时数据。<br/>
+<a href="https://golang.org/doc/articles/laws_of_reflection.html">The Laws of Reflection</a>介绍了Golang reflect机智中的几条规则：</p>
+
+<h2>从interface反射到对象</h2>
+
+<p>反射基本功能是用来检查interface变量中保存的<code>类型</code>和<code>数据</code>对。<a href="http://golang.org/pkg/reflect/">package reflect</a>中提供了两种类型：<a href="http://golang.org/pkg/reflect/#Type">Type</a>和<a href="http://golang.org/pkg/reflect/#Value">Value</a>。这两种类型提供了反问interface内部数据的机制。调用<code>reflect.TypeOf</code>和<code>reflect.ValueOf</code>函数分别返回<code>reflect.Type</code>和<code>reflect.Value</code>变量：</p>
+
+<pre><code>ackage main
+
+import (
+"fmt"
+"reflect"
+)
+
+func main() {
+    var x float64 = 3.4
+    fmt.Println("type:", reflect.TypeOf(x))
+}
+</code></pre>
+
+<p>程序输出如下：</p>
+
+<pre><code>type: float64
+</code></pre>
+
+<p><code>reflect.TypeOf</code>函数定义如下：</p>
+
+<pre><code>// TypeOf returns the reflection Type of the value in the interface{}.
+func TypeOf(i interface{}) Type
+</code></pre>
+
+<p>当我们调用<code>TypeOf(x)</code>时，x首先存在一个空interface中，之后作为参数，reflect.TypeOf解析参数获取实际类型。  <br/>
+调用<code>Value(x)</code>时，从接口参数中获取实参值。</p>
+
+<pre><code>var x float64 = 3.4
+fmt.Println("value:", reflect.ValueOf(x))
+</code></pre>
+
+<p>打印结果如下：</p>
+
+<pre><code>value: &lt;float64 Value&gt;
+</code></pre>
+
+<h2>从反射对象逆转回接口值</h2>
+
+<p>给定一个<code>reflect.Value</code>对象，调用<code>Interface</code>方法可以恢复一个接口值。实际上，<code>Interface</code>方法将Value对象的值和类型信息打包到一个接口值中并返回：</p>
+
+<pre><code>// Interface returns v's value as an interface{}.
+func (v Value) Interface() interface{}
+</code></pre>
+
+<p>接上面的例子：</p>
+
+<pre><code>y := v.Interface().(float64) // y will have type float64.
+fmt.Println(y)
+</code></pre>
+
+<p>将反射对象v代表的float64值打印。</p>
+
+<h2>如果修改一个反射对象，value必须可设置</h2>
+
+<p><code>reflect.ValueOf</code>返回的Value值，并不是所有情况下都是可修改的。下面示例：</p>
+
+<pre><code>var x float64 = 3.4
+v := reflect.ValueOf(x)
+v.SetFloat(7.1) // Error: will panic.
+</code></pre>
+
+<p>执行代码时，报如下panic错误：</p>
+
+<pre><code>panic: reflect.Value.SetFloat using unaddressable value
+</code></pre>
+
+<p>反射对象v不是可设置的。可设置是<code>reflect.Value</code>类型对象的一个属性，不是所有<code>Value</code>对象有此属性。<br/>
+Value对象<code>CanSet</code>方法返回Value对象是否可以设置，在我们的例子中：</p>
+
+<pre><code>var x float64 = 3.4
+v := reflect.ValueOf(x)
+fmt.Println("settability of v:", v.CanSet())
+</code></pre>
+
+<p>将会输出：</p>
+
+<pre><code>settability of v: false
+</code></pre>
+
+<p><code>Settability</code>是反射对象的一个属性，它反映的是是否能够修改创建这个反射对象的原对象。<code>Settability</code>由反射对象是否持有原对象决定。</p>
+
+<pre><code>var x float64 = 3.4
+v := reflect.ValueOf(x)
+</code></pre>
+
+<p>当我们执行上面代码时，根据x生成一个interface对象作为是实参调用<code>reflect.Value</code>，interface对象保存的是x值拷贝。</p>
+
+<pre><code>v.SetFloat(7.1)
+</code></pre>
+
+<p>上面代码修改的并不是x值。<br/>
+对于函数调用，如果想修改实参，那必须传递实参地址到函数中。</p>
+
+<pre><code>var x float64 = 3.4
+p := reflect.ValueOf(&amp;x) // Note: take the address of x.
+fmt.Println("type of p:", p.Type())
+fmt.Println("settability of p:", p.CanSet())
+</code></pre>
+
+<p>上面代码，我们创建了一个x地址的反射对象，代码的输出如下：</p>
+
+<pre><code>type of p: *float64
+settability of p: false
+</code></pre>
+
+<p>反射对象p是不可设置的，我们不是要修改p，而是要修改p指向的x对象。  调用<code>Elem</code>方法可以获取p所指向的原对象：</p>
+
+<pre><code>v := p.Elem()
+fmt.Println("settability of v:", v.CanSet())
+</code></pre>
+
+<p>现在v对象就是可以修改的了：</p>
+
+<pre><code>settability of v: true
+</code></pre>
+
+<p>现在v对象代表了原对象x，现在可以对v对象进行设置：</p>
+
+<pre><code>v.SetFloat(7.1)
+fmt.Println(v.Interface())
+fmt.Println(x)
+</code></pre>
+
+<p>结果输出如下：<br/>
+    7.1
+    7.1</p>
+
+<h3>Structs</h3>
+
+<p>当我们拥有struct结构体对象地址时，可以对结构体对象进行修改<br/>
+接下来是一个小的示例，使用结构体对象地址创建一个反射对象，然后使用reflect包中提供的结构体相关的方法，对结构体对象进行遍历和修改。</p>
+
+<pre><code>type T struct {
+    A int
+    B string
+}
+t := T{23, "skidoo"}
+s := reflect.ValueOf(&amp;t).Elem()
+typeOfT := s.Type()
+for i := 0; i &lt; s.NumField(); i++ {
+    f := s.Field(i)
+    fmt.Printf("%d: %s %s = %v\n", i,
+    typeOfT.Field(i).Name, f.Type(), f.Interface())
+}
+</code></pre>
+
+<p>上面代码的输出如下：</p>
+
+<pre><code>0: A int = 23
+1: B string = skidoo
+</code></pre>
+
+<p>因为s是可设置的反射对象，我们可以修改原对象的字段值：</p>
+
+<pre><code>s.Field(0).SetInt(77)
+s.Field(1).SetString("Sunset Strip")
+fmt.Println("t is now", t)
+</code></pre>
+
+<p>结果如下：</p>
+
+<pre><code>t is now {77 Sunset Strip}
+</code></pre>
+
+<h2>案例</h2>
+
+<p>参考：</p>
+
+<p>1、<a href="https://golang.org/pkg/reflect/">https://golang.org/pkg/reflect/</a>   <br/>
+2、<a href="https://blog.golang.org/laws-of-reflection">https://blog.golang.org/laws-of-reflection</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-03-06T17:44:02+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>5:44 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/" title="Previous Post: golang使用protobuf搭建rpc">&laquo; golang使用protobuf搭建rpc</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/03/06/golang-reflectjie-shao/">Golang Reflect介绍</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/">Golang使用protobuf搭建rpc</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (9)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 133%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 133%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -3,6 +3,22 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2017/03/06/golang-reflectjie-shao/</loc>
+    
+    <lastmod>2017-03-06T17:44:02+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>http://jintao-zero.github.io/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/</loc>
+    
+    <lastmod>2017-02-03T19:55:10+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/</loc>
     
     <lastmod>2017-01-18T15:26:37+08:00</lastmod>
@@ -221,14 +237,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2017-01-18T17:20:27+08:00</lastmod>
+    <lastmod>2017-03-06T20:30:52+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2017-01-18T17:20:27+08:00</lastmod>
+    <lastmod>2017-03-06T20:30:52+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

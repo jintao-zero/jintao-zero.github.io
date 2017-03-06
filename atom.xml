@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-01-18T17:20:27+08:00</updated>
+  <updated>2017-03-06T20:30:52+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,201 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Golang Reflect介绍]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/03/06/golang-reflectjie-shao/"/>
+    <updated>2017-03-06T17:44:02+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/03/06/golang-reflectjie-shao</id>
+    <content type="html"><![CDATA[<p>Golang <a href="https://golang.org/pkg/reflect/">reflect</a>包实现了运行时反射，允许程序管理任意类型对象。典型应用是使用<code>TypeOf</code>从静态类型<code>interface{}</code>中抽取动态类型信息。<br/>
+使用<code>ValueOf</code>返回一个<code>Value</code>类型变量代表运行时数据。<br/>
+<a href="https://golang.org/doc/articles/laws_of_reflection.html">The Laws of Reflection</a>介绍了Golang reflect机智中的几条规则：</p>
+
+<h2>从interface反射到对象</h2>
+
+<p>反射基本功能是用来检查interface变量中保存的<code>类型</code>和<code>数据</code>对。<a href="http://golang.org/pkg/reflect/">package reflect</a>中提供了两种类型：<a href="http://golang.org/pkg/reflect/#Type">Type</a>和<a href="http://golang.org/pkg/reflect/#Value">Value</a>。这两种类型提供了反问interface内部数据的机制。调用<code>reflect.TypeOf</code>和<code>reflect.ValueOf</code>函数分别返回<code>reflect.Type</code>和<code>reflect.Value</code>变量：</p>
+
+<pre><code>ackage main
+
+import (
+"fmt"
+"reflect"
+)
+
+func main() {
+    var x float64 = 3.4
+    fmt.Println("type:", reflect.TypeOf(x))
+}
+</code></pre>
+
+<p>程序输出如下：</p>
+
+<pre><code>type: float64
+</code></pre>
+
+<p><code>reflect.TypeOf</code>函数定义如下：</p>
+
+<pre><code>// TypeOf returns the reflection Type of the value in the interface{}.
+func TypeOf(i interface{}) Type
+</code></pre>
+
+<p>当我们调用<code>TypeOf(x)</code>时，x首先存在一个空interface中，之后作为参数，reflect.TypeOf解析参数获取实际类型。  <br/>
+调用<code>Value(x)</code>时，从接口参数中获取实参值。</p>
+
+<pre><code>var x float64 = 3.4
+fmt.Println("value:", reflect.ValueOf(x))
+</code></pre>
+
+<p>打印结果如下：</p>
+
+<pre><code>value: &lt;float64 Value&gt;
+</code></pre>
+
+<h2>从反射对象逆转回接口值</h2>
+
+<p>给定一个<code>reflect.Value</code>对象，调用<code>Interface</code>方法可以恢复一个接口值。实际上，<code>Interface</code>方法将Value对象的值和类型信息打包到一个接口值中并返回：</p>
+
+<pre><code>// Interface returns v's value as an interface{}.
+func (v Value) Interface() interface{}
+</code></pre>
+
+<p>接上面的例子：</p>
+
+<pre><code>y := v.Interface().(float64) // y will have type float64.
+fmt.Println(y)
+</code></pre>
+
+<p>将反射对象v代表的float64值打印。</p>
+
+<h2>如果修改一个反射对象，value必须可设置</h2>
+
+<p><code>reflect.ValueOf</code>返回的Value值，并不是所有情况下都是可修改的。下面示例：</p>
+
+<pre><code>var x float64 = 3.4
+v := reflect.ValueOf(x)
+v.SetFloat(7.1) // Error: will panic.
+</code></pre>
+
+<p>执行代码时，报如下panic错误：</p>
+
+<pre><code>panic: reflect.Value.SetFloat using unaddressable value
+</code></pre>
+
+<p>反射对象v不是可设置的。可设置是<code>reflect.Value</code>类型对象的一个属性，不是所有<code>Value</code>对象有此属性。<br/>
+Value对象<code>CanSet</code>方法返回Value对象是否可以设置，在我们的例子中：</p>
+
+<pre><code>var x float64 = 3.4
+v := reflect.ValueOf(x)
+fmt.Println("settability of v:", v.CanSet())
+</code></pre>
+
+<p>将会输出：</p>
+
+<pre><code>settability of v: false
+</code></pre>
+
+<p><code>Settability</code>是反射对象的一个属性，它反映的是是否能够修改创建这个反射对象的原对象。<code>Settability</code>由反射对象是否持有原对象决定。</p>
+
+<pre><code>var x float64 = 3.4
+v := reflect.ValueOf(x)
+</code></pre>
+
+<p>当我们执行上面代码时，根据x生成一个interface对象作为是实参调用<code>reflect.Value</code>，interface对象保存的是x值拷贝。</p>
+
+<pre><code>v.SetFloat(7.1)
+</code></pre>
+
+<p>上面代码修改的并不是x值。<br/>
+对于函数调用，如果想修改实参，那必须传递实参地址到函数中。</p>
+
+<pre><code>var x float64 = 3.4
+p := reflect.ValueOf(&amp;x) // Note: take the address of x.
+fmt.Println("type of p:", p.Type())
+fmt.Println("settability of p:", p.CanSet())
+</code></pre>
+
+<p>上面代码，我们创建了一个x地址的反射对象，代码的输出如下：</p>
+
+<pre><code>type of p: *float64
+settability of p: false
+</code></pre>
+
+<p>反射对象p是不可设置的，我们不是要修改p，而是要修改p指向的x对象。  调用<code>Elem</code>方法可以获取p所指向的原对象：</p>
+
+<pre><code>v := p.Elem()
+fmt.Println("settability of v:", v.CanSet())
+</code></pre>
+
+<p>现在v对象就是可以修改的了：</p>
+
+<pre><code>settability of v: true
+</code></pre>
+
+<p>现在v对象代表了原对象x，现在可以对v对象进行设置：</p>
+
+<pre><code>v.SetFloat(7.1)
+fmt.Println(v.Interface())
+fmt.Println(x)
+</code></pre>
+
+<p>结果输出如下：<br/>
+    7.1
+    7.1</p>
+
+<h3>Structs</h3>
+
+<p>当我们拥有struct结构体对象地址时，可以对结构体对象进行修改<br/>
+接下来是一个小的示例，使用结构体对象地址创建一个反射对象，然后使用reflect包中提供的结构体相关的方法，对结构体对象进行遍历和修改。</p>
+
+<pre><code>type T struct {
+    A int
+    B string
+}
+t := T{23, "skidoo"}
+s := reflect.ValueOf(&amp;t).Elem()
+typeOfT := s.Type()
+for i := 0; i &lt; s.NumField(); i++ {
+    f := s.Field(i)
+    fmt.Printf("%d: %s %s = %v\n", i,
+    typeOfT.Field(i).Name, f.Type(), f.Interface())
+}
+</code></pre>
+
+<p>上面代码的输出如下：</p>
+
+<pre><code>0: A int = 23
+1: B string = skidoo
+</code></pre>
+
+<p>因为s是可设置的反射对象，我们可以修改原对象的字段值：</p>
+
+<pre><code>s.Field(0).SetInt(77)
+s.Field(1).SetString("Sunset Strip")
+fmt.Println("t is now", t)
+</code></pre>
+
+<p>结果如下：</p>
+
+<pre><code>t is now {77 Sunset Strip}
+</code></pre>
+
+<h2>案例</h2>
+
+<p>参考：</p>
+
+<p>1、<a href="https://golang.org/pkg/reflect/">https://golang.org/pkg/reflect/</a>   <br/>
+2、<a href="https://blog.golang.org/laws-of-reflection">https://blog.golang.org/laws-of-reflection</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Golang使用protobuf搭建rpc]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/"/>
+    <updated>2017-02-03T19:55:10+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc</id>
+    <content type="html"><![CDATA[
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Go并发模型之Context]]></title>
@@ -3980,305 +4175,6 @@ void Receive(int sock, int buf_size)
 
 <p>这篇文章只是简单介绍了kevent I/O多路复用模型的简单用法，上述例子中涉及的一些细节，如错误处理等都尚须完善<br/>
 参考<a href="http://www.ibm.com/developerworks/cn/aix/library/1105_huangrg_kqueue/index.html#resources">使用 kqueue 在 FreeBSD 上开发高性能应用服务器</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Tcp server使用select进行I/O复用]]></title>
-    <link href="http://jintao-zero.github.io/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/"/>
-    <updated>2015-04-12T15:30:03+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong</id>
-    <content type="html"><![CDATA[<p>在<a href="http://jintao-zero.github.io/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">tcp服务端示例</a>中，接受一个客户端连接，调用accept函数返回后就对本客户端连接进行业务处理，如果业务逻辑比较复杂，那么服务端有可能就阻塞在某个客户端上，而不能处理其他客户端连接，解决此问题有多种模型可以采用：<br/>
-1）多进程，为每个客户端连接创建一个子进程进行处理<br/>
-2）多线程，多个线程并行处理客户端连接<br/>
-3）I/O多路复用，服务器采用单线程模型，使用I/O多路复用模型，并行处理多个客户端文件描述符<br/>
-在上一篇示例<a href="http://jintao-zero.github.io/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">tcp client 使用select进行I/O复用</a>中介绍的select函数同样适用与对tcp server端的I/O多路复用改造，改造主要设计几下几个方面：</p>
-
-<!-- more -->
-
-
-<p>1）将server监听套接字添加到readfds套接字集合中，监听套接字可读时，调用accept接受一个新的客户端连接，并将添加到readfds套接字集合中</p>
-
-<pre><code>if (FD_ISSET(sock_server, &amp;rfds)) {
-    struct sockaddr_in clientaddr;
-    socklen_t clientaddr_len = sizeof(clientaddr);
-    int clientsock = accept(sock_server, (struct sockaddr *)&amp;clientaddr, &amp;clientaddr_len);
-    if (clientsock &lt; 0) {
-        printf("accept fail. reason:%s\n", strerror(errno));
-        continue;
-    } else {
-        printf("new client connected, %s:%d \n", inet_ntoa(clientaddr.sin_addr), clientaddr.sin_port);
-        int i;
-        for (i = 0; i &lt; FD_SETSIZE; i++) {
-            if (clientfds[i] == -1) {
-                clientfds[i] = clientsock;
-                break;
-            }
-        }
-        if (i == FD_SETSIZE) {
-            printf("too many clients, ignore this one\n");
-            continue;
-        }
-        FD_SET(clientfds[i], &amp;allfds);
-        if (clientfds[i] &gt; maxfd)
-            maxfd = clientfds[i];
-    }
-}  
-</code></pre>
-
-<p>2）当每个客户端套接字可读时，对套接字调用read操作后，继续执行select判断是否有套接字可读，而不是处理一个客户端连接直到完成。</p>
-
-<pre><code>for (int i = 0; i &lt; FD_SETSIZE; i++) {
-    if (readyfds == 0)
-        break;
-    if (clientfds[i] &lt; 0)
-        continue;
-    if (FD_ISSET(clientfds[i], &amp;rfds)) {
-        readyfds--;
-        char buf[LINE_MAX];
-        ssize_t rcv_len;
-        rcv_len = recv(clientfds[i], buf, sizeof(buf), 0);
-        if (rcv_len &gt; 0) {
-            buf[rcv_len] = '\0';
-            printf("recv from client(%d), msg: %s\n", clientfds[i], buf);
-            for (int i = 0; i &lt; rcv_len; i++)
-                buf[i] = toupper(buf[i]);
-                send(clientfds[i], buf, rcv_len, 0);
-                printf("send to client:%s", buf);
-            } else if (rcv_len == 0) {
-                printf("recv_len == 0 from client:%d\n", clientfds[i]);
-                FD_CLR(clientfds[i], &amp;allfds);
-                close(clientfds[i]);
-                clientfds[i] = -1;
-            } else {
-                printf("recv from clientfd(%d) fail. reason:%s\n", clientfds[i], strerror(errno));
-                continue;
-            }
-        }
-    }
-}
-</code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Tcp Client 使用select进行I/O复用]]></title>
-    <link href="http://jintao-zero.github.io/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/"/>
-    <updated>2015-04-06T11:49:13+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong</id>
-    <content type="html"><![CDATA[<p>在<a href="http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">tcp客户端示例</a>中，存在以下两种情况时，示例代码不能更好的处理：</p>
-
-<ul>
-<li><p>目前客户端输入一条数据并发送，等待服务端返回后，才能继续输入数据
- 这样的设计不利于客户端批量处理数据</p></li>
-<li><p>当服务端出现异常（如服务进程退出或者服务端主机崩溃等异常情况），客户端也许正在等待输入，不能够及时感知到服务端的异常，只有从send返回错误时，才能感知到服务端故障</p></li>
-</ul>
-
-
-<h1>select 函数介绍</h1>
-
-<p>上面实现的客户端示例中，客户端只能处理一个描述符，我们需要修改客户端使其可以同时处理标准输入和套接字描述符，达到I/O复用：</p>
-
-<pre><code>#include &lt;sys/select.h&gt;
-#include &lt;sys/time.h&gt;
-int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict errorfds,
-     struct timeval *restrict timeout);
-</code></pre>
-
-<ul>
-<li><p>timeout参数，它告知内核等待所有描述符中的一个就绪可花多长时间<br/>
-  struct timeval {<br/>
-      long tv_sec;  /* seconds*/<br/>
-      long tv_usec; /* microseconds*/<br/>
-  }   <br/>
-  (1) 永远等待下去：仅在有一个描述符准备好时返回。为此，将timeout设置为   空指针<br/>
-  (2) 等待一段固定时间：在有一个描述符准备好I/O时返回，但是不超过由该参数所指向的timeval结构中指定的秒数和微秒数<br/>
-  (3) 根本不等待：检查描述符后立即返回，这称为轮询。为此，该参数必须指向一个timeval结构，而且其中的定时器值必须为0</p></li>
-<li><p>readfds, writefds, errorfds参数，这三个参数指定了，需要内核测试读、写     和异常条件的描述符集合。
-系统提供了以下宏来对描述符进行操作：<br/>
-void FD_CLR(fd, fd_set <em>fdset)<br/>
-void FD_COPY(fd_set </em>fdest_orig, fd_set <em>fdset_copy)<br/>
-int FD_ISSET(fd, fd_set </em>fdset)<br/>
-void FD_SET(fd, fd_set <em>fdset)<br/>
-void FD_ZERO(fd_set </em>fdset)</p></li>
-<li><p>nfds参数，指定待测试的描述符个数，它的值是待测试的最大描述符加1</p></li>
-</ul>
-
-
-<!-- more -->
-
-
-<h1>描述符就绪条件</h1>
-
-<ul>
-<li><p>满足下列四个条件中的任何一个时，一个套接字准备好读<br/>
-a) 该套接字接收缓冲区中的数据字节数大于等于套接字接收缓冲区低水位标记的当前大小。对这样的套接字执行读操作不会阻塞并将返回一个大于0的值（也就是返回准备好读入的数据）。对于TCP和UDP套接字，其默认值为1。<br/>
-b) 该连接的读半部关闭（也就是接收了FIN的TCP连接）。对这样的套接字的读操作将不阻塞并返回0（也就是返回EOF）<br/>
-c) 该套接字是一个监听套接字且已完成的连接数大于0。对于这样的套接字调用accept通常不会阻塞。  <br/>
-d) 其上有一个套接字错误待处理。对这样的套接字的读操作将不阻塞并返回－1（也就是返回一个错误），同时把errno设置成确切的错误条件。</p></li>
-<li><p>下列四个条件中的任何一个满足时，一个套接字准备好写。<br/>
-a) 该套接字发送缓冲区中的可用空间字节数大于等于套接字发送缓冲区低水位表姐的当前大小，并且或者该套接字已连接，或者该套接字不需要连接（如UDP套接字）。  <br/>
-b) 该连接的写半部关闭。对这样的套接字的写操作将产生SIGPIPE信号。<br/>
-c) 使用非阻塞式connect的套接字已建立连接，或者connect已经以失败告终。<br/>
-d) 其上有一个套接字错误待处理。</p></li>
-<li>如果一个套接字存在带外数据或者仍处于带外标记，那么它有异常条件待处理。</li>
-</ul>
-
-
-<h1>修改tcp客户端程序</h1>
-
-<ul>
-<li><p>批量输入<br/>
-a) 用户输入数据，标准输入可读，read返回读入字节数，发送到服务器<br/>
-b) 用户输入Ctrl-D时，标准输入可读，read返回字节数为0，此时关闭套接字写端</p></li>
-<li><p>套接字增加处理情况：
-a) 如果对端TCP发送数据，那么该套接字变为可读，并且read返回一个大于0的值（即读入数据的字节数）。<br/>
-b) 如果对端TCP发送一个FIN（对端进程终止），那么该套接字变为可读，并且read返回0（EOF）。<br/>
-c) 如果对端TCP发送一个RST（对端主机崩溃并重新启动），那么该套接字变为可读，并且read返回－1，而errno中含有确切的错误码。</p></li>
-</ul>
-
-
-<p>以下是相关修改：<br/>
-1、将标准输入、套接字添加到客服描述符集合</p>
-
-<pre><code>fd_set readfds;
-FD_ZERO(&amp;readfds);
-FD_SET(sock_client, &amp;readfds);
-FD_SET(STDIN_FILENO, &amp;readfds);
-int maxfd = (STDIN_FILENO &gt; sock_client ? STDIN_FILENO: sock_client) + 1;
-select(maxfd, &amp;readfds, NULL, NULL, NULL)
-</code></pre>
-
-<p>2、标准输入可读</p>
-
-<pre><code>if (FD_ISSET(STDIN_FILENO , &amp;readfds)) {
-    ssize_t rd_size = read(STDIN_FILENO , buf, sizeof(buf));
-    if (rd_size &gt; 0) {
-        ssize_t sd_size = send(sock_client, buf, rd_size, 0);
-        buf[rd_size] = '\0';
-        printf("send msg(len:%ld):%s to server \n", sd_size, buf);
-    } else if (rd_size == 0) {
-    // client finish send msg to server, we close write part of the full-duplex connection
-        shutdown(sock_client, SHUT_WR); // send FIN to server
-        stdineof = 1;
-        continue;
-    } else {
-    // client finish send msg to server, we close write part of the full-duplex connection
-        printf("read fail from console, reason:%s \n", strerror(errno));
-        break;
-    }
-}  
-</code></pre>
-
-<p>3、套接字可读</p>
-
-<pre><code>if (FD_ISSET(sock_client, &amp;readfds)) {
-    ssize_t rd_size = read(sock_client, buf, sizeof(buf));
-    if (rd_size &gt; 0) {
-        printf("receive from server:%s", buf);
-    } else if (rd_size == 0) { // client receive FIN
-            printf("receive 0 from server\n");
-            if (stdineof == 1) {
-                printf("normal finish\n");
-            } else {// server crash and reset, client receive RST
-                printf("server terminate prematurely\n");
-            }
-            break;
-        } else {
-            printf("read fail.reason: %s\n", strerror(errno));
-            break;
-        }
-    }
-}
-</code></pre>
-
-<p>下面是使用select进行I/O复用的tcp客户端代码：</p>
-
-<pre><code>int main(int argc, char *argv[])
-{
-    // judge the legal arguments
-    if (2 &gt; argc) {
-        printf("please input a hostname \n");
-        return -1;
-    }
-
-// create a socket
-    int sock_client = socket(AF_INET, SOCK_STREAM, 0);
-    if (0 &gt; sock_client) {
-        perror("create socket error");
-        return -1;
-    }
-
-
-    // construct server sockaddr
-        struct hostent *p = gethostbyname(argv[1]);
-        if (p == NULL) {
-            printf("gethostbyname:%s fail.reason:%s \n", argv[1], strerror(errno));
-            return -1;
-        }
-        struct sockaddr_in servaddr;
-        bzero(&amp;servaddr, sizeof(servaddr));
-        servaddr.sin_family = AF_INET;
-        servaddr.sin_addr = *(struct in_addr *)p-&gt;h_addr;
-        servaddr.sin_port = htons(SERVER_PORT);
-
-        // connect to server
-        if (connect(sock_client, (struct sockaddr *)&amp;servaddr, sizeof(servaddr)) == -1) {
-            printf("connect to server:%s port:%d fail.reason:%s \n", inet_ntoa(servaddr.sin_addr), SERVER_PORT,
-                strerror(errno));
-            return -1;
-        }
-        printf("connect to server:%s port:%d success\n", inet_ntoa(servaddr.sin_addr), SERVER_PORT );
-
-
-        int stdineof = 0;
-        for (; ; ) {
-            fd_set readfds;
-            FD_ZERO(&amp;readfds);
-            FD_SET(sock_client, &amp;readfds);
-            if (stdineof == 0)
-                FD_SET(STDIN_FILENO, &amp;readfds);
-            int maxfd = (STDIN_FILENO &gt; sock_client ? STDIN_FILENO: sock_client) + 1;
-            if (select(maxfd, &amp;readfds, NULL, NULL, NULL) &gt; 0) {
-                char buf[LINE_MAX]={0};
-                if (FD_ISSET(STDIN_FILENO , &amp;readfds)) {
-                    ssize_t rd_size = read(STDIN_FILENO , buf, sizeof(buf));
-                    if (rd_size &gt; 0) {
-                        ssize_t sd_size = send(sock_client, buf, rd_size, 0);
-                        buf[rd_size] = '\0';
-                        printf("send msg(len:%ld):%s to server \n", sd_size, buf);
-                    } else if (rd_size == 0) {
-                        // client finish send msg to server, we close write part of the full-duplex connection
-                        shutdown(sock_client, SHUT_WR); // send FIN to server
-                        stdineof = 1;
-                        continue;
-                    } else {
-                        // client finish send msg to server, we close write part of the full-duplex connection
-                        printf("read fail from console, reason:%s \n", strerror(errno));
-                        break;
-                    }
-                } else if (FD_ISSET(sock_client, &amp;readfds)) {
-                    ssize_t rd_size = read(sock_client, buf, sizeof(buf));
-                    if (rd_size &gt; 0) {
-                        printf("receive from server:%s", buf);
-                    } else if (rd_size == 0) { // client receive FIN
-                        printf("receive 0 from server\n");
-                        if (stdineof == 1) {
-                            printf("normal finish\n");
-                        } else {// server crash and reset, client receive RST
-                            printf("server terminate prematurely\n");
-                        }
-                        break;
-                    } else {
-                        printf("read fail.reason: %s\n", strerror(errno));
-                        break;
-                    }
-                }
-            }
-        }
-        close(sock_client);
-    }
-</code></pre>
 ]]></content>
   </entry>
   
