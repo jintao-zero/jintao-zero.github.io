@@ -40,7 +40,9 @@ Golang [reflect](https://golang.org/pkg/reflect/)包实现了运行时反射，�
 打印结果如下：  
 	
 	value: <float64 Value>
-	
+
+<!-- more -->	
+
 ##从反射对象逆转回接口值
 给定一个`reflect.Value`对象，调用`Interface`方法可以恢复一个接口值。实际上，`Interface`方法将Value对象的值和类型信息打包到一个接口值中并返回：  
 	
