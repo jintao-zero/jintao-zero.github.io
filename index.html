@@ -9,9 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Golang reflect包实现了运行时反射，允许程序管理任意类型对象。典型应用是使用TypeOf从静态类型interface{}中抽取动态类型信息。
-使用ValueOf返回一个Value类型变量代表运行时数据。
-The Laws of Reflection介绍了Golang &hellip;">
+  <meta name="description" content="Golang语言提供了正常的流程控制：if、for、switch和goto。还提供了go表达式创建goroutine协程。接下来将要介绍的是：defer、panic和recovery defer defer表达式将一个函数放到一个list中。包裹defer函数的函数return时， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -69,6 +67,119 @@ The Laws of Reflection介绍了Golang &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-07T11:08:41+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>11:08 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Golang语言提供了正常的流程控制：if、for、switch和goto。还提供了go表达式创建goroutine协程。接下来将要介绍的是：<code>defer</code>、<code>panic</code>和<code>recovery</code></p>
+
+<h2>defer</h2>
+
+<p>defer表达式将一个函数放到一个list中。包裹defer函数的函数return时，这个defer函数将会被执行。<code>Defer</code>通常被用来简化资源清理动作。  <br/>
+下面的代码片段，完成的功能是打开两个文件，将一个文件的内容拷贝到另外一个文件中：</p>
+
+<pre><code>func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+
+    written, err = io.Copy(dst, src)
+    dst.Close()
+    src.Close()
+    return
+}
+</code></pre>
+
+<p>这个片段有bug。当调用os.Createa失败时，函数返回，但是没有将已经打开的源文件关闭。在第二个return语句之前执行src.Close可以修复bug。但是如果存在多个资源需要关闭或者多个return语句时，这样就比较繁琐。使用defer表达式，可以方便确保资源关闭：</p>
+
+<pre><code>func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+    defer src.Close()
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+    defer dst.Close()
+
+    return io.Copy(dst, src)
+}
+</code></pre>
+
+<p>Defer表达式会提醒我们在打开文件之后关闭资源，并且确保无论多少return语句都会将资源关闭。<br/>
+defer表达式的行为是简单和可预测的。下面有三条简单规则：</p>
+
+<ol>
+<li><p>注册defer函数时，计算deferred函数的参数
+下面的例子中，defer表达式注册fmt.Println函数时确定了入参为0，下面函数执行return语句时，fmt.Println将会打印出0</p>
+
+<pre><code>  func a() {
+      i := 0
+      defer fmt.Println(i)
+      i++
+      return
+  }
+</code></pre></li>
+<li><p>注册函数按照先进后出的的顺序进行执行</p>
+
+<pre><code> func b() {
+     for i := 0; i &lt; 4; i++ {
+         defer fmt.Print(i)
+      }
+ }
+</code></pre>
+
+<p> 打印结果是“3210”</p></li>
+<li><p>Deferred函数可以读写包裹函数的命名返回值
+下面的例子中，包裹函数返回后，deferred函数修改了命名返回值i。因此，包裹函数的返回值为2</p>
+
+<pre><code>  func c() (i int) {
+      defer func() { i++ }()
+      return 1
+  }
+</code></pre>
+
+<p>  这个特点可以用来修改函数返回的error返回值</p></li>
+</ol>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -666,68 +777,6 @@ zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2016/03/06/mapreduce-wordcountshi-li/">MapReduce WordCount实例</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2016-03-06T15:08:34+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>3:08 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>搭建开发环境，开发mapreduce job程序，部署mapreduce程序。</p>
-
-<h1>开发环境搭建</h1>
-
-<p>开发mapreduce程序的环境有可能与运行环境不同，我是Windows环境上开发mapreduce job程序，编译没有错误后，打包放到hadoop集群中调试和运行。这样就要求开发环境依赖的jar包，在hadoop集群环境中存在并且版本一致。<br/>
-我的开发环境是Windows＋eclipse＋maven，hadoop集群环境上部署的版本号为：</p>
-
-<pre><code>jintao@node0:~/Project$ hadoop  version
-Hadoop 2.7.1
-Subversion https://git-wip-us.apache.org/repos/asf/hadoop.git -r 15ecc87ccf4a0228f35af08fc56de536e6ce657a
-Compiled by jenkins on 2015-06-29T06:04Z
-Compiled with protoc 2.5.0
-From source with checksum fc0a1a23fc1868e4d5ee7fa2b28a58a
-This command was run using /usr/local/hadoop-2.7.1/share/hadoop/common/hadoop-common-2.7.1.jar
-</code></pre>
-
-<p>maven配置文件pom.xml的配置如下：</p>
-
-<pre><code>&lt;dependencies&gt;
-&lt;dependency&gt;
-    &lt;groupId&gt;org.apache.hadoop&lt;/groupId&gt;
-    &lt;artifactId&gt;hadoop-client&lt;/artifactId&gt;
-    &lt;version&gt;2.7.1&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;/dependencies&gt;
-</code></pre>
-
-<p>maven工程会自动将依赖的jar下载到build path中。<br/>
-你也可以建立一个普通java工程，手动将依赖的jar添加到build path中，这样需要找依赖的jar，比较麻烦，但是可以让新手更快的了解mapreduce相关类分布情况。</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2016/03/06/mapreduce-wordcountshi-li/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -741,6 +790,10 @@ This command was run using /usr/local/hadoop-2.7.1/share/hadoop/common/hadoop-co
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/03/06/golang-reflectjie-shao/">Golang Reflect介绍</a>
@@ -758,10 +811,6 @@ This command was run using /usr/local/hadoop-2.7.1/share/hadoop/common/hadoop-co
         <a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -773,7 +822,7 @@ This command was run using /usr/local/hadoop-2.7.1/share/hadoop/common/hadoop-co
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/program/'>program (9)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (10)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
  </ul>
@@ -782,17 +831,17 @@ This command was run using /usr/local/hadoop-2.7.1/share/hadoop/common/hadoop-co
 <h1>Tags</h1>
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
-<a style="font-size: 133%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 130%" href="/blog/tags/devops/">DevOps</a>
 <a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
-<a style="font-size: 133%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 130%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
 <a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
-<a style="font-size: 210%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 202%" href="/blog/tags/network/">Network</a>
 <a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
-<a style="font-size: 133%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 130%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
-<a style="font-size: 133%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 130%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 
 </ul>

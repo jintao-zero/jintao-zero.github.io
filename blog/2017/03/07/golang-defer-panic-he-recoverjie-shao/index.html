@@ -1,0 +1,446 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Golang Defer Panic 和Recover介绍 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="Golang语言提供了正常的流程控制：if、for、switch和goto。还提供了go表达式创建goroutine协程。接下来将要介绍的是：defer、panic和recovery defer defer表达式将一个函数放到一个list中。包裹defer函数的函数return时， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Golang Defer Panic 和Recover介绍</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-07T11:08:41+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>11:08 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Golang语言提供了正常的流程控制：if、for、switch和goto。还提供了go表达式创建goroutine协程。接下来将要介绍的是：<code>defer</code>、<code>panic</code>和<code>recovery</code></p>
+
+<h2>defer</h2>
+
+<p>defer表达式将一个函数放到一个list中。包裹defer函数的函数return时，这个defer函数将会被执行。<code>Defer</code>通常被用来简化资源清理动作。  <br/>
+下面的代码片段，完成的功能是打开两个文件，将一个文件的内容拷贝到另外一个文件中：</p>
+
+<pre><code>func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+
+    written, err = io.Copy(dst, src)
+    dst.Close()
+    src.Close()
+    return
+}
+</code></pre>
+
+<p>这个片段有bug。当调用os.Createa失败时，函数返回，但是没有将已经打开的源文件关闭。在第二个return语句之前执行src.Close可以修复bug。但是如果存在多个资源需要关闭或者多个return语句时，这样就比较繁琐。使用defer表达式，可以方便确保资源关闭：</p>
+
+<pre><code>func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+    defer src.Close()
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+    defer dst.Close()
+
+    return io.Copy(dst, src)
+}
+</code></pre>
+
+<p>Defer表达式会提醒我们在打开文件之后关闭资源，并且确保无论多少return语句都会将资源关闭。<br/>
+defer表达式的行为是简单和可预测的。下面有三条简单规则：</p>
+
+<ol>
+<li><p>注册defer函数时，计算deferred函数的参数
+下面的例子中，defer表达式注册fmt.Println函数时确定了入参为0，下面函数执行return语句时，fmt.Println将会打印出0</p>
+
+<pre><code>  func a() {
+      i := 0
+      defer fmt.Println(i)
+      i++
+      return
+  }
+</code></pre></li>
+<li><p>注册函数按照先进后出的的顺序进行执行</p>
+
+<pre><code> func b() {
+     for i := 0; i &lt; 4; i++ {
+         defer fmt.Print(i)
+      }
+ }
+</code></pre>
+
+<p> 打印结果是“3210”</p></li>
+<li><p>Deferred函数可以读写包裹函数的命名返回值
+下面的例子中，包裹函数返回后，deferred函数修改了命名返回值i。因此，包裹函数的返回值为2</p>
+
+<pre><code>  func c() (i int) {
+      defer func() { i++ }()
+      return 1
+  }
+</code></pre>
+
+<p>  这个特点可以用来修改函数返回的error返回值</p></li>
+</ol>
+
+
+<!-- more -->
+
+
+<h2>Panic</h2>
+
+<p><code>panic</code>是Golang内建函数，它会停止当前流程，开始<code>panicking</code>。当函数F调用panic时，F将会停止执行正常流程，执行F函数中注册的defer函数，然后F函数返回。对于F函数的调用函数，F函数表现为panic。F函数的调用函数按照F函数panic时的行为一样，执行deferred函数后返回，这样沿着沿着调用栈，直到最上层，之后程序崩溃。<code>Panic</code>可以由程序调用<code>panic</code>函数后触发，也会有运行时错误触发，比如slice越界访问。</p>
+
+<h2>Recover</h2>
+
+<p><code>recover</code>内建函数，可以用来从处于<code>panic</code>状态的goroutine中重新获取控制。<code>recover</code>只有在defer函数中才有用。在正常状态下，调用recover函数返回nil，不会有其他作用。如果当前goroutine处于<code>panicking</code>状态，那么调用<code>recover</code>函数，可以获取<code>panic</code>函数的参数，并终止<code>panicking</code>状态，进入正常状态。
+下面的例子演示如何利用<code>defer</code>、<code>panic</code>和<code>recover</code>：</p>
+
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+    f()
+    fmt.Println("Returned normally from f.")
+}
+
+func f() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Recovered in f", r)
+        }
+    }()
+    fmt.Println("Calling g.")
+    g(0)
+    fmt.Println("Returned normally from g.")
+}
+
+func g(i int) {
+    if i &gt; 3 {
+    fmt.Println("Panicking!")
+        panic(fmt.Sprintf("%v", i))
+    }
+    defer fmt.Println("Defer in g", i)
+    fmt.Println("Printing in g", i)
+    g(i + 1)
+}
+</code></pre>
+
+<p>程序输出如下：</p>
+
+<pre><code>Calling g.
+Printing in g 0
+Printing in g 1
+Printing in g 2
+Printing in g 3
+Panicking!
+Defer in g 3
+Defer in g 2
+Defer in g 1
+Defer in g 0
+Recovered in f 4
+Returned normally from f.
+</code></pre>
+
+<p>如果我们删除F函数中的defer函数，那么panic将不会得到恢复，一直到到goroutine调用栈的最顶层，终止程序执行。这样程序的输出如下：</p>
+
+<pre><code>Calling g.
+Printing in g 0
+Printing in g 1
+Printing in g 2
+Printing in g 3
+Panicking!
+Defer in g 3
+Defer in g 2
+Defer in g 1
+Defer in g 0
+panic: 4
+
+panic PC=0x2a9cd8
+[stack trace omitted]
+</code></pre>
+
+<h2>实践</h2>
+
+<p>使用<code>defer</code>和<code>recover</code>构造一个带recover的goroutine包裹函数</p>
+
+<pre><code>func defaultPanicHandler(e interface{}) {
+    fmt.Println(e)
+    debug.PrintStack()
+    // log here
+}
+
+var PanicHandler func(interface{}) = defaultPanicHandler
+
+func withRecover(fn func()) {
+    defer func() {
+        handler := PanicHandler
+        if handler != nil {
+            if err := recover(); err != nil {
+                handler(err)
+            }
+        }
+    }()
+    fn()
+}
+
+func main () {
+    go withRecover(
+        func () {
+            fmt.Println("aaaa")
+            panic("panicking")
+        }
+    )
+    for {
+        time.Sleep(3 * time.Second)
+    }
+}
+</code></pre>
+
+<p>参考：</p>
+
+<ol>
+<li><a href="https://blog.golang.org/defer-panic-and-recover">https://blog.golang.org/defer-panic-and-recover</a></li>
+</ol>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-03-07T11:08:41+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>11:08 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/03/06/golang-reflectjie-shao/" title="Previous Post: Golang Reflect介绍">&laquo; Golang Reflect介绍</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/03/06/golang-reflectjie-shao/">Golang Reflect介绍</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/">Golang使用protobuf搭建rpc</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (10)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 130%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 130%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 202%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 130%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 130%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

@@ -4,7 +4,7 @@
   <title><![CDATA[Tag: Golang | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/tags/golang/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-03-06T20:33:30+08:00</updated>
+  <updated>2017-03-07T15:41:26+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,215 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Golang Defer Panic 和Recover介绍]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/"/>
+    <updated>2017-03-07T11:08:41+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao</id>
+    <content type="html"><![CDATA[<p>Golang语言提供了正常的流程控制：if、for、switch和goto。还提供了go表达式创建goroutine协程。接下来将要介绍的是：<code>defer</code>、<code>panic</code>和<code>recovery</code></p>
+
+<h2>defer</h2>
+
+<p>defer表达式将一个函数放到一个list中。包裹defer函数的函数return时，这个defer函数将会被执行。<code>Defer</code>通常被用来简化资源清理动作。  <br/>
+下面的代码片段，完成的功能是打开两个文件，将一个文件的内容拷贝到另外一个文件中：</p>
+
+<pre><code>func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+
+    written, err = io.Copy(dst, src)
+    dst.Close()
+    src.Close()
+    return
+}
+</code></pre>
+
+<p>这个片段有bug。当调用os.Createa失败时，函数返回，但是没有将已经打开的源文件关闭。在第二个return语句之前执行src.Close可以修复bug。但是如果存在多个资源需要关闭或者多个return语句时，这样就比较繁琐。使用defer表达式，可以方便确保资源关闭：</p>
+
+<pre><code>func CopyFile(dstName, srcName string) (written int64, err error) {
+    src, err := os.Open(srcName)
+    if err != nil {
+        return
+    }
+    defer src.Close()
+
+    dst, err := os.Create(dstName)
+    if err != nil {
+        return
+    }
+    defer dst.Close()
+
+    return io.Copy(dst, src)
+}
+</code></pre>
+
+<p>Defer表达式会提醒我们在打开文件之后关闭资源，并且确保无论多少return语句都会将资源关闭。<br/>
+defer表达式的行为是简单和可预测的。下面有三条简单规则：</p>
+
+<ol>
+<li><p>注册defer函数时，计算deferred函数的参数
+下面的例子中，defer表达式注册fmt.Println函数时确定了入参为0，下面函数执行return语句时，fmt.Println将会打印出0</p>
+
+<pre><code>  func a() {
+      i := 0
+      defer fmt.Println(i)
+      i++
+      return
+  }
+</code></pre></li>
+<li><p>注册函数按照先进后出的的顺序进行执行</p>
+
+<pre><code> func b() {
+     for i := 0; i &lt; 4; i++ {
+         defer fmt.Print(i)
+      }
+ }
+</code></pre>
+
+<p> 打印结果是“3210”</p></li>
+<li><p>Deferred函数可以读写包裹函数的命名返回值
+下面的例子中，包裹函数返回后，deferred函数修改了命名返回值i。因此，包裹函数的返回值为2</p>
+
+<pre><code>  func c() (i int) {
+      defer func() { i++ }()
+      return 1
+  }
+</code></pre>
+
+<p>  这个特点可以用来修改函数返回的error返回值</p></li>
+</ol>
+
+
+<!-- more -->
+
+
+<h2>Panic</h2>
+
+<p><code>panic</code>是Golang内建函数，它会停止当前流程，开始<code>panicking</code>。当函数F调用panic时，F将会停止执行正常流程，执行F函数中注册的defer函数，然后F函数返回。对于F函数的调用函数，F函数表现为panic。F函数的调用函数按照F函数panic时的行为一样，执行deferred函数后返回，这样沿着沿着调用栈，直到最上层，之后程序崩溃。<code>Panic</code>可以由程序调用<code>panic</code>函数后触发，也会有运行时错误触发，比如slice越界访问。</p>
+
+<h2>Recover</h2>
+
+<p><code>recover</code>内建函数，可以用来从处于<code>panic</code>状态的goroutine中重新获取控制。<code>recover</code>只有在defer函数中才有用。在正常状态下，调用recover函数返回nil，不会有其他作用。如果当前goroutine处于<code>panicking</code>状态，那么调用<code>recover</code>函数，可以获取<code>panic</code>函数的参数，并终止<code>panicking</code>状态，进入正常状态。
+下面的例子演示如何利用<code>defer</code>、<code>panic</code>和<code>recover</code>：</p>
+
+<pre><code>package main
+
+import "fmt"
+
+func main() {
+    f()
+    fmt.Println("Returned normally from f.")
+}
+
+func f() {
+    defer func() {
+        if r := recover(); r != nil {
+            fmt.Println("Recovered in f", r)
+        }
+    }()
+    fmt.Println("Calling g.")
+    g(0)
+    fmt.Println("Returned normally from g.")
+}
+
+func g(i int) {
+    if i &gt; 3 {
+    fmt.Println("Panicking!")
+        panic(fmt.Sprintf("%v", i))
+    }
+    defer fmt.Println("Defer in g", i)
+    fmt.Println("Printing in g", i)
+    g(i + 1)
+}
+</code></pre>
+
+<p>程序输出如下：</p>
+
+<pre><code>Calling g.
+Printing in g 0
+Printing in g 1
+Printing in g 2
+Printing in g 3
+Panicking!
+Defer in g 3
+Defer in g 2
+Defer in g 1
+Defer in g 0
+Recovered in f 4
+Returned normally from f.
+</code></pre>
+
+<p>如果我们删除F函数中的defer函数，那么panic将不会得到恢复，一直到到goroutine调用栈的最顶层，终止程序执行。这样程序的输出如下：</p>
+
+<pre><code>Calling g.
+Printing in g 0
+Printing in g 1
+Printing in g 2
+Printing in g 3
+Panicking!
+Defer in g 3
+Defer in g 2
+Defer in g 1
+Defer in g 0
+panic: 4
+
+panic PC=0x2a9cd8
+[stack trace omitted]
+</code></pre>
+
+<h2>实践</h2>
+
+<p>使用<code>defer</code>和<code>recover</code>构造一个带recover的goroutine包裹函数</p>
+
+<pre><code>func defaultPanicHandler(e interface{}) {
+    fmt.Println(e)
+    debug.PrintStack()
+    // log here
+}
+
+var PanicHandler func(interface{}) = defaultPanicHandler
+
+func withRecover(fn func()) {
+    defer func() {
+        handler := PanicHandler
+        if handler != nil {
+            if err := recover(); err != nil {
+                handler(err)
+            }
+        }
+    }()
+    fn()
+}
+
+func main () {
+    go withRecover(
+        func () {
+            fmt.Println("aaaa")
+            panic("panicking")
+        }
+    )
+    for {
+        time.Sleep(3 * time.Second)
+    }
+}
+</code></pre>
+
+<p>参考：</p>
+
+<ol>
+<li><a href="https://blog.golang.org/defer-panic-and-recover">https://blog.golang.org/defer-panic-and-recover</a></li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Golang Reflect介绍]]></title>
@@ -715,208 +924,6 @@ MAINFILE(.exe)   from go build MAINFILE.go
 
 <p>参考：<br/>
 <a href="https://golang.org/pkg/net/http/pprof/">Golang官博</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[golang创建、解压.tar.gz文件简单库]]></title>
-    <link href="http://jintao-zero.github.io/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/"/>
-    <updated>2017-01-05T19:17:06+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian</id>
-    <content type="html"><![CDATA[<p>golang提供了<code>tar</code>包和<code>compress/gzip</code>包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。</p>
-
-<h2>tar打包功能</h2>
-
-<p>利用tar中<code>Writer</code>和<code>Reader</code>可以实现将文件和文件夹进行打包的功能。</p>
-
-<h3>打包</h3>
-
-<p>创建目标文件</p>
-
-<pre><code>f, err := os.Create(dstPath)
-</code></pre>
-
-<p>创建<code>Writer</code></p>
-
-<pre><code>tw := tar.NewWriter(f)
-</code></pre>
-
-<p>循环遍历文件夹，写入Writer</p>
-
-<pre><code>fileInfo, err := os.Stat(path)
-if err != nil {
-    return err
-}
-if fileInfo.Mode().IsRegular() {
-    header, err := tar.FileInfoHeader(fileInfo, "")
-    if err != nil {
-        return err
-    }
-    header.Name = path
-    if err = tw.WriteHeader(header); err != nil {
-        return err
-    }
-    file, err := os.Open(path)
-    if err != nil {
-        return err
-    }
-    if _, err = io.Copy(tw, file); err != nil {
-        return err
-    }
-}
-
-if fileInfo.Mode().IsDir() {
-    // tar each file and dir in the dir
-    var file *os.File
-    if file, err = os.Open(path); err != nil {
-        return err
-    }
-    fileInfos, err := file.Readdir(0)
-    if err != nil {
-        return err
-    }
-    for _, info := range fileInfos {
-        if err = tarPath(filepath.Join(path, info.Name()), tw); err != nil {
-            return err
-        }
-    }
-}
-</code></pre>
-
-<!-- more -->
-
-
-<h3>解包</h3>
-
-<p>打开源文件</p>
-
-<pre><code>tarFile, err := os.Open(srcPath)
-</code></pre>
-
-<p>创建Reader</p>
-
-<pre><code>tr := tar.NewReader(tarFile)
-</code></pre>
-
-<p>循环遍历解压文件</p>
-
-<pre><code>for {
-    hdr, err := tr.Next()
-    if err == io.EOF {
-        break
-    }
-    fullPath := filepath.Join(dstPath, hdr.Name)
-    os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
-    log.Println("fullPath", fullPath)
-    file, err := os.Create(fullPath)
-    if err != nil {
-        return err
-    }
-    if _, err := io.Copy(file, tr); err != nil {
-        return err
-    }
-    file.Close()
-}
-</code></pre>
-
-<h2>Gzip压缩功能</h2>
-
-<h3>压缩</h3>
-
-<p>创建目标文件</p>
-
-<pre><code>dstFile, err := os.Create(dstPath)
-</code></pre>
-
-<p>创建Writer</p>
-
-<pre><code>gw := gzip.NewWriter(dstFile)
-</code></pre>
-
-<p>将源内容写入Writer</p>
-
-<pre><code>if _, err = io.Copy(gw, srcFile); err != nil {
-    return err
-}
-</code></pre>
-
-<h3>解压</h3>
-
-<p>打开源文件</p>
-
-<pre><code>srcFile, err := os.Open(srcPath)
-</code></pre>
-
-<p>创建Reader</p>
-
-<pre><code>gr, err := gzip.NewReader(srcFile)
-</code></pre>
-
-<p>进行解压</p>
-
-<pre><code>if _, err = io.Copy(dstFile, gr); err != nil {
-    return err
-}
-</code></pre>
-
-<h2>.tar.gz文件</h2>
-
-<p>将上面tar包进行打包和解包湿的的<code>io.Writer</code>和 <code>io.Reader</code>实参传入<code>gzip.Writer</code>和<code>gzip.Reader</code> ，即可将打包的目的文件进行压缩和解包时的源文件进行解压</p>
-
-<h3>打包压缩</h3>
-
-<pre><code>func Targz(srcPath, dstPath string) error {
-dstFile, err := os.Create(dstPath)
-if err != nil {
-    return err
-}
-defer dstFile.Close()
-gw := gzip.NewWriter(dstFile)
-defer gw.Close()
-tw := tar.NewWriter(gw)
-defer tw.Close()
-if err = tarPath(srcPath, tw); err != nil {
-    dstFile.Close()
-    os.Remove(dstPath)
-    return err
-}
-return nil
-</code></pre>
-
-<p>}</p>
-
-<h3>解压解包</h3>
-
-<pre><code>srcFile, err := os.Open(srcPath)
-if err != nil {
-    return err
-}
-gr, err := gzip.NewReader(srcFile)
-if err != nil {
-    return err
-}
-tr := tar.NewReader(gr)
-for {
-    hdr, err := tr.Next()
-    if err == io.EOF {
-        break
-    }
-    fullPath := filepath.Join(dstPath, hdr.Name)
-    os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
-    file, err := os.Create(fullPath)
-    if err != nil {
-        return err
-    }
-    if _, err := io.Copy(file, tr); err != nil {
-        return err
-    }
-    file.Close()
-}
-</code></pre>
-
-<h3>备注</h3>
-
-<p>完整源代码请参考<a href="https://github.com/jintao-zero/targz">targz</a></p>
 ]]></content>
   </entry>
   
