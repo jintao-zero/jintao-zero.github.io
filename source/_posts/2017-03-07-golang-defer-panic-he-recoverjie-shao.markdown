@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Golang Defer Panic 和Recover介绍"
+title: "Golang Defer Panic 和Recover介绍和实践"
 date: 2017-03-07 11:08:41 +0800
 comments: true
 categories: program
