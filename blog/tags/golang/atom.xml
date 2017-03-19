@@ -4,7 +4,7 @@
   <title><![CDATA[Tag: Golang | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/tags/golang/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-03-07T15:41:26+08:00</updated>
+  <updated>2017-03-19T17:32:53+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Golang Defer Panic 和Recover介绍]]></title>
+    <title type="html"><![CDATA[Golang Defer Panic 和Recover介绍和实践]]></title>
     <link href="http://jintao-zero.github.io/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/"/>
     <updated>2017-03-07T11:08:41+08:00</updated>
     <id>http://jintao-zero.github.io/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao</id>

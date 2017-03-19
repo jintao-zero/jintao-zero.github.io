@@ -9,7 +9,22 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Golang语言提供了正常的流程控制：if、for、switch和goto。还提供了go表达式创建goroutine协程。接下来将要介绍的是：defer、panic和recovery defer defer表达式将一个函数放到一个list中。包裹defer函数的函数return时， &hellip;">
+  <meta name="description" content="定义Message类型
+标量值类型
+默认值
+枚举
+使用其他消息类型
+嵌套类型
+更新消息类型
+未知字段
+Any
+Oneof
+Maps
+包
+服务
+json
+选项
+生成代码 这个指导文档如何使用protocol buffer语言结构化你的protocol buffer数据，包括. &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -73,7 +88,81 @@
       
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍</a></h1>
+      <h1 class="entry-title"><a href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Protocol-buffers Proto3 翻译</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-12T18:09:36+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>6:09 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><ul>
+<li><a href="#message">定义Message类型</a></li>
+<li><a href="#type">标量值类型</a></li>
+<li><a href="#default">默认值</a></li>
+<li><a href="#enum">枚举</a></li>
+<li><a href="#other_message">使用其他消息类型</a></li>
+<li><a href="#nested">嵌套类型</a></li>
+<li><a href="#update">更新消息类型</a></li>
+<li><a href="#unknown">未知字段</a></li>
+<li><a href="#any">Any</a></li>
+<li><a href="#oneof">Oneof</a></li>
+<li><a href="#maps">Maps</a></li>
+<li><a href="#packages">包</a></li>
+<li><a href="#services">服务</a></li>
+<li><a href="#json">json</a></li>
+<li><a href="#options">选项</a></li>
+<li><a href="#protoc">生成代码</a></li>
+</ul>
+
+
+<p>这个指导文档如何使用protocol buffer语言结构化你的protocol buffer数据，包括<code>.proto</code>文件语法和如何根据<code>.proto</code>文件生成代码访问数据。本文主要描述<code>proto3</code>版本。  <br/>
+本文是参考文档，如果需要例子的话可以访问，你选择语言相关的<a href="https://developers.google.com/protocol-buffers/docs/tutorials">入门指导</a></p>
+
+<h2><a name="message"></a>Message定义</h2>
+
+<p>一个简单例子。下面定义一个搜索请求消息格式，这个消息包含一个查询字符串，包含一个搜索结果页码，和每页包含搜索结果数。下面是该消息<code>.proto</code>文件：</p>
+
+<pre><code>syntax = "proto3";
+
+message SearchRequest {
+    string query = 1;
+    int32 page_number = 2;
+    int32 result_per_page = 3;
+}
+</code></pre>
+
+<ul>
+<li>第一行说明正在使用<code>proto3</code>语法：如果不指定proto版本，protocol buffer编译器默认认为正在使用<code>proto2</code>。这行语句必须是第一条非空、非注释语句。</li>
+<li><code>SearchRequest</code>消息包含三个字段。每个字段有都有一个名字和类型。</li>
+</ul>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍和实践</a></h1>
     
     
       <p class="meta">
@@ -731,52 +820,6 @@ fmt.Println(now)
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2016/10/05/grepming-ling/">Grep命令</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2016-10-05T20:48:14+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:48 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h1>grep命令</h1>
-
-<p>grep, egrep, fgrep, zgrep, zegrep, zfgrep 文件模式搜索</p>
-
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>grep [-abcdDEFGHhIiJLlmnOopqRSsUVvwxZ] [-A num] [-B num] [-C[num]] [-e pattern] [-f file] [--binary-files=value] [--color[=when]]
-</span><span class='line'>          [--colour[=when]] [--context[=num]] [--label] [--line-buffered] [--null] [pattern] [file ...]</span></code></pre></td></tr></table></div></figure>
-
-
-<p>grep搜索输入文件，输出匹配一个或者多个模式的文件行。通常情况，不包括结尾换行符的文件行匹配指定模式中的表达式即为匹配成功。空表达式匹配所有行。匹配行将会打印到标准输出。<br/>
-grep命令用于简单模式和基本正则表达式（BRES）；egrep命令可以处理扩展正则表达式。查看re_format(7）关于正则表达式的详细信息。fgre较grep和egrep更快，但是只能处理固定模式（比如，它不能解析正则表达式）。匹配模式可以由一行或者多行组成，以便于匹配输入内容的一部分。<br/>
-zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以接收由compress或者gzip压缩工具压缩过的文件作为输入。</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2016/10/05/grepming-ling/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -792,7 +835,11 @@ zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以�
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍</a>
+        <a href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Protocol-buffers Proto3 翻译</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍和实践</a>
       </li>
     
       <li class="post">
@@ -807,10 +854,6 @@ zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以�
         <a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -822,7 +865,7 @@ zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以�
 <li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/program/'>program (10)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
  </ul>
@@ -843,6 +886,7 @@ zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以�
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
 <a style="font-size: 130%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 
 </ul>
 </section>

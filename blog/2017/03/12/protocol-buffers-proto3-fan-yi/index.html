@@ -1,0 +1,821 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Protocol-buffers Proto3 翻译 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="定义Message类型
+标量值类型
+默认值
+枚举
+使用其他消息类型
+嵌套类型
+更新消息类型
+未知字段
+Any
+Oneof
+Maps
+包
+服务
+json
+选项
+生成代码 这个指导文档如何使用protocol buffer语言结构化你的protocol buffer数据，包括. &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/03/12/protocol-buffers-proto3-fan-yi">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Protocol-buffers Proto3 翻译</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-12T18:09:36+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>6:09 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><ul>
+<li><a href="#message">定义Message类型</a></li>
+<li><a href="#type">标量值类型</a></li>
+<li><a href="#default">默认值</a></li>
+<li><a href="#enum">枚举</a></li>
+<li><a href="#other_message">使用其他消息类型</a></li>
+<li><a href="#nested">嵌套类型</a></li>
+<li><a href="#update">更新消息类型</a></li>
+<li><a href="#unknown">未知字段</a></li>
+<li><a href="#any">Any</a></li>
+<li><a href="#oneof">Oneof</a></li>
+<li><a href="#maps">Maps</a></li>
+<li><a href="#packages">包</a></li>
+<li><a href="#services">服务</a></li>
+<li><a href="#json">json</a></li>
+<li><a href="#options">选项</a></li>
+<li><a href="#protoc">生成代码</a></li>
+</ul>
+
+
+<p>这个指导文档如何使用protocol buffer语言结构化你的protocol buffer数据，包括<code>.proto</code>文件语法和如何根据<code>.proto</code>文件生成代码访问数据。本文主要描述<code>proto3</code>版本。  <br/>
+本文是参考文档，如果需要例子的话可以访问，你选择语言相关的<a href="https://developers.google.com/protocol-buffers/docs/tutorials">入门指导</a></p>
+
+<h2><a name="message"></a>Message定义</h2>
+
+<p>一个简单例子。下面定义一个搜索请求消息格式，这个消息包含一个查询字符串，包含一个搜索结果页码，和每页包含搜索结果数。下面是该消息<code>.proto</code>文件：</p>
+
+<pre><code>syntax = "proto3";
+
+message SearchRequest {
+    string query = 1;
+    int32 page_number = 2;
+    int32 result_per_page = 3;
+}
+</code></pre>
+
+<ul>
+<li>第一行说明正在使用<code>proto3</code>语法：如果不指定proto版本，protocol buffer编译器默认认为正在使用<code>proto2</code>。这行语句必须是第一条非空、非注释语句。</li>
+<li><code>SearchRequest</code>消息包含三个字段。每个字段有都有一个名字和类型。</li>
+</ul>
+
+
+<!-- more -->
+
+
+<h3>字段类型</h3>
+
+<p>在上面的例子中，所有字段都是标量类型：两个整型（<code>page_number</code>和<code>result_per_page</code>）和字符串（<code>query</code>）。你也可以指定字段类型为组合类型，包含枚举或者其他类型。</p>
+
+<h3>添加Tag标签</h3>
+
+<p>如定义所见，每一个字段都有一个唯一的数字标签。这些标签用来在<a href="https://developers.google.com/protocol-buffers/docs/encoding">消息二进制格式</a>中标示相应字段，一旦消息类型得到使用，就不应该在修改字段标签。值在1到15之间的tag编码时只占用一个字节，一个字节包含了tag值和字段类型，更多信息可以参考<a href="https://developers.google.com/protocol-buffers/docs/encoding.html#structure">Protocol Buffer Encoding</a>。16到2047之间的标签占用两个字节。所以应该用1到15之间的标签标示经常使用的字段，并且给未来可能添加进来的频繁使用字段预留一些标签。</p>
+
+<p>自小标签值为1，最大值为2的29次方-1，即536,870,911。tag值区间19000到19999（FieldDescriptor::kFirstReservedNumber 到 FieldDescriptor::kLastReservedNumber）是<code>Protocol Buffers</code>的保留值，如果在<code>.proto</code>文件中使用了这个范围内的值，编译器将会报警。</p>
+
+<h3>指定字段规则</h3>
+
+<p>消息类型可以为如下类型：</p>
+
+<ul>
+<li>单数形式： 一个正确格式的消息可以包含0个或者一个这样的字段（不能大于一个）</li>
+<li>重复类型： 这种类型的字段可以在一个消息中重复多次（包括0次）。</li>
+</ul>
+
+
+<p><code>proto3</code>中，标量类型的<code>repeated</code>字段类型默认使用<code>packed</code>编码。</p>
+
+<p>可以在<a href="Protocol%20Buffer%20Encoding">Protocol Buffer Encoding</a>查看关于编码的详细内容。</p>
+
+<h3>添加更多Message类型</h3>
+
+<p>一个<code>.proto</code>文件中可以定义多个消息类型。因此可以将相关消息类型定义在一个<code>.proto</code>文件中，比如可以在上面的proto文件添加一个<code>SearchResponse</code>消息类型：</p>
+
+<pre><code>message SearchRequest {
+    string query = 1;
+    int32 page_number = 2;
+    int32 result_per_page = 3;
+}
+
+message SearchResponse {
+    ...
+}
+</code></pre>
+
+<h3>添加注释</h3>
+
+<p><code>.proto</code>文件中，使用C/C++风格<code>//</code>注释</p>
+
+<pre><code>message SearchRequest {
+    string query = 1;
+    int32 page_number = 2;  // Which page number do we want?
+    int32 result_per_page = 3;  // Number of results to return per page.
+}
+</code></pre>
+
+<h3>保留字段</h3>
+
+<p>当完整删除一个字段，或者注释掉字段，这种方式修改一个消息类型时，未来用户可能会复用之前的标签值。如果加载就版本<code>.proto</code>文件时，这种情况可能会引起数据冲突，程序问题或者其他异常情况。可以通过将已经删除字段的tag值或者字段名设置为<code>reserved</code>。如果将来有人用到这些保留值，编译器将会报错。</p>
+
+<pre><code>message Foo {
+    reserved 2, 15, 9 to 11;
+    reserved "foo", "bar";
+}
+</code></pre>
+
+<p>注意不可以在同一个<code>reserved</code>语句中同时标示tag和字段</p>
+
+<h3>从.proto文件生成什么</h3>
+
+<p>当用编译器处理已经编写好的<code>.proto</code>文件时，编译器会根据选择的编程语言类型生成代码，使用这些代码可以操作<code>.proto</code>文件中定义的消息类型，包括获取、设置字段值，序列化消息到输出流，从输入流中反序列化消息。</p>
+
+<ul>
+<li>C++，编译器为每个<code>.proto</code>文件生成一个<code>.h</code>和<code>.cc</code>文件，对于文件中定义的每个消息类型生成一个类</li>
+<li>Java,编译器为每个消息类型生成一个<code>.java</code>文件，同时生成一个<code>Builder</code>类用于创建消息类实例</li>
+<li>Python，编译器为每个消息类型生成一个包含静态描述符的模块，在python运行时，可以与原类型一起生成一个Python数据存取类</li>
+<li>Go，编译器为<code>.proto</code>文件中的每个消息类型生成一个<code>.pb.go</code>文件</li>
+<li>Ruby，编译器生成一个<code>.rb</code>文件包含一个ruby模块包括所有文件中国年定义的消息类型</li>
+<li>JavaNano，编译器生成的内容与Java类似，但是没有<code>Builder</code>类型。</li>
+<li>Objective-C，编译器为每一个<code>.proto</code>文件生成一个<code>pbobjc.h</code>和<code>pbobjc.m</code>文件，为每个消息类型生成一个类。</li>
+<li>C#，编译器生成一个<code>.cs</code>文件，每个消息类型生成一个类。</li>
+</ul>
+
+
+<p>可以从<a href="https://developers.google.com/protocol-buffers/docs/reference/overview">API reference</a>中了解更多API相关信息</p>
+
+<h2><a name="type"></a>标量值类型</h2>
+
+<p>一个标量消息字段可以用如下消息类型，这些类型可以使用在<code>.proto</code>文件中，表中列出了相应语言的数据类型：</p>
+
+<p><img src="/images/proto-1.png" alt="" />
+<img src="/images/proto-2.png" alt="" />
+<img src="/images/proto-3.png" alt="" />
+<img src="/images/proto-4.png" alt="" />
+<img src="/images/proto-5.png" alt="" /></p>
+
+<p>可以在<a href="https://developers.google.com/protocol-buffers/docs/encoding">Protocol Buffer Encoding</a>中查看上面类型如何编码。</p>
+
+<h2><a name="default"></a>默认值</h2>
+
+<p>解析消息时，如果编码消息没有包含某个元素值，那么消息对象中对应字段的值设置为字段类型的默认值。不同类型具有不同默认值：</p>
+
+<ul>
+<li>字符串类型，默认为空字符串</li>
+<li>字节类型，默认为空字节</li>
+<li>布尔型，默认为false</li>
+<li>数字类型，默认为0</li>
+<li>枚举类型，默认为枚举类型第一个值，这个值必须为0</li>
+<li>message类型，字段不进行设置。具体值依赖不同语言的初始化操作。</li>
+</ul>
+
+
+<p>重复型字段默认值为空。</p>
+
+<p>注意，对于标量类型字段，一个消息解析时不会标示某个字段是否是显示设置为默认值，比如一个布尔型字段值为<code>false</code>时，不会告诉消息使用者这个布尔字段值为<code>false</code>还是被设置的默认值<code>false</code>。定义消息类型时，要注意这点。如果一个布尔字段值为<code>false</code>时，程序表现为某种行为，如果你不希望默认情况下程序表现为这种行为的话，就需要注意。对于标量类型字段，如果设置为默认值，那么将不会对这个字段进行编码传输。 <br/>
+<a href="https://developers.google.com/protocol-buffers/docs/reference/overview">generated code guide</a>查看关于不同语言默认值如何工作的详细情况。</p>
+
+<h2><a name="enum"></a>枚举</h2>
+
+<p>定义消息类型时，可能需要设置字段值为一些预定义值，我们可以在消息定义文件中定义<code>enum</code>枚举类型，在<code>SearchRequest</code>中定义一个枚举类型<code>Corpus</code>：</p>
+
+<pre><code>message SearchRequest {
+    string query = 1;
+    int32 page_number = 2;
+    int32 result_per_page = 3;
+    enum Corpus {
+        UNIVERSAL = 0;
+        WEB = 1;
+        IMAGES = 2;
+        LOCAL = 3;
+        NEWS = 4;
+        PRODUCTS = 5;
+        VIDEO = 6;
+    }
+    Corpus corpus = 4;
+}
+</code></pre>
+
+<p><code>Corpus</code>枚举类型的第一个常量值为0：protobuf中每一个枚举类型<code>必须</code>将第一个值定义为0，原因如下：</p>
+
+<ul>
+<li>必须有一个0值，这样可以使用0值为枚举类型默认值</li>
+<li>0值必须为第一个值，这样是为了与<code>proto2</code>语法相兼容，<code>proto2</code>中以第一个枚举值为默认值</li>
+</ul>
+
+
+<p>可以为枚举值定义一个别名，需要在定义别名的枚举类型中设置<code>allow_alias</code>选项为<code>true</code>，否则编译器将会报错。</p>
+
+<pre><code>enum EnumAllowingAlias {
+    option allow_alias = true;
+    UNKNOWN = 0;
+    STARTED = 1;
+    RUNNING = 1;
+}   
+enum EnumNotAllowingAlias {
+    UNKNOWN = 0;
+    STARTED = 1;
+    // RUNNING = 1;  // Uncommenting this line will cause a         compile error inside Google and a warning message outside.
+}
+</code></pre>
+
+<p>枚举类型常量值必须在32位整型之间。因为<code>enum</code>类型使用<a href="https://developers.google.com/protocol-buffers/docs/encoding">varint encoding</a>进行编码，值为负数的话，编码效率低，所以不推荐为负数。可以在消息定义体之中，或者之外定义<code>enum</code>枚举类型，可以在<code>.proto</code>文件任何为值使用这些枚举类型。 你可以通过<code>MessageType.EnumType</code>的方式使用在其他消息中定义的枚举类型。</p>
+
+<p>当编译带有<code>enum</code>的<code>.proto</code>文件时，目标语言是<code>C++</code>或者<code>Java</code>时，产生的代码中包含<code>enum</code>定义，目标代码是<code>Python</code>时，产生一个<code>EnumDescriptor</code>类。</p>
+
+<h2><a name="other_message"></a>使用其他消息类型</h2>
+
+<p>可以使用其他消息类型定义字段。比如在<code>SearchResponse</code>消息中包含<code>Result</code>消息，<code>Result</code>消息可以定义在同一个<code>.proto</code>文件中。</p>
+
+<pre><code>message SearchResponse {
+    repeated Result results = 1;
+}
+
+message Result {
+    string url = 1;
+    string title = 2;
+    repeated string snippets = 3;
+}
+</code></pre>
+
+<h3>引入定义</h3>
+
+<p>上面的例子中，<code>Result</code>定义在<code>SearchResponse</code>同样的<code>.proto</code>文件中，如果需要使用的消息类型定义在其他文件中消息类型。</p>
+
+<p>通过import<code>.proto</code>文件使用<code>.proto</code>文件中的定义。在自己<code>.proto</code>文件顶部添加一行引入语句：</p>
+
+<pre><code>import "myproject/other_protos.proto";
+</code></pre>
+
+<p>默认情况下，只能使用被直接<code>import</code>的文件中的消息定义。如果需要将<code>.proto</code>文件挪到一个新的位置去，可以放一个替代<code>.proto</code>文件到老的位置，在这个替代文件中使用<code>import public</code>将定义转移到新位置。例子：</p>
+
+<pre><code>// new.proto
+// All definitions are moved here
+
+
+// old.proto
+// This is the proto that all clients are importing.
+import public "new.proto";
+import "other.proto";
+
+// client.proto
+import "old.proto";
+// You use definitions from old.proto and new.proto, but not other.proto
+</code></pre>
+
+<p>编译器在<code>-I/--proto_path</code>参数指定的目录中搜索被引入的<code>.proto</code>文件。如果没有设置这个参数，编译器在当前目录下查找，通常情况下，应该设置<code>--proto_path</code>为工程的根目录。</p>
+
+<h3>使用proto2消息类型</h3>
+
+<p>可以在<code>proto3</code>消息中引入<code>proto2</code>消息类型。但是proto2枚举类型不能在proto3语法中直接使用。</p>
+
+<h2><a name="nested"></a>嵌套类型</h2>
+
+<p>可以在消息类型中定义其他类型，下面的例子中，<code>Result</code>消息定义在<code>SearchResponse</code>消息中：</p>
+
+<pre><code>message SearchResponse {
+    message Result {
+    string url = 1;
+    string title = 2;
+    repeated string snippets = 3;
+    }
+    repeated Result results = 1;
+}  
+</code></pre>
+
+<p>如果想在<code>SearchResponse</code>消息以外使用<code>Result</code>消息，以<code>Parent.Type</code>格式使用：</p>
+
+<pre><code>message SomeOtherMessage {
+    SearchResponse.Result result = 1;
+}
+</code></pre>
+
+<p>可以任意潜逃消息定义：</p>
+
+<pre><code>message Outer {                  // Level 0
+    message MiddleAA {  // Level 1
+        message Inner {   // Level 2
+            int64 ival = 1;
+            bool  booly = 2;
+        }
+    }
+    message MiddleBB {  // Level 1
+        message Inner {   // Level 2
+            int32 ival = 1;
+            bool  booly = 2;
+        }
+    }
+}
+</code></pre>
+
+<h2><a name="update"></a>更新消息类型</h2>
+
+<p>如果已有消息不能满足新的需求，比如，需要增加一个新的字段，但是仍然使用根据老的消息格式产生的代码，对于protocol buffer来说这很容易完成，请记住如下的规则：</p>
+
+<ul>
+<li>不要修改当前字段的标签值</li>
+<li>如果新增字段，任何根据老格式序列化的消息，都能够被根据新格式产生的代码进行解析。这种情况下，新增字段的值都会被设置为<a href="https://developers.google.com/protocol-buffers/docs/proto3#default">默认值</a>。新格式消息同样可以为老格式代码解析，新增字段将会被忽略。</li>
+<li>可以删除字段，只要新消息格式中该字段标签值没有被使用。对于删除的字段，最好是对字段名称进行修改，添加<code>OBSOLETE_</code>字段或者设置tag为<a href="https://developers.google.com/protocol-buffers/docs/proto3#reserved">reserved</a>，这样未来不会错误使用该tag值。</li>
+<li><code>int32</code>,<code>uint32</code>,<code>int64</code>,<code>uint64</code>,<code>bool</code>都是兼容的，意味着可以将字段从一种类型修改为另一种。如果解析时，从序列化数据中解析出的数据与响应字段类型不匹配，那么行为表现为从类型转换。</li>
+<li><code>sint32</code>和<code>sint64</code>互相兼容，但是与其他整型类型不兼容。</li>
+<li><code>string</code>和<code>bytes</code>互相兼容，只要bytes是UTF-8格式。</li>
+<li>嵌套消息与<code>bytes</code>互相兼容，只要bytes包含该消息的编码</li>
+<li><code>fixed32</code>与<code>sfixed32</code>，<code>fixed64</code>，<code>sfixed64</code>相兼容。</li>
+<li><code>enum</code>与<code>int32</code>，<code>uint32</code>，<code>int64</code>，<code>uint64</code>相兼容</li>
+</ul>
+
+
+<h2><a name="unknown"></a>未知字段</h2>
+
+<p>未知字段是正确格式数据，解析程序不能识别的字段。当旧格式解析程序解析新格式消息时，解析程序无法识别新格式消息中新增字段，认为为未知字段。</p>
+
+<p><code>Proto3</code>实现可以解析这些未知字段，但是实现可能不支持保留这些字段。不应依赖这些未知字段。对于大部分实现，未知字段都是不可访问的，在序列化时，未知字段将会被忽略。这与<code>proto2</code>不同，未知字段也会被保留和序列化。</p>
+
+<h2><a name="any"></a>Any</h2>
+
+<p><code>Any</code>消息类型允许你使用某消息类型，而不需要引入该类型消息<code>.proto</code>文件。<code>Any</code>类型包含任意<code>bytes</code>类型序列化数据，<code>Any</code>类型包含一个URL，作为消息类型的唯一标识。引入<code>google/protobuf/any.proto</code>来使用<code>Any</code>类型。</p>
+
+<pre><code>import "google/protobuf/any.proto";
+
+message ErrorStatus {
+    string message = 1;
+    repeated google.protobuf.Any details = 2;
+}
+</code></pre>
+
+<p>一个消息类型的默认URL为<code>type.googleapis.com/packagename.messagename</code>。</p>
+
+<p>不同语言都会有运行时库去打包和解包Any类型值，Java中，Any类型字段会有<code>pack()</code>和<code>unpack()</code>方法访问，C++语言中有<code>PackFrom()</code>和<code>UnpackTo()</code>方法：</p>
+
+<pre><code>// Storing an arbitrary message type in Any.
+NetworkErrorDetails details = ...;
+ErrorStatus status;
+status.add_details()-&gt;PackFrom(details);
+
+// Reading an arbitrary message from Any.
+ErrorStatus status = ...;
+for (const Any&amp; detail : status.details()) {
+    if (detail.Is&lt;NetworkErrorDetails&gt;()) {
+        NetworkErrorDetails network_error;
+        detail.UnpackTo(&amp;network_error);
+        ... processing network_error ...
+    }
+}
+</code></pre>
+
+<h2><a name="oneof"></a>Oneof</h2>
+
+<p>如果消息中包含多个字段，同一时间最多设置一个字段，可以使用<code>oneof</code>特性来强制这种行为并且节省内存。</p>
+
+<p>设置<code>oneof</code>中的任一字段将会清楚其他字段值。可以使用<code>case</code>或者<code>WhichOneof</code>方法查看当前哪个字段被设置。</p>
+
+<h3>使用Oneof</h3>
+
+<p>使用<code>oneof</code>关键词在<code>.proto</code>文件中定义：</p>
+
+<pre><code>message SampleMessage {
+    oneof test_oneof {
+        string name = 4;
+        SubMessage sub_message = 9;
+    }
+}
+</code></pre>
+
+<p>可以在oneof定义中添加除了<code>repeated</code>以外任意类型的字段。</p>
+
+<p>产生的代码中，对于oneof中的字段拥有跟普通字段一样的获取、设置函数。还会获取一个特殊方法检查哪个值被设置。关于oneof更多API请参考<a href="https://developers.google.com/protocol-buffers/docs/reference/overview">API reference</a>。</p>
+
+<h3>Oneof 特性</h3>
+
+<ul>
+<li><p>设置oneof字段会清楚其他字段值。如果多次设置oneof字段值，只保留最后一次设置值。</p>
+
+<pre><code>  SampleMessage message;
+  message.set_name("name");
+  CHECK(message.has_name());
+  message.mutable_sub_message();   // Will clear name field.
+  CHECK(!message.has_name());  
+</code></pre></li>
+<li>如果解析程序遇到oneof定义中的多个字段值，只有最后一个是有效的。</li>
+<li>不能将一个<code>oneof</code>类型用于<code>repeated</code>中</li>
+<li>反射对于oneof字段有效</li>
+<li><p>使用C++时，防止非法访问内存。下面代码示例中，执行<code>set_name</code>时，<code>sub_message</code>已经被清除：</p>
+
+<pre><code>  SampleMessage message;
+  SubMessage* sub_message = message.mutable_sub_message();
+  message.set_name("name");      // Will delete sub_message
+  sub_message-&gt;set_...            // Crashes here
+</code></pre>
+
+<p>*使用C++ oneof <code>Swap</code>方法时，互换两个变量中设置的字段值：</p>
+
+<pre><code>  SampleMessage msg1;
+  msg1.set_name("name");  
+  SampleMessage msg2;
+  msg2.mutable_sub_message();
+  msg1.swap(&amp;msg2);
+  CHECK(msg1.has_sub_message());
+  CHECK(msg2.has_name());
+</code></pre></li>
+</ul>
+
+
+<h3>向后兼容问题</h3>
+
+<p>添加或者删除oneof字段时要小心。如果检查oneof值时返回<code>None</code>或者<code>NOT_SET</code>时,意味着oneof没有被设置或者设置了oneof的一个其他版本。 因为没有办法区分一个未知字段是新加字段。</p>
+
+<p>复用标签问题</p>
+
+<ul>
+<li>添加或者移除字段： 可能会丢失某些字段信息。</li>
+<li>删除字段后又添加：</li>
+<li>分拆或者合并：</li>
+</ul>
+
+
+<h2><a name="maps"></a>Maps</h2>
+
+<p>protocol buffers提供一个映射类型定义字段：</p>
+
+<pre><code>map&lt;key_type, value_type&gt; map_field = N;
+</code></pre>
+
+<p><code>key_type</code>可以为整型或者字符串类型（除了<code>floating point</code>和<code>bytes</code>以外的标量类型）。<code>value_type</code>可以为任何类型。</p>
+
+<p>下面定义个map类型字段，每个<code>project</code>对应一个字符串：</p>
+
+<pre><code>map&lt;string, Project&gt; projects = 3;
+</code></pre>
+
+<ul>
+<li>Map字段不可以是<code>repeated</code></li>
+<li>不依赖map顺序</li>
+<li>生成<code>.proteo</code>文本格式时，maps以key排序。数字按照数字排序</li>
+</ul>
+
+
+<h3>向后兼容</h3>
+
+<p>map语法等同于下面的消息定义，所以不支持map的protocol buffers实现仍然可以解析数据：</p>
+
+<pre><code>message MapFieldEntry {
+    key_type key = 1;
+    value_type value = 2;
+}
+
+repeated MapFieldEntry map_field = N;
+</code></pre>
+
+<h2><a name="packages"></a>包</h2>
+
+<p>可以在<code>.proto</code>文件中添加一个<code>package</code>可选项，防止消息类型命名冲突。</p>
+
+<pre><code>package foo.bar;
+message Open { ... }
+</code></pre>
+
+<p>可以在定义字段时使用包名：</p>
+
+<pre><code>message Foo {
+    ...
+    foo.bar.Open open = 1;
+    ...
+}
+</code></pre>
+
+<p>根据不同语言产生不同的代码：</p>
+
+<ul>
+<li>C++中，产生的类包含在C++命名空间中，例如，<code>Open</code>将会出现在<code>foo::bar</code>命名空间</li>
+<li>Java，<code>package</code>名被用来作为Java包名，除非在<code>.proto</code>文件中使用<code>option java_package</code>指定包名</li>
+<li>Python，<code>package</code>指令被忽略，因为Python中包是按照在文件系统中的路径组织的</li>
+<li>Go，<code>package</code>包名被用做Go代码包名，除非使用<code>option java_package</code>指定包名</li>
+<li>Ruby，产生的代码包裹在Ruby命名空间，命名空间名称根据<code>package</code>参数包名生成</li>
+<li>JavaNano，<code>package</code>参数名被用做产生代码包名</li>
+<li>C#，<code>package</code>参数名被用来作为产生代码包名</li>
+</ul>
+
+
+<h3>包和命名查找</h3>
+
+<p>protocol buffer中名字查找规则与C++类似：从内到外，逐层查找。<code>.foo.bar.Baz</code>意思是从最外层开始查找。</p>
+
+<h2><a name="services"></a>定义服务</h2>
+
+<p>如果在<code>RPC</code>中使用定义的消息类型，可以在<code>.proto</code>文件中定义一个RPC服务接口，protocol buffer编译器将会产生服务接口代码。下面定义一个服务函数，输入<code>SearchRequest</code>返回一个<code>SearchResponse</code>：</p>
+
+<pre><code>service SearchService {
+    rpc Search (SearchRequest) returns (SearchResponse);
+}
+</code></pre>
+
+<p>最简单的使用protocol buffers的RPC系统是<a href="https://github.com/grpc/grpc-common">gRPC</a>：Google开发的一个语言和平台无关的开源RPC系统。使用一个protocol buffer编译器插件可以直接从<code>.proto</code>文件中直接生成相应的RPC代码。</p>
+
+<h2><a name="json"></a>JSON映射</h2>
+
+<p>Proto3支持JSON编码，方便系统间共享数据。下面的表格列入了Proto3消息类型与JSON对应关系。</p>
+
+<p><img src="/images/proto-6.png" alt="" />
+<img src="/images/proto-7.png" alt="" /></p>
+
+<h2><a name="options"></a>Options选项</h2>
+
+<p>单独的声明可以用一些options修饰。选项不会改变一个声明的总体意义，但是会影响在特殊上下文中的意义。完整options选项定义在<code>google/protobuf/descriptor.proto</code>。<br/>
+一些options选项是文件级别的。一些选项是消息级别的。一些选项是字段级别的。<br/>
+下面是一些经常是用的选项：</p>
+
+<ul>
+<li><p><code>java_package</code>(文件级别选项)：使用这个选项指定产生的java代码包名。如果没有使用这个参数显示指定包名，编译器将会使用<code>.proto</code>文件中package指定的包名作为java代码包名。但是proto包名生成的java包名并不符合Java包名倒序的惯例。如果不是生成Java代码，这个选项无效：</p>
+
+<pre><code>  option java_package = "com.example.foo";
+</code></pre></li>
+<li><p><code>java_multiple_files</code>（文件级别选项）：指定产生的最外层Java类名。如果没有使用<code>java_outer_classname</code>参数，则使用<code>.proto</code>文件名作为最外层类名，文件名被转换成驼峰模式（<code>foo_bar.proto</code>生成<code>FooBar.java</code>）。如果不是生成java代码，下面选项无效：</p>
+
+<pre><code>  option java_outer_classname = "Ponycopter";
+</code></pre></li>
+<li><p><code>optimize_for</code>（文件级别选项）：可以设置为<code>SPEED</code>，<code>CODE_SIZE</code>，<code>LITE_RUNTIME</code>。这个参数按照下面方式影响C++和Java代码生成：</p>
+
+<ul>
+<li><code>SPEED</code>(默认值)：protocol buffer编译器为消息类型生成序列化、反序列化和其他操作的相关代码。代码是高度优化的。</li>
+<li><code>CODE_SIZE</code>：protocol buffer编译器生成最少类，依赖共享的，基于反射的代码去实现序列化、反序列化和其他操作。生成的代码与<code>SPEED</code>相比很小，但是更慢。生成的类的接口与<code>SPEED</code>模式一样。这个选项在拥有大量<code>.proto</code>文件不需要它们都很快。</li>
+<li><p><code>LITE_RUNTIME</code>：编译器将生成类只依赖轻运行时库（<code>libprotobuf-lite</code>而不是<code>libprotobuf</code>）。轻运行时库比全库更小。这对于运行在限制平台（比如智能手机）的应用很有用。编译器将会生成跟<code>SPEED</code>选项一样的高效代码。生成的类只实现<code>MessageLite</code>接口，只提供了全<code>Message</code>接口方法的子集。</p>
+
+<pre><code>  option optimize_for = CODE_SIZE;
+</code></pre></li>
+</ul>
+</li>
+<li><p><code>cc_enable_arenas</code>（文件级别选项）：为产生的C++代码使能<a href="https://developers.google.com/protocol-buffers/docs/reference/arenas">arena allocation</a></p></li>
+<li><code>objc_class_prefix</code>（文件级别选项）：为产生的Objective-C代码添加前缀。没有默认值，应该按照Apple推荐的惯例设置此选项。</li>
+<li><p><code>deprecated</code>（文件级别选项）：如果设置为<code>true</code>，指示这个字段已弃用。在大多数语言中，这个选项无效。Java代码中，这个选项变成<code>@Deprecated</code>注解。</p>
+
+<pre><code>  int32 old_field = 6 [deprecated=true];
+</code></pre>
+
+<h2>自定义选项</h2>
+
+Protocol Buffers also allows you to define and use your own options. This is an advanced feature which most people don&rsquo;t need. If you do think you need to create your own options, see the Proto2 Language Guide for details. Note that creating custom options uses extensions, which are permitted only for custom options in proto3.
+
+<h2><a name="protoc"></a>生成代码</h2>
+
+<p>使用<code>protoc</code>编译器根据<code>.proto</code>文件生成Java，Python，C++，Go，Ruby，JavaNano，Objective-C，或者C#代码。如果格式调用程序：</p>
+
+<pre><code>  protoc --proto_path=IMPORT_PATH --cpp_out=DST_DIR --java_out=DST_DIR --python_out=DST_DIR --go_out=DST_DIR --ruby_out=DST_DIR --javanano_out=DST_DIR --objc_out=DST_DIR --csharp_out=DST_DIR path/to/file.proto
+</code></pre></li>
+<li><p><code>IMPORT_PATH</code> 指定目录，在目录中查找<code>import</code>指令引入的文件。如果没有制定，使用当前目录。可以多次使用<code>--proto_path</code>参数指定多个路径；按照顺序查找。<code>-I=IMPORT_PATH</code>可以作为<code>--proto_path</code>的短形式</p></li>
+<li>可以设置多个输出指令：
+
+<ul>
+<li><code>--cpp_out</code>在<code>DST_DIR</code>中生成C++代码。</li>
+<li><code>--java_out</code>在<code>DST_DIR</code>中生成Java代码</li>
+<li><code>--python_out</code>在<code>DST_DIR</code>中生成Python代码</li>
+<li><code>--go_out</code>在<code>DST_DIR</code>中生成Go代码</li>
+<li><code>--ruby_out</code>在<code>DST_DIR</code>中生成Ruby代码</li>
+<li><code>--javanano_out</code>在<code>DST_DIR</code>中生成JavaNano代码</li>
+<li><code>--objc_out</code>在<code>DST_DIR</code>中生成Objective-C代码</li>
+<li><code>--csharp_out</code>在<code>DST_DIR</code>中生成C#代码</li>
+<li><code>--php_out</code>在<code>DST_DIR</code>中生成PHP代码</li>
+</ul>
+</li>
+<li>必须指定一个或者多个<code>.proto</code>文件作为参数。多个<code>.proto</code>文件可以同时指定。每个文件必须在<code>IMPORT_PATH</code>指定的路径中能够查找到</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-03-12T18:09:36+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>6:09 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/program/'>program</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/" title="Previous Post: Golang Defer Panic 和Recover介绍和实践">&laquo; Golang Defer Panic 和Recover介绍和实践</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Protocol-buffers Proto3 翻译</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍和实践</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/03/06/golang-reflectjie-shao/">Golang Reflect介绍</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/">Golang使用protobuf搭建rpc</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 130%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 130%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 202%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 130%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 130%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
