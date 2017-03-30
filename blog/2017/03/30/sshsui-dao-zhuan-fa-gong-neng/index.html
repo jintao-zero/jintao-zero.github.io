@@ -5,11 +5,14 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Tag: HTTP - jintao&#8217;s blog</title>
+  <title>SSH常用设置(免密、别名登录、隧道转发) - jintao&#8217;s blog</title>
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Tag: HTTP">
+  <meta name="description" content="作为程序员每天都需要使用ssh登录到远程主机进行部署调试，本篇将总结ssh工具几个常用方法： 免密登录
+别名登录
+隧道转发 免密登录 在本地机器上生成pubkey
+将pubkey拷贝到远程主机~/.ssh/authorized_keys文件中 别名登录 在免密登录的基础上， 可以方便实现别名登录 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +21,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jintao-zero.github.io/blog/tags/http">
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
@@ -66,35 +69,144 @@
   <div id="main">
     <div id="content">
       <div>
-<article role="article">
+<article class="hentry" role="article">
   
   <header>
-    <h1 class="entry-title">Tag: HTTP</h1>
+    
+      <h1 class="entry-title">SSH常用设置(免密、别名登录、隧道转发)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-30T19:48:56+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:48 pm</span></time>
+        
+      </p>
     
   </header>
-  
-  <div id="blog-archives" class="tag">
 
 
+<div class="entry-content"><p>作为程序员每天都需要使用ssh登录到远程主机进行部署调试，本篇将总结ssh工具几个常用方法：</p>
 
-  
-  <h2>2017</h2>
-
-<article>
-  
-<h1><a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a></h1>
-<time datetime="2017-03-29T16:51:16+08:00" pubdate><span class='month'>Mar</span> <span class='day'>29</span> <span class='year'>2017</span></time>
-
-<footer>
-  <span class="categories">posted in <a class='category' href='/blog/categories/network/'>network</a></span>
-</footer>
+<ul>
+<li><a href="#password-less">免密登录</a></li>
+<li><a href="#alias">别名登录</a></li>
+<li><a href="#tunnel">隧道转发</a></li>
+</ul>
 
 
-</article>
+<h2><a name="password-less"> </a>免密登录</h2>
 
+<ol>
+<li>在本地机器上生成pubkey</li>
+<li>将pubkey拷贝到远程主机~/.ssh/authorized_keys文件中</li>
+</ol>
+
+
+<h2><a name="alias"/> </a>别名登录</h2>
+
+<p>在免密登录的基础上， 可以方便实现别名登录
+在本地~/.ssh/config文件中配置远程主机相关信息：</p>
+
+<pre><code>Host vps
+    HostName 45.78.61.64
+    Port 22
+    User root
+</code></pre>
+
+<p> 本地可以使用</p>
+
+<pre><code>ssh vps
+</code></pre>
+
+<p> 这样的形式直接登录目标主机</p>
+
+<h2><a name="tunnel"> </a> 隧道转发</h2>
+
+<p>远端主机可能设置了防火墙，只开放少数端口，比如远端机器只开放了22 ssh端口，如果本地想连接远端3306端口的话，会被防火墙拒绝，这个时候我们可以利用ssh的隧道功能，将本地流量通过ssh tunnel转发远端目标端口，在~/.ssh/config配置文件中添加如下配置：</p>
+
+<pre><code>Host tunnel
+    HostName 45.78.61.64
+    Port 27764
+    LocalForward 3306 127.0.0.1:3306
+    User root
+</code></pre>
+
+<p> 上面的意思是将本地3306端口流量隧道转发到45.78.61.64 3306端口
+    添加配置后，需要运行下面命令：</p>
+
+<pre><code>ssh -f -N tunnel 
+</code></pre>
+
+<p>使用lsof -i:3306我们可以看到ssh程序正在监听这个端口，当有数据从这个端口进来时，ssh程序会将数据转发到远端sshd服务端程序，服务端程序会将流量转发到远端本地3306端口，ssh隧道数据是加密的，我上一篇开发的<a href="http://jintao-zero.github.io/blog/2017/03/29/golang-shi-xian-httpdai-li/">http proxy</a>我们可以利用ssh可以利用这个功能躲避GFW</p>
 </div>
 
+
+  <footer>
+    <p class="meta">
+      
   
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-03-30T19:48:56+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:48 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/tool/'>tool</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/03/29/golang-shi-xian-httpdai-li/" title="Previous Post: golang 实现HTTP代理">&laquo; golang 实现HTTP代理</a>
+      
+      
+    </p>
+  </footer>
 </article>
 
 </div>

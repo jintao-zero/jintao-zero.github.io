@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Tag: ssh | jintao's blog]]></title>
+  <link href="http://jintao-zero.github.io/blog/tags/ssh/atom.xml" rel="self"/>
+  <link href="http://jintao-zero.github.io/"/>
+  <updated>2017-03-30T20:31:57+08:00</updated>
+  <id>http://jintao-zero.github.io/</id>
+  <author>
+    <name><![CDATA[jintao]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[SSH常用设置(免密、别名登录、隧道转发)]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng/"/>
+    <updated>2017-03-30T19:48:56+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng</id>
+    <content type="html"><![CDATA[<p>作为程序员每天都需要使用ssh登录到远程主机进行部署调试，本篇将总结ssh工具几个常用方法：</p>
+
+<ul>
+<li><a href="#password-less">免密登录</a></li>
+<li><a href="#alias">别名登录</a></li>
+<li><a href="#tunnel">隧道转发</a></li>
+</ul>
+
+
+<h2><a name="password-less"> </a>免密登录</h2>
+
+<ol>
+<li>在本地机器上生成pubkey</li>
+<li>将pubkey拷贝到远程主机~/.ssh/authorized_keys文件中</li>
+</ol>
+
+
+<h2><a name="alias"/> </a>别名登录</h2>
+
+<p>在免密登录的基础上， 可以方便实现别名登录
+在本地~/.ssh/config文件中配置远程主机相关信息：</p>
+
+<pre><code>Host vps
+    HostName 45.78.61.64
+    Port 22
+    User root
+</code></pre>
+
+<p> 本地可以使用</p>
+
+<pre><code>ssh vps
+</code></pre>
+
+<p> 这样的形式直接登录目标主机</p>
+
+<h2><a name="tunnel"> </a> 隧道转发</h2>
+
+<p>远端主机可能设置了防火墙，只开放少数端口，比如远端机器只开放了22 ssh端口，如果本地想连接远端3306端口的话，会被防火墙拒绝，这个时候我们可以利用ssh的隧道功能，将本地流量通过ssh tunnel转发远端目标端口，在~/.ssh/config配置文件中添加如下配置：</p>
+
+<pre><code>Host tunnel
+    HostName 45.78.61.64
+    Port 27764
+    LocalForward 3306 127.0.0.1:3306
+    User root
+</code></pre>
+
+<p> 上面的意思是将本地3306端口流量隧道转发到45.78.61.64 3306端口
+    添加配置后，需要运行下面命令：</p>
+
+<pre><code>ssh -f -N tunnel 
+</code></pre>
+
+<p>使用lsof -i:3306我们可以看到ssh程序正在监听这个端口，当有数据从这个端口进来时，ssh程序会将数据转发到远端sshd服务端程序，服务端程序会将流量转发到远端本地3306端口，ssh隧道数据是加密的，我上一篇开发的<a href="http://jintao-zero.github.io/blog/2017/03/29/golang-shi-xian-httpdai-li/">http proxy</a>我们可以利用ssh可以利用这个功能躲避GFW</p>
+]]></content>
+  </entry>
+  
+</feed>

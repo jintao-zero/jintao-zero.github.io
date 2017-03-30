@@ -9,8 +9,9 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="学习Markdown基本语法 点击这里页内跳转 页内跳转到这里
-">
+  <meta name="description" content="项目需要用到网络空间这一个技术，但是在CentOS 6.x版本中，ip命令并不能够使用netns这个参数： [root@gaichao ~]# ip netns
+Object "netns" is unknown, try "ip help".
+[root@gaichao ~]# &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +69,47 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/12/11/centos-6-dot-5-an-zhuang-ip-netns/">CentOS 6.5 安装ip Netns</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-12-11T16:42:57+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:42 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>项目需要用到网络空间这一个技术，但是在CentOS 6.x版本中，ip命令并不能够使用netns这个参数：</p>
+
+<pre><code>[root@gaichao ~]# ip netns
+Object "netns" is unknown, try "ip help".
+[root@gaichao ~]#
+</code></pre>
+
+<p>下面分别介绍以下安装失败与成功的经验：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/12/11/centos-6-dot-5-an-zhuang-ip-netns/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -171,6 +213,10 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng/">SSH常用设置(免密、别名登录、隧道转发)</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a>
       </li>
     
@@ -186,10 +232,6 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
         <a href="/blog/2017/03/06/golang-reflectjie-shao/">Golang Reflect介绍</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/">Golang使用protobuf搭建rpc</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -202,6 +244,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
+<li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
  </ul>
@@ -224,6 +267,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+<a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
 
 </ul>
 </section>
