@@ -9,22 +9,8 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="定义Message类型
-标量值类型
-默认值
-枚举
-使用其他消息类型
-嵌套类型
-更新消息类型
-未知字段
-Any
-Oneof
-Maps
-包
-服务
-json
-选项
-生成代码 这个指导文档如何使用protocol buffer语言结构化你的protocol buffer数据，包括. &hellip;">
+  <meta name="description" content="使用Golang实现一个HTTP代理程序，程序部署在海外VPS节点，可以实现翻墙功能
+HTTP Proxy的基本原理是将客户端HTTP请求发送到目标主机，将目标主机返回的HTTP应答转发到客户端,对于HTTPS协议略有不同，HTTPS协议需要Proxy先建立一条到目标主机的链路， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -82,6 +68,80 @@ json
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-29T16:51:16+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>4:51 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>使用Golang实现一个HTTP代理程序，程序部署在海外VPS节点，可以实现翻墙功能<br/>
+HTTP Proxy的基本原理是将客户端HTTP请求发送到目标主机，将目标主机返回的HTTP应答转发到客户端,对于HTTPS协议略有不同，HTTPS协议需要Proxy先建立一条到目标主机的链路，之后再进行协议本身的通讯，下面简单介绍一个HTTP Proxy的实现过程：</p>
+
+<h3>分析第一条请求</h3>
+
+<ol>
+<li><p>启动一个简版HTTP Proxy程序，代码如下：</p>
+
+<pre><code> func handleConn(conn net.Conn) {
+     defer conn.Close()
+     log.Println("client conn form ", conn.RemoteAddr())
+     var buffer [1024]byte
+     _, err := conn.Read(buffer[:])
+     if err != nil {
+         return
+     }
+     log.Println(string(buffer[:]))
+ }
+
+ func main() {
+     // listen on tcp port
+     l, err := net.Listen("tcp", ":8081")
+     if err != nil {
+         log.Println(err)
+         return
+     }
+     for {
+         conn, err := l.Accept()
+         if err != nil {
+             log.Println(err)
+             return
+         }
+         go handleConn(conn)
+     }
+ }  
+ go run httpproxy.go
+</code></pre>
+
+<p> 这个程序主要是用来接收客户端发送的第一条HTTP请求</p></li>
+</ol>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -765,61 +825,6 @@ sys 0m0.284s
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li/">Golang日期转化处理</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2016-10-30T22:13:12+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>10:13 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>golang中time包提供了时间操作函数。</p>
-
-<h2>获取时间</h2>
-
-<pre><code>type Time struct {
-    // contains filtered or unexported fields
-}
-
-func Date(year int, month Month, day, hour, min, sec, nsec int, loc *Location) Time
-func Now() Time
-</code></pre>
-
-<p>一个Time结构体代表一个纳米精度的时间实例。now函数可以获取当前时间：</p>
-
-<pre><code>now := time.Now()
-fmt.Println(now)
-</code></pre>
-
-<p>结果如下：</p>
-
-<pre><code>2016-11-27 22:46:17.666418725 +0800 CST 
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2016/10/30/golangri-qi-zhuan-hua-chu-li/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -833,6 +838,10 @@ fmt.Println(now)
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Protocol-buffers Proto3 翻译</a>
@@ -850,10 +859,6 @@ fmt.Println(now)
         <a href="/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/">Golang使用protobuf搭建rpc</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -862,7 +867,7 @@ fmt.Println(now)
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
-<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (8)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
@@ -874,17 +879,18 @@ fmt.Println(now)
 <h1>Tags</h1>
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
-<a style="font-size: 130%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 128%" href="/blog/tags/devops/">DevOps</a>
 <a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
-<a style="font-size: 130%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 128%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
 <a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
-<a style="font-size: 202%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 196%" href="/blog/tags/network/">Network</a>
 <a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
-<a style="font-size: 130%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 128%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
-<a style="font-size: 130%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 

@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2017/03/29/golang-shi-xian-httpdai-li/</loc>
+    
+    <lastmod>2017-03-29T16:51:16+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2017/03/12/protocol-buffers-proto3-fan-yi/</loc>
     
     <lastmod>2017-03-12T18:09:36+08:00</lastmod>
@@ -253,14 +261,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2017-03-19T17:32:53+08:00</lastmod>
+    <lastmod>2017-03-30T19:39:56+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2017-03-19T17:32:53+08:00</lastmod>
+    <lastmod>2017-03-30T19:39:56+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

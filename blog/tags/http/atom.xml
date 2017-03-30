@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Tag: HTTP | jintao's blog]]></title>
+  <link href="http://jintao-zero.github.io/blog/tags/http/atom.xml" rel="self"/>
+  <link href="http://jintao-zero.github.io/"/>
+  <updated>2017-03-30T19:39:56+08:00</updated>
+  <id>http://jintao-zero.github.io/</id>
+  <author>
+    <name><![CDATA[jintao]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[golang 实现HTTP代理]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/03/29/golang-shi-xian-httpdai-li/"/>
+    <updated>2017-03-29T16:51:16+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/03/29/golang-shi-xian-httpdai-li</id>
+    <content type="html"><![CDATA[<p>使用Golang实现一个HTTP代理程序，程序部署在海外VPS节点，可以实现翻墙功能<br/>
+HTTP Proxy的基本原理是将客户端HTTP请求发送到目标主机，将目标主机返回的HTTP应答转发到客户端,对于HTTPS协议略有不同，HTTPS协议需要Proxy先建立一条到目标主机的链路，之后再进行协议本身的通讯，下面简单介绍一个HTTP Proxy的实现过程：</p>
+
+<h3>分析第一条请求</h3>
+
+<ol>
+<li><p>启动一个简版HTTP Proxy程序，代码如下：</p>
+
+<pre><code> func handleConn(conn net.Conn) {
+     defer conn.Close()
+     log.Println("client conn form ", conn.RemoteAddr())
+     var buffer [1024]byte
+     _, err := conn.Read(buffer[:])
+     if err != nil {
+         return
+     }
+     log.Println(string(buffer[:]))
+ }
+
+ func main() {
+     // listen on tcp port
+     l, err := net.Listen("tcp", ":8081")
+     if err != nil {
+         log.Println(err)
+         return
+     }
+     for {
+         conn, err := l.Accept()
+         if err != nil {
+             log.Println(err)
+             return
+         }
+         go handleConn(conn)
+     }
+ }  
+ go run httpproxy.go
+</code></pre>
+
+<p> 这个程序主要是用来接收客户端发送的第一条HTTP请求</p></li>
+</ol>
+
+
+<!-- more -->
+
+
+<ol>
+<li><p>Safari设置HTTP/HTTPS代理<br/>
+ 设置代理为<code>localhost:8081</code><br/>
+ <img src="/images/http-proxy-1.png" alt="proxy" /></p></li>
+<li><p>Safari输入框访问<code>http://localhost:8080</code>，我们的proxy程序输出HTTP请求：</p>
+
+<pre><code> GET http://www.localhost.com:8080/ HTTP/1.1
+ Host: www.localhost.com:8080
+ Proxy-Connection: keep-alive
+ Upgrade-Insecure-Requests: 1
+ Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+ User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko)     Version/10.0.3 Safari/602.4.8
+ Accept-Language: zh-cn
+ Accept-Encoding: gzip, deflate
+ Connection: keep-alive
+</code></pre>
+
+<p>其中跟代理有关的是前两行：</p>
+
+<pre><code>  GET http://www.localhost.com:8080/ HTTP/1.1
+  Host: www.localhost.com:8080
+</code></pre>
+
+<p>当访问<code>http://localhost</code>时，输出的前两行为：</p>
+
+<pre><code>  GET http://www.localhost.com/ HTTP/1.1
+  Host: www.localhost.com
+</code></pre></li>
+<li><p>Safari输入框访问<code>https://localhost:8080</code>时，proxy程序输出HTTP请求为：</p>
+
+<pre><code> CONNECT www.localhost.com:8080 HTTP/1.1
+ Host: www.localhost.com:8080
+ User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8
+ Connection: keep-alive
+ Proxy-Connection: keep-alive
+</code></pre>
+
+<p>访问网址为<code>https://localhost</code>时，输出为：</p>
+
+<pre><code> CONNECT www.localhost.com:443 HTTP/1.1
+ Host: www.localhost.com
+ User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/602.4.8 (KHTML, like Gecko) Version/10.0.3 Safari/602.4.8
+ Connection: keep-alive
+ Proxy-Connection: keep-alive
+</code></pre></li>
+</ol>
+
+
+<p>设置代理后，客户端发送HTTP请求之前需要先与Proxy通讯建立到目标主机的通讯隧道，命令消息格式为：</p>
+
+<pre><code>method absoluteURI HTTP/1.1
+</code></pre>
+
+<p>使用<code>HTTP</code>协议时，使用<code>GET</code>命令发送请求，使用<code>HTTPS</code>协议时，使用<code>CONNECT</code>命令发送请求,后面跟着<a href="http://greenbytes.de/tech/webdav/rfc2616.html#general.syntax">absoluteURI</a>,再就是HTTP版本信息
+第二行为<code>Host</code>头标示了需要访问的目标地址，根据<a href="[Request-URI](http://greenbytes.de/tech/webdav/rfc2616.html#request-uri"><code>HTTP/1.1</code></a>)版本规定，客户端和服务的必须支持<code>Host</code>头，但是默认协议情况下，host头只包含域名，不包含默认端口号(<code>HTTP(80)``HTTPS(443)</code>)</p>
+
+<p>我们的proxy程序需要根据<code>absoluteURI</code>获取目标域名和端口，从而建立到目标主机的连接，示例代码如下：</p>
+
+<pre><code>var buffer [1024]byte
+n, err := conn.Read(buffer[:])
+if err != nil {
+    return
+}
+log.Println(string(buffer[:]))
+_, line, err := bufio.ScanLines(buffer[:], true)
+if err != nil {
+    log.Println(err)
+    return
+}
+var method string
+var absUri string
+_, err = fmt.Sscanf(string(line), "%s%s", &amp;method, &amp;absUri)
+if err != nil {
+    log.Println(err)
+    return
+}
+absUrl, err := url.Parse(absUri)
+if err != nil {
+    log.Println(err)
+    return
+}
+log.Printf("%+v", *absUrl)
+var hostPort string
+if absUrl.Scheme == "http" {
+    if strings.Index(absUrl.Host, ":") == -1 {
+        hostPort = absUrl.Host + ":80"
+    } else {
+        hostPort = absUrl.Host
+    }
+} else {
+    hostPort = absUrl.Scheme + ":" + absUrl.Opaque
+}
+log.Println("hostPort", hostPort)
+</code></pre>
+
+<h3>建立连接</h3>
+
+<ol>
+<li>根据获取的目标地址+端口建立到目标主机的tcp连接</li>
+<li><p>根据第一条请求的协议类型(HTTP/HTTPS),做不同应答处理：<br/>
+ 2.1 HTTP消息，直接转发给目标主机，不对客户端有应答<br/>
+ 2.2 HTTPS CONNECT消息，对客户端应答<code>200</code>消息：</p>
+
+<pre><code> HTTP/1.1 200 Connection established\r\n\r\n
+</code></pre></li>
+<li><p>不间断进行消息转发，某一方连接异常后，关闭双方连接</p>
+
+<pre><code> go io.Copy(conn, serverConn)
+ io.Copy(serverConn, conn)
+</code></pre></li>
+</ol>
+
+
+<h3>部署</h3>
+
+<ol>
+<li><a href="https://github.com/jintao-zero/golang-http-proxy">完整代码</a></li>
+<li>编译生成二进制可执行文件，部署到海外VPS服务器，浏览器设置对应ip和端口后，即可翻墙</li>
+</ol>
+
+
+<h3>遗留问题</h3>
+
+<p>1、转发功能基本实现，但是依然无法访问google、facebook等被GFW墙的网站
+    我猜想是明文HTTP请求中<code>google、facebook</code>类的网站名被匹配到，出口连接被关闭，使用了ssh tunnel功能，将数据加密传输解决了这个问题</p>
+
+<h3>参考</h3>
+
+<ol>
+<li><a href="http://greenbytes.de/tech/webdav/rfc2616.html#changes.from.1.0">HTTP1.0 VS HTTP1.1</a></li>
+<li><a href="http://stackoverflow.com/questions/7155529/how-does-http-proxy-work">how does http proxy work?</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Proxy_server#Web_proxy_servers">Proxy server</a></li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>

@@ -9,7 +9,8 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="JSON简介 JSON(JavaScript Object Notation)是一个轻量级的数据交换格式。方便人类读写。方便机器解析和产生。它基于JavaScript Programming Language的子集，Standard ECMA-262 3rd Edition - December &hellip;">
+  <meta name="description" content="非root用户运行tcpdump 有些时候，我们希望以非root用户运行一些程序，比如以普通用户运行tcpdump命令进行抓包时，系统报如下异常信息： Mac OS 系统： MacBook-Pro:plugins jintao$ tcpdump
+tcpdump: ioctl( &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +68,78 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/">Linux/Unix设置SUID</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-02T13:56:27+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>1:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>非root用户运行tcpdump</h1>
+
+<p>有些时候，我们希望以非root用户运行一些程序，比如以普通用户运行tcpdump命令进行抓包时，系统报如下异常信息：</p>
+
+<p>Mac OS 系统：</p>
+
+<pre><code>MacBook-Pro:plugins jintao$ tcpdump
+tcpdump: ioctl(SIOCIFCREATE): Operation not permitted
+MacBook-Pro:plugins jintao$
+</code></pre>
+
+<p>Ubuntu系统：</p>
+
+<pre><code>[app@mp5 ~]$ tcpdump
+tcpdump: no suitable device found
+[app@mp5 ~]$
+</code></pre>
+
+<p>为什么会出现上述异常信息呢？是否是因为普通用户没有执行权限？下面是系统中tcpdump命令的权限信息<br/>
+Mac OS 系统：</p>
+
+<pre><code>MacBook-Pro:plugins jintao$ which tcpdump
+/usr/sbin/tcpdump
+MacBook-Pro:plugins jintao$ ls -l /usr/sbin/tcpdump
+-rwxr-xr-x 1 root wheel 749040  9 10  2014 /usr/sbin/tcpdump*
+MacBook-Pro:plugins jintao$
+</code></pre>
+
+<p>Ubuntu系统：</p>
+
+<pre><code>[app@mp5 ~]$ which tcpdump
+/usr/sbin/tcpdump
+[app@mp5 ~]$ ls -l /usr/sbin/tcpdump
+-rwxr-xr-x. 1 root root 742080 3月  26 2012 /usr/sbin/ tcpdump
+[app@mp5 ~]$
+</code></pre>
+
+<p>根据tcpdump的权限位-rwxr-xr-x我们发现对于普通用户jintao、app是拥有可读和可执行权限的。以普通用户执行tcpdump时，tcpdump进程的实际运行用户和有效用户都是普通用户，tcpdump运行过程中需要获取系统网卡资源信息，而获取这些信息需要root权限，这样的话系统就禁止了tcpdump程序的运行。<br/>
+解决这样的问题，我们可以尝试以下三种方法：</p>
+
+<p>  </div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -652,39 +725,6 @@ Object "netns" is unknown, try "ip help".
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/11/03/xue-xi-markdownyu-fa/">学习Markdown语法</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-11-03T20:23:52+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>8:23 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>学习Markdown基本语法</p>
-
-<p><a href="#pagelink">点击这里页内跳转</a></p>
-
-<h2><a name="pagelink"></a>页内跳转到这里</h2>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -702,6 +742,10 @@ Object "netns" is unknown, try "ip help".
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Protocol-buffers Proto3 翻译</a>
       </li>
     
@@ -717,10 +761,6 @@ Object "netns" is unknown, try "ip help".
         <a href="/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/">Golang使用protobuf搭建rpc</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -729,7 +769,7 @@ Object "netns" is unknown, try "ip help".
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
-<li class='category'><a href='/blog/categories/network/'>network (7)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (8)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
@@ -741,17 +781,18 @@ Object "netns" is unknown, try "ip help".
 <h1>Tags</h1>
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
-<a style="font-size: 130%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 128%" href="/blog/tags/devops/">DevOps</a>
 <a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
-<a style="font-size: 130%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 128%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
 <a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
-<a style="font-size: 202%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 196%" href="/blog/tags/network/">Network</a>
 <a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
-<a style="font-size: 130%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 128%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
-<a style="font-size: 130%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 
