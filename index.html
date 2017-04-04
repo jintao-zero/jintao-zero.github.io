@@ -9,10 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="作为程序员每天都需要使用ssh登录到远程主机进行部署调试，本篇将总结ssh工具几个常用方法： 免密登录
-别名登录
-隧道转发 免密登录 在本地机器上生成pubkey
-将pubkey拷贝到远程主机~/.ssh/authorized_keys文件中 别名登录 在免密登录的基础上， 可以方便实现别名登录 &hellip;">
+  <meta name="description" content="介绍 网络防火墙用来隔离组织内部网络和外部网络，比如INTERNET。这些防火墙系统扮演着内外部网络之间的应用层网关，用来控制TELNET、FTP和SMTP等协议的进入。随着更多复杂应用层协议被设计用来加速全局信息发现，需要为这些协议提供一个框架以便透明和安全的通过防火墙。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -70,6 +67,45 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-04-02T16:38:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2017</span></span> <span class='time'>4:38 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>介绍</h2>
+
+<p>网络防火墙用来隔离组织内部网络和外部网络，比如<code>INTERNET</code>。这些防火墙系统扮演着内外部网络之间的应用层网关，用来控制<code>TELNET</code>、<code>FTP</code>和<code>SMTP</code>等协议的进入。随着更多复杂应用层协议被设计用来加速全局信息发现，需要为这些协议提供一个框架以便透明和安全的通过防火墙。 也需要提供为这种通过提供可靠授权。 <br/>
+<code>SOCKS5</code>协议被设计用来为基于TCP或者UDP协议的client-server模式应用程序方便且安全的使用网络防火墙服务。这个协议概念上认为是在应用层和传输层之间，因此它不提供网络层网关服务，比如转发<code>ICMP</code>消息。</p>
+
+<p>已经存在了一个<code>SOCKS4</code>协议，这个版本的协议在4版本的基础上支持UDP协议，包含通用授权范型和支持域名和V6版本IP地址。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/04/02/socks5-xie-yi/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -732,98 +768,6 @@ testfunc    description of testing functions
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">golang创建、解压.tar.gz文件简单库</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-01-05T19:17:06+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>golang提供了<code>tar</code>包和<code>compress/gzip</code>包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。</p>
-
-<h2>tar打包功能</h2>
-
-<p>利用tar中<code>Writer</code>和<code>Reader</code>可以实现将文件和文件夹进行打包的功能。</p>
-
-<h3>打包</h3>
-
-<p>创建目标文件</p>
-
-<pre><code>f, err := os.Create(dstPath)
-</code></pre>
-
-<p>创建<code>Writer</code></p>
-
-<pre><code>tw := tar.NewWriter(f)
-</code></pre>
-
-<p>循环遍历文件夹，写入Writer</p>
-
-<pre><code>fileInfo, err := os.Stat(path)
-if err != nil {
-    return err
-}
-if fileInfo.Mode().IsRegular() {
-    header, err := tar.FileInfoHeader(fileInfo, "")
-    if err != nil {
-        return err
-    }
-    header.Name = path
-    if err = tw.WriteHeader(header); err != nil {
-        return err
-    }
-    file, err := os.Open(path)
-    if err != nil {
-        return err
-    }
-    if _, err = io.Copy(tw, file); err != nil {
-        return err
-    }
-}
-
-if fileInfo.Mode().IsDir() {
-    // tar each file and dir in the dir
-    var file *os.File
-    if file, err = os.Open(path); err != nil {
-        return err
-    }
-    fileInfos, err := file.Readdir(0)
-    if err != nil {
-        return err
-    }
-    for _, info := range fileInfos {
-        if err = tarPath(filepath.Join(path, info.Name()), tw); err != nil {
-            return err
-        }
-    }
-}
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -837,6 +781,10 @@ if fileInfo.Mode().IsDir() {
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng/">SSH常用设置(免密、别名登录、隧道转发)</a>
@@ -854,10 +802,6 @@ if fileInfo.Mode().IsDir() {
         <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍和实践</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/03/06/golang-reflectjie-shao/">Golang Reflect介绍</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -866,7 +810,7 @@ if fileInfo.Mode().IsDir() {
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
-<li class='category'><a href='/blog/categories/network/'>network (8)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
@@ -890,6 +834,7 @@ if fileInfo.Mode().IsDir() {
 <a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
 <a style="font-size: 128%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
 <a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>

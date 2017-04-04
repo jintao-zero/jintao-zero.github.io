@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Tag: SOCKS | jintao's blog]]></title>
+  <link href="http://jintao-zero.github.io/blog/tags/socks/atom.xml" rel="self"/>
+  <link href="http://jintao-zero.github.io/"/>
+  <updated>2017-04-04T16:56:34+08:00</updated>
+  <id>http://jintao-zero.github.io/</id>
+  <author>
+    <name><![CDATA[jintao]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[[翻译]SOCKS5 协议]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/04/02/socks5-xie-yi/"/>
+    <updated>2017-04-02T16:38:00+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/04/02/socks5-xie-yi</id>
+    <content type="html"><![CDATA[<h2>介绍</h2>
+
+<p>网络防火墙用来隔离组织内部网络和外部网络，比如<code>INTERNET</code>。这些防火墙系统扮演着内外部网络之间的应用层网关，用来控制<code>TELNET</code>、<code>FTP</code>和<code>SMTP</code>等协议的进入。随着更多复杂应用层协议被设计用来加速全局信息发现，需要为这些协议提供一个框架以便透明和安全的通过防火墙。 也需要提供为这种通过提供可靠授权。 <br/>
+<code>SOCKS5</code>协议被设计用来为基于TCP或者UDP协议的client-server模式应用程序方便且安全的使用网络防火墙服务。这个协议概念上认为是在应用层和传输层之间，因此它不提供网络层网关服务，比如转发<code>ICMP</code>消息。</p>
+
+<p>已经存在了一个<code>SOCKS4</code>协议，这个版本的协议在4版本的基础上支持UDP协议，包含通用授权范型和支持域名和V6版本IP地址。</p>
+
+<!-- more -->
+
+
+<h2>TCP客户端处理步骤</h2>
+
+<p>当一个基于TCP协议的客户端希望与位于防火墙后面的目标之间建立一个连接时，它必须打开一个到<code>SOCKS</code>服务端的连接。<code>SOCKS</code>服务按照惯例位于1080TCP端口。 如果连接建立成功后，客户端发送鉴权请求。服务端评估请求，要么建立相应连接或者拒绝这个请求。  <br/>
+客户端连接socks服务端，发送一个版本标识符或者方法选择消息：</p>
+
+<pre><code>+----+----------+----------+
+|VER | NMETHODS | METHODS  |
++----+----------+----------+
+| 1  |    1     | 1 to 255 |
++----+----------+----------+
+</code></pre>
+
+<p><code>VER</code>字段设置为<code>X'05'</code>是这个协议的版本。<code>NMETHODS</code>字段包含出现在<code>METHODS</code>字段中的值的字节数。<br/>
+socks服务端从<code>METHODS</code>中选择一个方法，发送一个<code>METHOD</code>选择消息：</p>
+
+<pre><code>+----+--------+
+|VER | METHOD |
++----+--------+
+| 1  |   1    |
++----+--------+
+</code></pre>
+
+<p>如果选择的<code>METHOD</code>为<code>X'FF'</code>，那么客户端列出的所有方法都不被接受，这时候客户端必须关闭连接。<br/>
+目前定义的<code>METHOD</code>值有：</p>
+
+<pre><code>o  X'00' NO AUTHENTICATION REQUIRED
+o  X'01' GSSAPI
+o  X'02' USERNAME/PASSWORD
+o  X'03' to X'7F' IANA ASSIGNED
+o  X'80' to X'FE' RESERVED FOR PRIVATE METHODS
+o  X'FF' NO ACCEPTABLE METHODS  
+</code></pre>
+
+<p>方法选择之后，客户端和服务端之间进入与方法相关的子协商。</p>
+
+<h2>请求</h2>
+
+<p>子协商完成后，客户端发送请求详情。如果协商结果是需要对发送的消息进行封装加密，那么请求消息必须进行封装加密。<br/>
+SOCKS协议请求格式为：</p>
+
+<pre><code>+----+-----+-------+------+----------+----------+
+|VER | CMD |  RSV  | ATYP | DST.ADDR | DST.PORT |
++----+-----+-------+------+----------+----------+
+| 1  |  1  | X'00' |  1   | Variable |    2     |
++----+-----+-------+------+----------+----------+
+</code></pre>
+
+<p>字段说明如下：</p>
+
+<pre><code>o  VER    protocol version: X'05'
+o  CMD
+o  CONNECT X'01'
+o  BIND X'02'
+o  UDP ASSOCIATE X'03'
+o  RSV    RESERVED
+o  ATYP   address type of following address
+o  IP V4 address: X'01'
+o  DOMAINNAME: X'03'
+o  IP V6 address: X'04'
+o  DST.ADDR       desired destination address
+o  DST.PORT desired destination port in network octet order
+</code></pre>
+
+<p>SOCKS服务端将会根据源和目的地址评估请求，并且根据请求类型返回一个或者多个回复消息。</p>
+
+<h2>地址</h2>
+
+<p>在地址字段（<code>DST.ADDR BND.ADDR</code>），<code>ATYP</code>字段指示了地址的类型：</p>
+
+<ul>
+<li>X&#8217;01&#8217;
+指示地址为IPv4地址，长度为4个字节。</li>
+<li>X&#8217;03&#8217;
+指示地址为域名。地址的第一个字节为域名的长度，域名不是以<code>NUL</code>结束的。</li>
+<li>X&#8217;04&#8217;
+地址为IPv6地址，长度为16个字节。</li>
+</ul>
+
+
+<h2>回复</h2>
+
+<p>对应上面的请求，服务端回复以下应答：</p>
+
+<pre><code>+----+-----+-------+------+----------+----------+
+|VER | REP |  RSV  | ATYP | BND.ADDR | BND.PORT |
++----+-----+-------+------+----------+----------+
+| 1  |  1  | X'00' |  1   | Variable |    2     |
++----+-----+-------+------+----------+----------+ 
+</code></pre>
+
+<p> 字段说明如下：</p>
+
+<pre><code> o  VER    protocol version: X'05'
+ o  REP    Reply field:
+    o  X'00' succeeded
+    o  X'01' general SOCKS server failure
+    o  X'02' connection not allowed by ruleset
+    o  X'03' Network unreachable
+    o  X'04' Host unreachable
+    o  X'05' Connection refused
+    o  X'06' TTL expired
+    o  X'07' Command not supported
+    o  X'08' Address type not supported
+    o  X'09' to X'FF' unassigned
+
+ o  RSV    RESERVED
+ o  ATYP   address type of following address
+     o  IP V4 address: X'01'
+     o  DOMAINNAME: X'03'
+     o  IP V6 address: X'04'
+ o  BND.ADDR       server bound address
+ o  BND.PORT       server bound port in network octet order
+</code></pre>
+
+<p>标记为<code>RESERVED</code>的字段必须设置为X&#8217;00&#8217;</p>
+
+<h3>CONNECT</h3>
+
+<p>对于<code>CONNECT</code>请求消息的应答中，<code>BND.PORT</code>字段为服务端绑定的用来连接到目标主机的端口号，<code>BND.ADDR</code>字段为绑定的地址。绑定的地址通常与客户端连接服务端的地址不同。</p>
+
+<h3>BIND</h3>
+
+<p>BIND请求被用来要求客户端接受来自服务端的请求。FTP是一个常见的例子，它使用客户端到服务端的连接发送命令和状态，使用服务端到客户端的连接传输数据。  <br/>
+客户端使用<code>CONNECT</code>建立主连接，使用<code>BIND</code>请求只是用来建立第二个连接。<br/>
+对于<code>BIND</code>请求，<code>SOCKS</code>服务端将使用<code>DST.ADDR</code>和<code>DST.PORT</code>。<br/>
+对于<code>BIND</code>操作，SOCKS服务端将会发送两个回复到客户端。服务端创建和绑定一个新的socket套接字后发送第一个回复。回复中<code>BND.PORT</code>字段值为SOCKS服务端本地绑定用来监听和接受连接的端口号。<code>BND.ADDR</code>字段为SOCKS服务端绑定的IP。客户端通过主控制链路发送这些信息给应用程序服务端。当新的连接建立成功或者失败后，SOCKS服务端会发送第二个应答。 在第二个应答中，<code>BND.PORT</code>和<code>BND.ADDR</code>字段包含连接主机的ip和端口信息。</p>
+
+<h3>UDP</h3>
+
+<p><code>UDP ASSOCIATE</code>请求用来与UDP中继进程建立一个联系来处理UDP数据报。客户端希望发送UDP数据报到<code>DST.ADDR</code>和<code>DST.PORT</code>字段标示的IP和端口号。在建立UDP ASSOCIATE时，如果客户端不拥有这些信息，客户端必须使用全零的端口号和ip地址。  <br/>
+当发送UDP ASSOCIATE请求的TCP连接中断时，这个UDP 连接也要中断。<br/>
+在对UDP ASSOCIATE请求的应答中，<code>BND.PORT</code>和<code>BND.ADDR</code>字段表示客户端必须将待转发的UDP消息发送到这个地址。</p>
+
+<h3>应答处理</h3>
+
+<p>如果应答消息中结果字段为失败，SOCKS服务端必须在发送应答后立即关闭TCP连接。关闭连接必须在检测到失败后10秒内终止连接。</p>
+
+<p>如果应答消息中结果字段为成功，请求为<code>BIND</code>或者<code>CONNECT</code>的话，客户端就可以开始传输数据。 如果协商了封装加密方法的话，在客户端和SOCKS服务端通信过程中需要进行封装加密。</p>
+
+<h2>UDP客户端</h2>
+
+<p>udp客户端必须想UDP ASSOCIATE应答中<code>BND.PORT</code>标示的字段发送UDP数据报。如果协商了封装方法，那么通讯时需要进行封装。<br/>
+每个UDP数据需要携带一个UDP请求头：</p>
+
+<pre><code>+----+------+------+----------+----------+----------+
+|RSV | FRAG | ATYP | DST.ADDR | DST.PORT |   DATA   |
++----+------+------+----------+----------+----------+
+| 2  |  1   |  1   | Variable |    2     | Variable |
++----+------+------+----------+----------+----------+
+</code></pre>
+
+<p> 字段说明如下：</p>
+
+<pre><code> o  RSV  Reserved X'0000'
+ o  FRAG    Current fragment number
+ o  ATYP    address type of following addresses:
+        o  IP V4 address: X'01'
+      o  DOMAINNAME: X'03'
+      o  IP V6 address: X'04'
+ o  DST.ADDR       desired destination address
+ o  DST.PORT       desired destination port
+ o  DATA     user data
+</code></pre>
+
+<p>UDP中继服务端必须从SOCKS服务端获取申请建立UDP ASSOCIATE的客户端ip地址。中继服务端对于其他源ip发送过来的数据包将会丢弃。</p>
+
+<h2>参考</h2>
+
+<p><a href="https://www.ietf.org/rfc/rfc1928.txt">rfc1928</a><br/>
+<a href="https://tools.ietf.org/html/rfc1929">rfc1929</a></p>
+]]></content>
+  </entry>
+  
+</feed>

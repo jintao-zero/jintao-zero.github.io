@@ -9,7 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="本文根据Profiling Go Programs文章，进行演示如何利用Golang性能工具进行cpu性能统计和优化。 准备工作 1、Golang编译运行环境。 go version go1.7 darwin/amd64 2、下载测试源码 -rw-r--r-- 1 jintao staff &hellip;">
+  <meta name="description" content="golang提供了tar包和compress/gzip包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。 tar打包功能 利用tar中Writer和Reader可以实现将文件和文件夹进行打包的功能。 打包 创建目标文件 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +67,98 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">golang创建、解压.tar.gz文件简单库</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-05T19:17:06+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>golang提供了<code>tar</code>包和<code>compress/gzip</code>包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。</p>
+
+<h2>tar打包功能</h2>
+
+<p>利用tar中<code>Writer</code>和<code>Reader</code>可以实现将文件和文件夹进行打包的功能。</p>
+
+<h3>打包</h3>
+
+<p>创建目标文件</p>
+
+<pre><code>f, err := os.Create(dstPath)
+</code></pre>
+
+<p>创建<code>Writer</code></p>
+
+<pre><code>tw := tar.NewWriter(f)
+</code></pre>
+
+<p>循环遍历文件夹，写入Writer</p>
+
+<pre><code>fileInfo, err := os.Stat(path)
+if err != nil {
+    return err
+}
+if fileInfo.Mode().IsRegular() {
+    header, err := tar.FileInfoHeader(fileInfo, "")
+    if err != nil {
+        return err
+    }
+    header.Name = path
+    if err = tw.WriteHeader(header); err != nil {
+        return err
+    }
+    file, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    if _, err = io.Copy(tw, file); err != nil {
+        return err
+    }
+}
+
+if fileInfo.Mode().IsDir() {
+    // tar each file and dir in the dir
+    var file *os.File
+    if file, err = os.Open(path); err != nil {
+        return err
+    }
+    fileInfos, err := file.Readdir(0)
+    if err != nil {
+        return err
+    }
+    for _, info := range fileInfos {
+        if err = tarPath(filepath.Join(path, info.Name()), tw); err != nil {
+            return err
+        }
+    }
+}
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -657,73 +749,6 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Libnetfilter_queue学习笔记</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-06-16T18:53:42+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>6:53 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>项目需要将某个进程发出的报文截获，待用户态业务处理后再将报文送回系统协议栈中处理。调研后，采用iptables添加防火墙规则截获报文传递到用户态队列，用户态进程使用libnetfilter_queue库接受报文，待业务处理后，将报文送回系统协议栈这样的方案完成。下面介绍下，学习的几个知识点：</p>
-
-<h1>netfilter</h1>
-
-<h2>简介</h2>
-
-<p><a href="http://netfilter.org/">netfilter</a>是Linux 2.4.x开始以后内核版本中的报文过滤框架。netfilter框架的用户态工具是<a href="http://netfilter.org/projects/iptables/index.html">iptables</a>防火墙配置工具。<br/>
-netfilter框架实现了报文过滤，网络地址转换，端口转换和其他报文管理。它是对Linux 2.2.x ipchains和Linux 2.0.x ipfwadm系统的重构和显著改进。<br/>
-netfilter是位于Linux内核中的一组回调函数集合，各个模块可以在网络协议栈注册回调函数。每个报文到来时，将会遍历协议栈中的回调函数并调用。<br/>
-iptables定义了规则集的通用格式。IP table中的每一条规则是有一些分类和相关的目标组成。<br/>
-netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和NAT子系统是netfilter的主要组成部分。</p>
-
-<h2>主要特性</h2>
-
-<ul>
-<li>无状态报文过滤</li>
-<li>有状态报文过滤</li>
-<li>所有网络地址和端口转换，比如NAT/NAPT(IPv4和IPv6)</li>
-<li>灵活的、可扩展的框架</li>
-<li>为第三方扩展提供API访问网络各层</li>
-</ul>
-
-
-<h2>可以做哪些</h2>
-
-<ul>
-<li>基于无状态或者有状态报文过滤构建互联网防火墙</li>
-<li>托管高可用有状态或者无状态的防火墙集群</li>
-<li>使用NAT和ip伪装共享共网ip</li>
-<li>使用NAT实现传输代理</li>
-<li>与tc和iproute2系统一起构建复杂Qos和策略路由器</li>
-<li>更进一步进行报文管理，比如修改IP头中的TOS/DSCP/ECN</li>
-</ul>
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -741,6 +766,10 @@ netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和N
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng/">SSH常用设置(免密、别名登录、隧道转发)</a>
       </li>
     
@@ -756,10 +785,6 @@ netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和N
         <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍和实践</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/03/06/golang-reflectjie-shao/">Golang Reflect介绍</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -768,7 +793,7 @@ netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和N
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
-<li class='category'><a href='/blog/categories/network/'>network (8)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
@@ -792,6 +817,7 @@ netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和N
 <a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
 <a style="font-size: 128%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
 <a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
