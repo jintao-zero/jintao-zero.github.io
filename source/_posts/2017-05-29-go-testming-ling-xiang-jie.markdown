@@ -1,0 +1,69 @@
+---
+layout: post
+title: "go test命令详解"
+date: 2017-05-29 10:58:11 +0800
+comments: true
+categories: go
+tags: go
+---
+## Test packages
+使用：
+	
+	go test [build/test flags] [packages] [build/test flags & test binary flags]
+	
+`Go test`命令自动测试`packages`参数指定的包。它以如下格式打印测试结果摘要信息：  
+	
+	ok   archive/tar   0.011s
+	FAIL archive/zip   0.022s
+	ok   compress/gzip 0.033s
+	...
+`Go test`重新编译每个包中文件名为`*_test.go`模式的文件，将这些文件与测试库进行链接、运行。  
+go tool工具会忽略名为`testdata`的文件夹，使用这个文件夹来保存test中需要的数据。  
+默认情况，`go tes`不需要任何参数。它会编译并当前目录下所有test文件。    
+测试包被安装在临时目录，所以它不会涉及到非测试包安装目录。  
+除了build标志，`go test`自身支持的标志如下：  
+
+	-args
+		将-args后面的参数不做任何修改和解释的传递给test可执行文件。  
+		需要在这个参数之前指定包名。  
+	-c 
+		编译test二进制文件为pkg.test但是不运行。pkg为引入包路径的最后一层。
+		可以使用-o参数修改可执行文件名。  
+	-exec xprog
+		使用xprog运行test二进制文件。行为表现与go run一样。详情参照go help run  
+	-i 
+		安装测试依赖的包。但是不运行测试。  
+	-o file
+		指定可执行测试文件名并运行测试。  
+test二进制可执行文件接受参数来控制test执行。这些参数也可以在`go test`使用：  
+
+	-bench regexp
+		运行负荷正则表达式的子性能测试。
+	-benchmem
+		性能测试中的内存统计信息。  
+	-benchtime t
+		运行足够多的性能测试用例次数，使测试时间达到t，t的类型为time.Duration(比如，-benchtime 1h30s)。默认是1秒。    
+	-blockprofile block.out  
+		所有测试结束后，将goroutine blocking 性能数据写入指定文件。  
+	-blockprofilerate n  
+		使用runtime.SetBlockProfileRate控制goroutine blocking性能数据格式。  
+	-count n  
+		运行每个测试用例和性能测试用例n次。如果设置了-cpu参数，每个GOMAXPROCS运行n次。  
+	-cover 
+		启动覆盖率分析  
+	-covermode set,count,atomic
+		设置覆盖分析模式。如果设置了-race，则覆盖分析模式为atomic，否则为默认set模式。
+		set：
+		count：
+		atomic：
+	-coverpkg pkg1,pkg2,pkg3
+		每个测试中都对给定列表中的包进行覆盖分析。默认是对正在进行测试的包进行分析。
+	-coverprofile cover.out
+		所有测试都通过后，输出一个覆盖测试文件。  
+	-cpu 1,2,4  
+		指定一个GOMAXPROCS列表，默认是GOMAXPROCS当前值。  
+	
+	
+
+    
+
