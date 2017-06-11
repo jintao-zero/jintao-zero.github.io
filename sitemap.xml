@@ -3,6 +3,22 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/</loc>
+    
+    <lastmod>2017-06-11T12:19:45+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>http://jintao-zero.github.io/blog/2017/05/29/go-testming-ling-xiang-jie/</loc>
+    
+    <lastmod>2017-05-29T10:58:11+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2017/04/02/socks5-xie-yi/</loc>
     
     <lastmod>2017-04-02T16:38:00+08:00</lastmod>
@@ -277,14 +293,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2017-04-04T16:56:34+08:00</lastmod>
+    <lastmod>2017-06-11T14:29:13+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2017-04-04T16:56:34+08:00</lastmod>
+    <lastmod>2017-06-11T14:29:13+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

@@ -4,7 +4,7 @@
   <title><![CDATA[Tag: Network | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/tags/network/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-04-04T16:56:34+08:00</updated>
+  <updated>2017-06-11T14:29:13+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -1054,7 +1054,7 @@ for ( ; ; ) {
 </code></pre>
 
 <p>以上tcp服务端程序可以并发处理多个客户端请求，但是在通讯结束，子进程调用exit函数退出后，会产生僵死进程, 使用ps命令可以看到多个server进程状态为Z+：<br/>
-{% img /images/zombie.png %}
+<img src="/images/zombie.png">
 设置僵死状态的目的是维护子进程的信息，以便父进程在以后某个时候获取。这些信息包括子进程的进程ID、终止状态以及资源利用信息（CPU时间、内存使用量等等）。如果一个进程终止，而该进程有子进程处于僵死状态，那么它的所有僵死子进程的富进程ID将被重置为1（init进程）。继承这些子进程的init进程将清理它们。<br/>
 僵死进程占用内核中的空间，最终可能导致我们耗尽进程资源，因此我们需要及时的清理僵死子进程，无论何时我们fork子进程都得wait它们，以防它们变成僵死进程。每个子进程在退出时，内核都会向父进程发送SIGCHLD信号，因此父进程需要建立一个俘获SIGCHLD信号的信号处理函数，在函数体中调用wait。</p>
 
@@ -1111,7 +1111,7 @@ if (sigaction(SIGCHLD, &amp;act, &amp;oact) &lt; 0) {
 </code></pre>
 
 <p>在tcp服务代码中添加了SIGCHLD信号处理函数后，重新测试，但是发现仍然会出现僵死子进程：<br/>
-{% img /images/zombie_wait.png %}<br/>
+<img src="/images/zombie_wait.png"><br/>
 Unix信号处理机制中，<br/>
 1、当一个信号达到后，进入该信号的处理函数后，进程将屏蔽该信号 <br/>
 2、多个同样类型信号同时到达时，信号处理函数只执行一次，其他的信号不进行排队</p>

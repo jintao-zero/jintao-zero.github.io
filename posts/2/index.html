@@ -9,7 +9,9 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="golang提供了tar包和compress/gzip包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。 tar打包功能 利用tar中Writer和Reader可以实现将文件和文件夹进行打包的功能。 打包 创建目标文件 &hellip;">
+  <meta name="description" content="go命令 Compile packages and dependencies Remove object files
+Description of testing flags Go工具用来管理Go语音源代码。
+使用： go command [arguments] 命令为： build &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +69,169 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-13T19:17:12+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>go命令</h1>
+
+<p><a href="#compile">Compile packages and dependencies</a>    <br/>
+<a href="#clean">Remove object files</a><br/>
+<a href="#testing">Description of testing flags</a></p>
+
+<p><code>Go</code>工具用来管理Go语音源代码。
+使用：</p>
+
+<pre><code>go command [arguments]
+</code></pre>
+
+<p>命令为：</p>
+
+<pre><code>build       compile packages and dependencies
+clean       remove object files
+doc         show documentation for package or symbol
+env         print Go environment information
+fix         run go tool fix on packages
+fmt         run gofmt on package sources
+generate    generate Go files by processing source
+get         download and install packages and dependencies
+install     compile and install packages and dependencies
+list        list packages
+run         compile and run Go program
+test        test packages
+tool        run specified go tool
+version     print Go version
+vet         run go tool vet on packages
+</code></pre>
+
+<p>使用<code>go help [command]</code>查看命令相信信息。<br/>
+更多topic：</p>
+
+<pre><code>c           calling between Go and C
+buildmode   description of build modes
+filetype    file types
+gopath      GOPATH environment variable
+environment environment variables
+importpath  import path syntax
+packages    description of package lists
+testflag    description of testing flags
+testfunc    description of testing functions
+</code></pre>
+
+<p>使用<code>go help [topic]</code>查看topic帮助信息</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-08T22:55:07+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>10:55 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Golang标准库<code>net/http/pprof</code>通过HTTP服务对外提供性能统计数据，以便<code>pprof</code>这样的可视化工具使用。</p>
+
+<p>引入此<code>pprof</code>库向http服务注册路径处理函数。此库注册的http服务路径都是以<code>/debug/pprof</code>开头。</p>
+
+<h2>使用方法</h2>
+
+<h3>方式引入库</h3>
+
+<pre><code>import _ "net/http/pprof"
+</code></pre>
+
+<h3>开启HTTP服务</h3>
+
+<p>如果程序中已经运行了一个或者多个HTTP服务，那么就无需再开启HTTP服务，否则需要像如下代码片段，开启一个HTTP服务：</p>
+
+<pre><code>go func() {
+    log.Println(http.ListenAndServe("localhost:6060",   nil))
+}()
+</code></pre>
+
+<p>其中地址也可以不绑定到localhost,可以选择监听所有端口,比如:</p>
+
+<pre><code>go func() {
+    log.Println(http.ListenAndServe(":6060",    nil))
+}()
+</code></pre>
+
+<h3>获取性能数据</h3>
+
+<p>1、查看堆栈性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/heap
+</code></pre>
+
+<p>2、查看30s CPU性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/profile
+</code></pre>
+
+<p>3、查看goroutine阻塞性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/block
+</code></pre>
+
+<p>4、查看5s执行栈</p>
+
+<pre><code>wget http://localhost:6060/debug/pprof/trace?seconds=5
+</code></pre>
+
+<p>5、查看所有可用性能数据</p>
+
+<pre><code>浏览器打开  http://localhost:6060/debug/pprof/
+</code></pre>
+
+<p>参考：<br/>
+<a href="https://golang.org/pkg/net/http/pprof/">Golang官博</a></p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -622,133 +787,6 @@ day of week    0-7 (0 or 7 is Sun, or use names)
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Hadoop环境搭建</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-09-19T15:41:51+08:00'><span class='date'><span class='date-month'>Sep</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:41 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>最近开始进行Hadoop分布式计算相关内容的学习，先从搭建开发环境开始。下面记录一下搭建Hadoop开发环境的过程，以及注意点。
-本节介绍如何快速搭建和配置一个单节点Hadoop环境，便于使用Hadoop MapReduce和Hadoop Distributed File System(HDFS)。</p>
-
-<h2>依赖条件</h2>
-
-<p>支持的操作系统平台  <br/>
-GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以在GNU/Linux集群上运行2000节点。本文使用Ubuntu操作系统做为实验环境。</p>
-
-<pre><code>Linux node8 3.16.0-30-generic #40~14.04.1-Ubuntu SMP Thu Jan 15 17:43:14 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
-</code></pre>
-
-<p>Windows系统也可以搭建Hadoop集群，本文暂时没有涉及，可以参考<a href="http://wiki.apache.org/hadoop/Hadoop2OnWindows">wiki page</a></p>
-
-<p>依赖的软件</p>
-
-<ul>
-<li><p>Java环境<br/>
-  安装方法：</p>
-
-<p>  1、到oracle官网下载<a href="http://download.oracle.com/otn-pub/java/jdk/8u60-b27/jdk-8u60-linux-x64.tar.gz">JDK二进制压缩包</a><br/>
-  2、将压缩包解压到/usr/local/lib/目录下，安装目录也可以换到其他路径  <br/>
-      sudo tar xzvf jdk-8u45-linux-x64.tar.gz -C /usr/local/lib/<br/>
-  3、修改/etc/profile文件配置JAVA_HOME、PATH、CLASSPATH环境变量<br/>
-      JAVA_HOME=/usr/local/lib/jdk1.8.0_45<br/>
-      PATH=$JAVA_HOME/bin:$PATH<br/>
-      CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar <br/>
-  4、运行java -version查看是否显示java版本信息</p></li>
-<li><p>ssh远程控制软件<br/>
-  如果系统没有运行sshd服务，则Ubuntu下运行apt-get命令安装ssh服务端
-  sudo apt-get install openssh-server</p></li>
-</ul>
-
-
-<h2>下载Hadoop软件</h2>
-
-<p>本文采用的是Hadoop最新的稳定版本<a href="http://apache.fayea.com/hadoop/common/current/hadoop-2.7.1.tar.gz">2.7.1</a></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">冒泡、选择、插入、归并、快速、堆排序</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-08-02T20:40:24+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>8:40 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。</p>
-
-<h1>冒泡排序</h1>
-
-<p><a href="http://baike.baidu.com/view/254413.htm#ref_[1]_254413">冒泡排序算法</a>（百度百科）的运作如下：（从后往前）<br/>
-1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。<br/>
-2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。在这一点，最后的元素应该会是最大的数。<br/>
-3. 针对所有的元素重复以上的步骤，除了最后一个。<br/>
-4. 持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较。</p>
-
-<p>代码实现</p>
-
-<pre><code>void BubbleSort(int array[], int len)    
-{  
-    for (int i = 0; i &lt; len-1; i++) {
-        for (int j = 0; j &lt; len-i-1; j++) {
-            if (array[j+1] &lt; array[j]) {
-                int tmp = array[j+1];
-                array[j+1] = array[j];
-                array[j] = tmp;
-            }
-        }
-    }
-}
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -766,6 +804,14 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
       </li>
     
@@ -777,14 +823,6 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
         <a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Protocol-buffers Proto3 翻译</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍和实践</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -793,10 +831,11 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
@@ -819,6 +858,8 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
 <a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
 <a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 90%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>

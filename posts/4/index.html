@@ -9,8 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="实现了一个简单客户端，使用tcp与服务端进行通讯。本片文章主要介绍在tcp客户端网络编程中用到的几个基本函数：
-1、创建socket int socket(int domain, int type, int protocol) socket函数创建一个通讯端并返回这个终端的文件描述符。 &hellip;">
+  <meta name="description" content="上一篇博客中实现的tcp服务端每次只能处理一个客户端连接，如果有多个客户端同时与服务端进行通讯的话，那只能进行等待上一个客户端通讯完成才可以，那么如何修改服务端为并发服务器程序呢？Unix中编写并发服务器程序最简单的方法就是fork一个子进程来服务每个客户。以下为一个典型的并发服务器的轮廓： &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +67,146 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Tcp服务端并发之子进程</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-17T14:56:56+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>上一篇博客中实现的tcp服务端每次只能处理一个客户端连接，如果有多个客户端同时与服务端进行通讯的话，那只能进行等待上一个客户端通讯完成才可以，那么如何修改服务端为并发服务器程序呢？Unix中编写并发服务器程序最简单的方法就是fork一个子进程来服务每个客户。以下为一个典型的并发服务器的轮廓：</p>
+
+<pre><code>pid_t pid;
+int listenfd, connfd;
+listenfd = Socket(...);
+    /* fill in sockaddr_in{} with server's well-known port */
+Bind*(listenfd, ...);
+Listen(listenfd, LISTENQ);
+for ( ; ; ) {
+    connfd = Accept(listenfd, ...);  /* probably blocks */
+    if ((pid = Fork()) == 0) {
+        Close(listenfd);    /* child close listening socket */
+        doit(connfd);       /* process the request */
+        close(connfd);      /* child terminates */
+        exit(0);            /* child terminate */
+    }
+    Close(connfd);          /* parent closes connected socket */
+}
+</code></pre>
+
+<p>fork函数</p>
+
+<pre><code>pid_t fork(void);
+</code></pre>
+
+<p>fork创建一个新进程。新进程是当前运行进程的一个拷贝。fork函数一次调用，两次返回。对于子进程返回值为0，对于父进程，返回值为子进程id。</p>
+
+<p>以下为根据上面的并发服务器轮廓代码修改的tcp客户端代码：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">Tcp 服务端例子</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-13T11:04:43+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:04 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>实现了一个简单服务端，使用tcp与客户端进行通讯。本片文章主要介绍在tcp服务端网络编程中用到的几个基本函数：<br/>
+1、创建套接字socket函数</p>
+
+<pre><code>int socket(int domain, int type, int protocol)
+</code></pre>
+
+<p>socket函数创建一个通讯端并返回这个终端的文件描述符。</p>
+
+<p>参数domain指定发生整个通讯过程所在的协议域。协议域定义在&lt;sys/socket.h>头文件中，常用协议域名为：</p>
+
+<pre><code>PF_LOCAL 主机内部通讯协议，之前名为PF_UNIX
+PF_UNIX  主机内部通讯协议，废弃，使用PF_LOCAL
+PF_INET  IPV4通讯协议
+PF_INET6 IPV6通讯协议
+。。。
+</code></pre>
+
+<p>本例子中使用PF_INET ipv4通讯协议域</p>
+
+<p>参数type指定socket类型，目前定义类型为：</p>
+
+<pre><code>SOCK_STREAM                                      
+SOCK_DGRAM
+SOCK_RAW
+SOCK_SEQPACKET
+SOCK_RDM
+</code></pre>
+
+<p>SOCK_STREAM 类型提供序列化、可靠的、全双工字节流套接字
+SOCK_DGRAM 类型提供无连接的、不可靠的，有报文最大限制的数据报通讯套接字
+SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字，需要有超级用户权限<br/>
+本例子中使用SOCK_STREAM流套接字类型</p>
+
+<p>失败时，函数返回-1，成功时，返回套接字文件描述符</p>
+
+<p>2、bind函数</p>
+
+<pre><code>int bind(int socket, const struct sockaddr *address, socklen_t address_len);
+</code></pre>
+
+<p>bind函数把一个本地协议地址赋予一个套接字。
+参数socket，为需要赋予地址的套接字。
+参数address，为赋予到套接字的地址结构，有ip和端口号标识。
+参数address_len, 为该地址结构大小</p>
+
+<p>对于服务端来讲，在调用监听函数之前，都需要bind到特定地址和端口</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -292,6 +431,14 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
       </li>
     
@@ -303,14 +450,6 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
         <a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Protocol-buffers Proto3 翻译</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/03/07/golang-defer-panic-he-recoverjie-shao/">Golang Defer Panic 和Recover介绍和实践</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -319,10 +458,11 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/program/'>program (11)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
 
@@ -345,6 +485,8 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
 <a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
 <a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 90%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
