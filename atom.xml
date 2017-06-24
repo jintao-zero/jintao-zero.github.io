@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-06-11T14:29:13+08:00</updated>
+  <updated>2017-06-24T17:43:13+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,354 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Golang加两边读锁导致程序死锁问题分析]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/"/>
+    <updated>2017-06-20T21:42:04+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu</id>
+    <content type="html"><![CDATA[<p>golang程序使用读写锁对共享数据进行互斥保护时，注意在同一程序调用栈不要对锁进行多次加锁，这样会导致程序死锁，如下的代码片段就会导致程序死锁：</p>
+
+<pre><code>import (
+"sync"
+"fmt"
+"time"
+_ "net/http/pprof"
+"net/http"
+)
+
+var mutex sync.RWMutex
+
+func f()  {
+    fmt.Println("f begin to get Rlock ")
+    mutex.RLock()
+    defer mutex.RUnlock()
+    fmt.Println("f get Rlock suc")
+}
+
+func main() {
+    mutex.RLock()
+    fmt.Println("main get RLock suc")
+    defer mutex.RUnlock()
+
+    go http.ListenAndServe(":6060", nil)
+    go func() {
+        fmt.Println("other goroutine begin to get write lock")
+        mutex.Lock()
+        defer mutex.Unlock()
+        fmt.Println("other goroutine get write lock suc“)
+    }()
+    time.Sleep(time.Second)
+    f()
+}
+</code></pre>
+
+<p>程序执行结果如下：</p>
+
+<pre><code>MacBook-Pro-2:sync jintao$ go run main.go 
+main get RLock suc
+other goroutine begin to get write lock
+f begin to get Rlock
+</code></pre>
+
+<!-- more -->
+
+
+<p>通过pprof工具查看相关goroutine调用栈：<br/>
+main goroutine阻塞在获取读锁的位置：</p>
+
+<pre><code>1 @ 0x102dfca 0x102e0ae 0x103e5a1 0x103e1a4 0x1060869 0x13119c6 0x1311bd7 0x102db7a 0x1059c01
+#   0x103e1a3   sync.runtime_Semacquire+0x33    /usr/local/go/src/runtime/sema.go:47
+#   0x1060868   sync.(*RWMutex).RLock+0x48  /usr/local/go/src/sync/rwmutex.go:43
+#   0x13119c5   main.f+0xa5         /Users/jintao/Project/test/Golang/src/goutil/sync/main.go:15
+#   0x1311bd6   main.main+0x136         /Users/jintao/Project/test/Golang/src/goutil/sync/main.go:33
+#   0x102db79   runtime.main+0x209      /usr/local/go/src/runtime/proc.go:185
+</code></pre>
+
+<p>子goroutine阻塞在获取写锁的位置：</p>
+
+<pre><code>1 @ 0x102dfca 0x102e0ae 0x103e5a1 0x103e1a4 0x106098e 0x1311cb6 0x1059c01
+#   0x103e1a3   sync.runtime_Semacquire+0x33    /usr/local/go/src/runtime/sema.go:47
+#   0x106098d   sync.(*RWMutex).Lock+0x6d   /usr/local/go/src/sync/rwmutex.go:91
+#   0x1311cb5   main.main.func1+0xa5        /Users/jintao/Project/test/Golang/src/goutil/sync/main.go:28
+</code></pre>
+
+<p>通过上面的调用栈，我们发现main goroutine在第21行已经获取了读锁，当在调用的函数<code>f</code>第15行再次尝试获取读锁时，程序阻塞。创建的goroutine在第28行尝试获取写所时，协程阻塞。</p>
+
+<h2>分析</h2>
+
+<p>这个是读写锁的一个标准行为。在
+<a href="https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">Wikipedia &ldquo;Readers–writer lock&rdquo;</a>词条中对读写锁进行了介绍，在<code>Priority policies</code>一节中对<code>reader</code>和<code>writer</code>加锁时的优先级策略进行了说明，不同的优先级策略会给并发和死锁带来不同的影响：</p>
+
+<ul>
+<li>读优先策略 <br/>
+  读优先允许最大并发，但是如果读并发太多，可能导致写饥饿。<a href="https://www.google.com/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=3&amp;cad=rja&amp;uact=8&amp;ved=0ahUKEwji0rOAh9bUAhUW12MKHYx9CvUQFggyMAI&amp;url=http%3A%2F%2Fwww.beck-shop.de%2Ffachbuch%2Fleseprobe%2F9783642320262_Excerpt_001.pdf&amp;usg=AFQjCNEskoEL2n3HKpHGYVWc_XpU4z90nw">Concurrent Programming: Algorithms, Principles, and Foundations</a></li>
+<li>写优先策略<br/>
+  写优先策略可以避免上面读优先导致的写锁饥饿问题，如果有一个写锁着在等待，系统将会组织任何新reader加读锁成功，一旦当前已经获取的读锁释放完后，即会成功获取写锁。写优先策略相比较与读优先策略，会降低系统的并发性能。相对于读优先策略，写优先策略在实现上的效率要低，因为在获取或者释放读锁或者写锁时，都要操作多个互斥锁。</li>
+<li>不指定优先级策略
+  这种策略在一定场景下的效率更高</li>
+</ul>
+
+
+<p>从上面Wikipedia关于读写锁的说明看，golang中关于读写锁使用的是写优先策略，下面查看源码，对源码进行分析</p>
+
+<h2>源码解析</h2>
+
+<p>读写锁实现在sync/rwmutex.go文件中</p>
+
+<pre><code>type RWMutex struct {
+    w           Mutex  // 获取写锁时，必须获取的互斥量
+    writerSem   uint32 // 写锁信号量
+    readerSem   uint32 // 读锁信号量
+    readerCount int32  // 目前获取的读锁个数
+    readerWait  int32  // 需要等待reader释放锁个数
+}
+</code></pre>
+
+<p><code>加载读锁：</code></p>
+
+<pre><code>// RLock locks rw for reading.
+func (rw *RWMutex) RLock() {
+    if race.Enabled {
+        _ = rw.w.state
+        race.Disable()
+    }
+    if atomic.AddInt32(&amp;rw.readerCount, 1) &lt; 0 {
+        // A writer is pending, wait for it.
+        runtime_Semacquire(&amp;rw.readerSem)
+    }
+    if race.Enabled {
+        race.Enable()
+        race.Acquire(unsafe.Pointer(&amp;rw.readerSem))
+    }
+}
+</code></pre>
+
+<p>每次获取读锁时，都对readerCount计数器进行加1，如果加1后值为负，那么说明有人正在获取写锁。等待readerSem信号量变为正</p>
+
+<p><code>释放读锁：</code></p>
+
+<pre><code>func (rw *RWMutex) RUnlock() {
+    if race.Enabled {
+        _ = rw.w.state
+        race.ReleaseMerge(unsafe.Pointer(&amp;rw.writerSem))
+        race.Disable()
+    }
+    if r := atomic.AddInt32(&amp;rw.readerCount, -1); r &lt; 0 {
+        if r+1 == 0 || r+1 == -rwmutexMaxReaders {
+            race.Enable()
+            panic("sync: RUnlock of unlocked RWMutex")
+        }
+        // A writer is pending.
+        if atomic.AddInt32(&amp;rw.readerWait, -1) == 0 {
+            // The last reader unblocks the writer.
+            runtime_Semrelease(&amp;rw.writerSem)
+        }
+    }
+    if race.Enabled {
+        race.Enable()
+    }
+}
+</code></pre>
+
+<p>释放写锁时，对readerCount减1，说明获取释放一个读锁，如果最新值为负，那么说明有人正在尝试获取写锁，readerWait记录了写锁需要等待的读锁个数，此时将readerWait个数减1，如果个素减为0，说明写锁正在等待的所有reader都已经释放读锁，此时可以释放写锁信号量，让程序获取写锁。</p>
+
+<p><code>获取写锁：</code></p>
+
+<pre><code>func (rw *RWMutex) Lock() {
+    if race.Enabled {
+        _ = rw.w.state
+        race.Disable()
+    }
+    // First, resolve competition with other writers.
+    rw.w.Lock()
+    // Announce to readers there is a pending writer.
+    r := atomic.AddInt32(&amp;rw.readerCount, -rwmutexMaxReaders) + rwmutexMaxReaders
+    // Wait for active readers.
+    if r != 0 &amp;&amp; atomic.AddInt32(&amp;rw.readerWait, r) != 0 {
+        runtime_Semacquire(&amp;rw.writerSem)
+    }
+    if race.Enabled {
+        race.Enable()
+        race.Acquire(unsafe.Pointer(&amp;rw.readerSem))
+        race.Acquire(unsafe.Pointer(&amp;rw.writerSem))
+    }
+}
+</code></pre>
+
+<p>获取写锁时，首先获取互斥锁，这样其他写锁必须等待。然后设置读锁个数为负值，这样后面的reader就无法获取到读锁。如果读锁没有释放，则等待写锁信号量变为正。</p>
+
+<p><code>释放写锁：</code></p>
+
+<pre><code>func (rw *RWMutex) Unlock() {
+    if race.Enabled {
+        _ = rw.w.state
+        race.Release(unsafe.Pointer(&amp;rw.readerSem))
+        race.Release(unsafe.Pointer(&amp;rw.writerSem))
+        race.Disable()
+    }
+
+    // Announce to readers there is no active writer.
+    r := atomic.AddInt32(&amp;rw.readerCount, rwmutexMaxReaders)
+    if r &gt;= rwmutexMaxReaders {
+        race.Enable()
+        panic("sync: Unlock of unlocked RWMutex")
+    }
+    // Unblock blocked readers, if any.
+    for i := 0; i &lt; int(r); i++ {
+        runtime_Semrelease(&amp;rw.readerSem)
+    }
+    // Allow other writers to proceed.
+    rw.w.Unlock()
+    if race.Enabled {
+        race.Enable()
+    }
+}
+</code></pre>
+
+<p>释放写锁时，将等待获取读锁的个数变为实际值，根据等待获取读锁的个数，释放读锁信号量。</p>
+
+<h2>结论</h2>
+
+<p>根据上面对读写锁源码的分析，我们可以看到golang中读写锁是使用写锁优先策略的，博文开头的例子中，main主协程在已经获取读锁的情况，又尝试第二次获取读锁，因为已经创建了一个子协程在获取写锁，那么第二次获取读锁操作将被阻塞，这样就导致主协程无法释放第一次获取的读锁，从而子协程获取写锁失败，这样整个程序两个写成处于死锁状态。</p>
+
+<h2>参考</h2>
+
+<ul>
+<li><a href="https://groups.google.com/forum/#!topic/golang-nuts/4sx5pPp8gFw">Lock re-accquision in sync forbiden</a></li>
+<li><a href="https://golang.org/pkg/sync/#RWMutex.Lock">Package sync</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">Readers–writer lock</a></li>
+<li><a href="https://stackoverflow.com/questions/30547916/goroutine-blocks-when-calling-rwmutex-rlock-twice-after-an-rwmutex-unlock">goroutine blocks when calling RWMutex RLock twice after an RWMutex Unlock</a></li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Go代码走读规范]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/06/14/godai-ma-zou-du-gui-fan/"/>
+    <updated>2017-06-14T19:27:11+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/06/14/godai-ma-zou-du-gui-fan</id>
+    <content type="html"><![CDATA[<p>Go代码走读时注意点，非代码规范：</p>
+
+<ul>
+<li><a href="#gofmt">Gofmt</a></li>
+<li><a href="#Comment%20Sentences">Comment Sentences</a></li>
+</ul>
+
+
+<h2><span id="Gofmt">Gofmt</span></h2>
+
+<p>使用<a href="https://golang.org/cmd/gofmt/">gofmt</a>工具修复大多数代码风格问题。机会所有Go代码都是用<code>gofmt</code>进行格式化。剩下的非机器可以格式化的代码风格将在本篇文章中进行说明。<br/>
+一个替代工具是<code>goimports</code>，它是<code>gofmt</code>工具的一个超集，它会自动增加或者删除引入包行。</p>
+
+<h2><span id="Comment Sentences">Comment Sentences</span></h2>
+
+<p>查看<a href="https://golang.org/doc/effective_go.html#commentary">https://golang.org/doc/effective_go.html#commentary</a>，声明的注释应该占完整行，这样在将注释抽取到godoc文档时可以更好的格式化。注释应该以被注释声明开始，存在结束：</p>
+
+<pre><code>// Request represents a request to run a command.
+type Request struct { ...
+
+// Encode writes the JSON encoding of req to w.
+func Encode(w io.Writer, req *Request) { ...
+</code></pre>
+
+<h2><span id="Contexts">Contexts</span></h2>
+
+<p><code>context.Context</code>类型实例在API和进程边界中传递安全证书、跟踪信息、超时期限和取消信号。Go程序在从RPC或者HTTP请求开始到输出请求的整个函数调用链过程中显示传递Context实例。  <br/>
+大部分函数使用Context作为第一个参数：</p>
+
+<pre><code>func F(ctx context.Context, /* other arguments */) {}
+</code></pre>
+
+<p>如果一个函数不是请求特化的话，可以使用context.Background，即使你觉得不必要也宁可传递一个Context实例。默认情况是传递一个Context上下文，除非有更好的理由来使用<code>context.Background</code>。<br/>
+不要在结构体类型中添加<code>Context</code>成员，在结构体类型的所有需要使用Context的方法中添加一个ctx参数，用来传递Context。一个特殊情况是如果这些方法需要满足标准库或者第三方库中的接口。<br/>
+不要在函数声明中使用特定Context类型或者使用非Context接口。<br/>
+除非真的需要，否则通过参数，全局变量或者其他方法传递应用程序数据。<br/>
+Context是不可变的，所以可在多个调用中传递同一个ctx共享同样的最后期限、取消信号、资格认证和跟踪等等。</p>
+
+<h2><span id="Copying"> Copying</span></h2>
+
+<p>避免非预期的别名使用，当从其他包拷贝结构体时需要小心。比如，bytes.Buffer类型包含一个<code>[]byte</code>数组，当保存的字符串比较小时，内部<code>[]byte</code>数组就比较小。如果拷贝一个<code>Buffer</code>，新旧Buffer类型变量中的数组就发生了混淆，这样接下来对于两个Buffer对象的使用将产生不可预知的情况。<br/>
+总的来说，如果一个类型<code>T</code>，它的方法都与<code>*T</code>想对象，那就不要复制这个类型的变量。</p>
+
+<h2><span id="Declaring Empty Slices"> Declaring Empty Slices</span></h2>
+
+<p>声明一个空切片时，使用下面方式：</p>
+
+<pre><code>var t []string
+</code></pre>
+
+<p>而不是</p>
+
+<pre><code>t := []string{}
+</code></pre>
+
+<p>前者声明一个nil切片，后者定义一个长度为0的非nil切片。两种方式定义的切片<code>len</code>和<code>cap</code>的值都为0，建议使用前者。</p>
+
+<p>一些场景下建议使用后者定义空切片，比如将对象序列化为JSON格式时，<code>nil</code>序列化为<code>null</code>，<code>[]string{}</code>序列化为<code>[]</code>。</p>
+
+<p>设计接口时，避免nil切片，非nil切片和长度为0的切片产生差异，否则会产生微妙的错误。</p>
+
+<p>更多关于Go中nil的讨论见：<a href="https://www.youtube.com/watch?v=ynoY2xz-F8s">Understanding Nil</a></p>
+
+<h2><span id="Crypto Rand">Crypto Rand</span></h2>
+
+<p>即使只使用一次，也不要使用<code>math/rand</code>生成key。没有种子，生成是可预测的。使用<code>time.Nanoseconds()</code>设置种子，只有一点熵。可替换方法是，使用<code>crypto/rand</code>，如果需要文本，打印为十六进制或者base64编码。</p>
+
+<pre><code>import (
+"crypto/rand"
+// "encoding/base64"
+// "encoding/hex"
+"fmt"
+)
+
+func Key() string {
+    buf := make([]byte, 16)
+    _, err := rand.Read(buf)
+if err != nil {
+    panic(err)  // out of randomness, should never happen
+}
+return fmt.Sprintf("%x", buf)
+// or hex.EncodeToString(buf)
+// or base64.StdEncoding.EncodeToString(buf)    
+}
+</code></pre>
+
+<h2><span id="Doc Comments">Doc Comments</span></h2>
+
+<p>所有顶级，对外提供的名称应该有文档注释，一些重要的非对外提供的类型和函数定名也需要有注释。更多关于注释的信息参考：<a href="https://golang.org/doc/effective_go.html#commentary">https://golang.org/doc/effective_go.html#commentary</a></p>
+
+<h2><span id="Don't Panic">Don&rsquo;t Panic</span></h2>
+
+<p>关于错误处理参考：<a href="https://golang.org/doc/effective_go.html#errors">https://golang.org/doc/effective_go.html#errors</a>。不要使用<code>panic </code>处理普通错误。使用error和多返回值。</p>
+
+<h2><span id="Error Strings">Error Strings</span></h2>
+
+<p>错误字符串不应该大写，除非是以名词或者缩写开头，因为错误信息通常跟在其他信息后面。使用<code>fmt.Errorf("something bad")</code>，而不是<code>fmt.Errorf("Something bad")</code>，所以<code>log.Printf("Reading %s: %v", filename, err)</code>格式化的信息中不会在中间出现一个可以的大写字符。</p>
+
+<h2><span id="Examples">Examples</span></h2>
+
+<p>当添加一个新包时，包含使用示例：一个可运行示例，或者一个简单测试演示一个完整调用顺序。<br/>
+更多信息参考：<a href="https://blog.golang.org/examples">testable Example() functions</a>。</p>
+
+<h2><span id="Goroutine Lifetimes">Goroutine Lifetimes</span></h2>
+
+<p>当创建goroutine时，需要对它是否退出和什么时间退出非常清楚。</p>
+
+<p>goroutine阻塞在发送或者接收通道时可能会导致泄漏：垃圾收集不会结束这样的goroutine。</p>
+
+<p>即使这些goroutine没有泄漏，这样的goroutine有可能导致微妙的不易定位的问题。向已经关闭的通道发送数据会导致panic。</p>
+
+<p>保持并发执行的代码足够简单，这样goroutine的声明周期更明显。 如果不能这样的话，对goroutine的退出时机进行注释。</p>
+
+<h2><span id="Handle Errors">Handle Errors</span></h2>
+
+<p>查看错误处理<a href="https://golang.org/doc/effective_go.html#errors">https://golang.org/doc/effective_go.html#errors</a>，不要使用<code>_</code>丢弃错误。如果一个函数返回错误，对返回值进行检查。处理错误，返回。如果是异常情况，则panic。</p>
+
+<h2><span id="Imports">Import</span></h2>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Golang 工程代码结构]]></title>
@@ -3345,365 +3693,6 @@ public FSDataOutputStream append(Path f) throws IOException
 FileStatus[]    listStatus(Path[] files)
 FileStatus[]    listStatus(Path[] files, PathFilter filter)
 FileStatus[]    listStatus(Path f, PathFilter filter)
-</code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Hiredis C语言Redis客户端库使用]]></title>
-    <link href="http://jintao-zero.github.io/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/"/>
-    <updated>2015-11-22T11:21:43+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong</id>
-    <content type="html"><![CDATA[<p>Redis是一款依据BSD开源协议发型的高性能Key-Value存储系统(cache and store)。它通常称为数据结构服务器，因为值(value)可以是字符串(String)，哈希(Hase)，列表(List)，集合(Set)和有序集合(sorted sets)等类型。</p>
-
-<p>本文对RedisC语言客户端库<a href="https://github.com/redis/hiredis#using-replies">hireis</a>的安装、使用进行简单介绍。</p>
-
-<h2>Redis安装</h2>
-
-<p>参考<a href="http://redis.io/download">Redis</a>官网中的安装指导进行安装：<br/>
-1、下载、解压和编译安装</p>
-
-<pre><code>$ wget http://download.redis.io/releases/redis-3.0.5.tar.gz
-$ tar xzf redis-3.0.5.tar.gz
-$ cd redis-3.0.5
-$ make
-</code></pre>
-
-<p>2、运行服务端
-    编译声称的二进制文件在redis目录下的src子目录中，如下运行：</p>
-
-<pre><code>$ src/redis-server
-</code></pre>
-
-<p>3、使用命令行工具与redis-server进行交互：</p>
-
-<pre><code>$ src/redis-cli
-redis&gt; set foo bar
-OK
-redis&gt; get foo
-"bar"
-</code></pre>
-
-<p>详细的redis使用文档请参考<a href="http://redis.io/documentation">官网</a></p>
-
-<!-- more -->
-
-
-<h2>hiredis安装</h2>
-
-<p>上面下载的Redis源代码目录的deps/hiredis目录中包含了hiredis的源代码，也可以从hiredis在github的网址下载：</p>
-
-<pre><code>$ git clonet https://github.com/redis/hiredis.git
-$ make
-$ make install
-</code></pre>
-
-<p>以上命令会将相关.h头文件拷贝到/usr/local/include/hiredis/目录，<br/>
-同时将hiredis相关库文件拷贝到/usr/local/lib/目录。</p>
-
-<pre><code>-rw-rw-r--  1 jintao jintao 431534 11月  9 21:28 libhiredis.a
-lrwxrwxrwx  1 root   root       15 11月  9 21:50 libhiredis.so -&gt; libhiredis.so.0*
-lrwxrwxrwx  1 root   root       18 11月  9 21:50 libhiredis.so.0 -&gt; libhiredis.so.0.11*
--rwxrwxr-x  1 jintao jintao 219340 11月  9 21:50 libhiredis.so.0.11*
-</code></pre>
-
-<h2>hiredis接口</h2>
-
-<p>hiredis库接口分为同步和异步两种接口，本文主要使用的是同步接口，主要涉及一下几个:</p>
-
-<pre><code>redisContext *redisConnect(const char *ip, int port);
-void *redisCommand(redisContext *c, const char *format, ...);
-void freeReplyObject(void *reply);
-</code></pre>
-
-<h3>建立连接</h3>
-
-<pre><code>redisContext *redisConnect(const char *ip, int port);
-</code></pre>
-
-<p>redisConnect函数用来创建一个到redis服务器的连接，并返回一个redisContext类型的指针。redisContext对象用来维护连接的状态。<br/>
-redisContext对象中err字段非0表示连接处于异常状态。 <br/>
-redisContext对象errstr字段包含错误信息描述字符串。<br/>
-使用redisConnect接口连接Redis服务器后，需要判断是否连接成功：</p>
-
-<pre><code>redisContext *c = redisConnect("127.0.0.1", 6379);
-if (c != NULL &amp;&amp; c-&gt;err) {
-    printf("Error: %s\n", c-&gt;errstr);
-    // handle error
-}
-</code></pre>
-
-<h3>发送命令</h3>
-
-<p>有多个方法发送命令到Redis。现在介绍redisCommand函数，redisCommand函数类似printf。最简单的形式如下：</p>
-
-<pre><code>reply = redisCommand(context, "SET foo bar");
-</code></pre>
-
-<p>%s标识符用来将字符串格式到命令中。</p>
-
-<pre><code>reply = redisCommand(context, "SET foo %s", value);
-</code></pre>
-
-<p>%b标识符可以用来将二进制数据格式化到命令中，valuelen为数据长度。</p>
-
-<pre><code>reply = redisCommand(context, "SET foo %b", value, (size_t) valuelen);
-</code></pre>
-
-<h3>处理命令结果</h3>
-
-<p><code>redisCommand</code>执行成功后，返回一个<code>redisReply</code>对象保存执行结果。<br/>
-当命令执行异常，redisCommand返回<code>NULL</code>,设置<code>context</code>对象<code>err</code>字段记录错误原因。<br/>
-当执行命令异常，<code>context</code>失效，必须重新建立到redis服务器的连接。<br/>
-<code>redisReply</code>对象中的<code>type</code>字段标识返回类型：</p>
-
-<ul>
-<li><p>REDIS_REPLY_STRING:<br/>
-命令返回值类型为字符串。reply->str代表返回的字符串值。</p></li>
-<li><p>REDIS_REPLY_STATUS:<br/>
-  命令返回一个状态。通过reply->str获取状态字符串。状态字符串的长度为reply->len。</p></li>
-<li><p>REDIS_REPLY_ERROR:
-  命令执行失败，返回一个错误。错误原因字符串通过reply->str获取。</p></li>
-<li><p>REDIS_REPLY_INTEGER:<br/>
-  命令返回一个整型。整型的值可以通过reply->integer字段获取，整型类型为long long。</p></li>
-<li><p>REDIS_REPLY_NIL:<br/>
-  命令返回一个nil对象。没有数据可以获取。</p></li>
-<li><p>REDIS_REPLY_ARRAY:  <br/>
-  返回值为一个数组。reply->elements中保存对象个数。每个对象都是一个<code>redisReply</code>对象。通过reply->element[..index..]获取这些对象。</p></li>
-</ul>
-
-
-<p><code>redisReply</code>对象需要使用<code>freeReplyObject()</code>进行释放，返回对象中的子对象无需使用<code>freeReplyObject()</code>进行释放。</p>
-
-<h3>管道批量发送命令</h3>
-
-<p>当redisCommand命令被调用时，Hiredis首先根据Redis协议格式化命令。格式化后的命令被放到context维护的输出缓冲区中。输出缓冲区是动态的，可以容纳很多命令。命令被放置到输出缓冲区以后，调用redisGetReply获取返回值。redisGetReply有如下两条执行路径：</p>
-
-<pre><code>1. 输入缓冲区非空：  
-    从输入缓冲区中解析一个reply应答并返回。
-    如果不能解析出一个reply，则走到第二条路径  
-
-2. 输入缓冲区为空：
-    将输出缓冲区写到socket。
-    读取socket并解析出一个reply。
-</code></pre>
-
-<p>使用管道批量发送命令，就是使用如下命令填充输出缓冲区：</p>
-
-<pre><code>void redisAppendCommand(redisContext *c, const char *format, ...);
-void redisAppendCommandArgv(redisContext *c, int argc, const char **argv, const size_t *argvlen);
-</code></pre>
-
-<p>调用数次上面函数发送命令后，调用<code>redisGetReply</code>获取随后的返回值。<br/>
-下面例子是一个简单的使用管道发送命令的例子（只有一次调用write（2）和一次调用read（2））：</p>
-
-<pre><code>redisReply *reply;
-redisAppendCommand(context,"SET foo bar");
-redisAppendCommand(context,"GET foo");
-redisGetReply(context,&amp;reply); // reply for SET
-freeReplyObject(reply);
-redisGetReply(context,&amp;reply); // reply for GET
-freeReplyObject(reply);  
-</code></pre>
-
-<h3>示例：</h3>
-
-<pre><code>#include &lt;hiredis/hiredis.h&gt;
-
-int main()
-{
-    // create a connection
-    redisContext *context = redisConnect("127.0.0.1", 6379);
-    if ( context != NULL &amp;&amp; context-&gt;err) {
-        printf("connect to redis fail.%s\n", context-&gt;errstr);
-        return -1;
-    }
-
-    redisReply *reply = redisCommand(context, "select 0");
-    if (NULL != reply) {
-        if (REDIS_REPLY_STATUS == reply-&gt;type &amp;&amp; strcmp(reply-&gt;str,"OK") == 0) {
-            printf("command:select 0 suc.type: %d, str:%s\n", REDIS_REPLY_STATUS, "OK");
-        } 
-        else {
-            printf("command:select 0 fail.type: %d, str:%s\n", reply-&gt;type, reply-&gt;str);
-            freeReplyObject(reply);
-            redisFree(context);
-            return -1;
-        }
-    } else {
-        printf("command:select 0 fail.\n");
-        redisFree(context);
-        return -1;
-    }
-    freeReplyObject(reply);
-
-    char *c1 = "set key1 eeee";
-    reply = redisCommand(context, c1);
-    if (NULL != reply) {
-        if (reply-&gt;type == REDIS_REPLY_ERROR) {
-            printf("command:%s excute fail: type: %d, str:%s\n", c1, reply-&gt;type, reply-&gt;str);
-        }
-        printf("command:%s excute ret: type: %d, str:%s\n", c1, reply-&gt;type, reply-&gt;str);
-    } else {
-        printf("command:%s fail\n", c1);
-        redisFree(context);
-        return -1;
-    }
-    freeReplyObject(reply);
-
-    char *c2 = "set key2 222";
-    char *c3 = "get list_key1";
-    redisAppendCommand(context, c2);
-    redisAppendCommand(context, c3);
-
-    char *get_cmd = "get key1";
-    reply = redisCommand(context, get_cmd);
-    if (reply != NULL) {
-        if (reply-&gt;type == REDIS_REPLY_ERROR) {
-            printf("%s fail.type:%d value:%s\n", get_cmd, reply-&gt;type, reply-&gt;str);
-        } else if (reply-&gt;type == REDIS_REPLY_STRING) {
-            printf("%s suc.type:%d value:%s\n", get_cmd, reply-&gt;type, reply-&gt;str);
-        }
-        freeReplyObject(reply);
-    } else {
-        printf("%s execute fail.\n", get_cmd);
-        redisFree(context);
-        return -1;
-    }
-
-// list
-// hash
-char *hgetall = "hgetall hash_key1";
-reply = redisCommand(context, hgetall);
-if (reply != NULL) {
-    if (reply-&gt;type == REDIS_REPLY_ERROR) {
-        printf("%s ,type:%d result:%s\n", hgetall, REDIS_REPLY_ERROR, reply-&gt;str);
-    } else if (reply-&gt;type == REDIS_REPLY_NIL) {
-        printf("%s ,type:%d result:%s\n", hgetall, REDIS_REPLY_NIL, reply-&gt;str);
-    } else if (reply-&gt;type == REDIS_REPLY_ARRAY) {
-        printf("%s ,type:%d elements:%lu \n", hgetall, REDIS_REPLY_ARRAY, reply-&gt;elements);
-        int i;
-        for (i = 0; i &lt; reply-&gt;elements; i++) {
-            redisReply *tmp = reply-&gt;element[i];
-            if (tmp-&gt;type == REDIS_REPLY_INTEGER){
-                printf("elements[%d],type:%d result:%lld\n", i, REDIS_REPLY_INTEGER, tmp-&gt;integer);
-            } else if (tmp-&gt;type == REDIS_REPLY_STRING) {
-                printf("elements[%d] ,type:%d result:%s\n", i, REDIS_REPLY_STRING, tmp-&gt;str);
-            }
-            printf("index:%d ,type:%d \n", i, tmp-&gt;type);
-        }
-    }
-    freeReplyObject(reply);
-} else {
-    printf("%s fail\n", hgetall);
-}
-redisFree(context);
-return 0;
-}
-</code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Crontab任务设置及路径、动态库、产生多个进程问题解决]]></title>
-    <link href="http://jintao-zero.github.io/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/"/>
-    <updated>2015-11-21T11:17:04+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue</id>
-    <content type="html"><![CDATA[<p>crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。</p>
-
-<pre><code>crontab [ -u user ] file
-crontab [ -u user ] [ -i ] { -e | -l | -r }
-</code></pre>
-
-<p>命令第一种形式是用file中的命令设置crontab任务<br/>
--l 参数是打印当前crontab任务到标准输出<br/>
--e 参数是使用VISUAL或者EDITOR环境变量定义的编辑器编辑当前crontab定时任务<br/>
--r 参数删除当前定时任务<br/>
--i 与用户进行交互</p>
-
-<h2>任务设置</h2>
-
-<p>crontab文件中可以包含三种语句：<br/>
-1、注释
-以#开头的语句都是注释</p>
-
-<pre><code>#this is a comment in crontab 
-</code></pre>
-
-<p>2、设置环境变量</p>
-
-<pre><code>LD_LIBRARY_PATH = /homt/lib/
-</code></pre>
-
-<p>3、设置定时任务<br/>
-每一行定义一条定时任务，包括五个时间、日期字段，时间日期后面的内容都是命令<br/>
-时间日期包括分、时、天、月和一周某天字段：</p>
-
-<pre><code>ield          allowed values
------          --------------
-minute         0-59
-hour           0-23
-day of month   1-31
-month          1-12 (or names, see below)
-day of week    0-7 (0 or 7 is Sun, or use names)
-</code></pre>
-
-<p>字段可以是＊，代表范围内所有<br/>
-字段也可以是一个范围，比如hour字段8-10，代表8，9，10<br/>
-字段也可以是一个列表，比如hour字段8，9，10<br/>
-字段也可以是一个范围和列表的混合，比如hour字段1-7，9－12<br/>
-字段也可以为一个间隔，比如hour 1-8/2,代表1,3,5,7</p>
-
-<!-- more -->
-
-
-<h2>路径问题</h2>
-
-<p>crontab任务是根据所属用户从/etc/passwd文件中获取bashshell工具类型、logname和当前路径的。<br/>
-代码中如果使用的是相对路径，那么在会导致程序找不到文件，可以在程序入口处利用chdir类似功能函数修改程序的当前工作路径：</p>
-
-<pre><code>int chdir(const char *path);
-</code></pre>
-
-<h2>动态库问题</h2>
-
-<p>如果程序使用了动态库，而动态库放置的位置没有在等标准路径下的话，程序会因为加载不到动态库而执行失败，可能报如下的错误：</p>
-
-<pre><code>/root/server/demo_linux/server: error while loading shared libraries: libTDFAPI30.so: cannot open shared object file: No such file or directory
-</code></pre>
-
-<p>解决办法有两个：<br/>
-1、链接程序时指定绝对路径：</p>
-
-<pre><code>-Wl,-rpath=/root/server/lib
-</code></pre>
-
-<p>2、在crontab中设置LD_LIBRARY_PATH环境变量</p>
-
-<pre><code>LD_LIBRARY_PATH=/root/server/lib
-</code></pre>
-
-<h2>创建两个相关进程</h2>
-
-<pre><code>root     19400  0.0  0.0 113116  1208 ?        Ss   18:10   0:00 /bin/sh -c /root/test/cron 1&gt; stdout 2&gt; stderr
-root     19402  0.0  0.0  12620  1072 ?        S    18:10   0:00 /root/test/cron
-</code></pre>
-
-<p>看到两个进程是因为crontab使用/bin/sh来启动定时任务程序:</p>
-
-<pre><code>[root@iZ235ne7v0iZ demo_linux]# ps -o ppid -p 19402
-PPID
-19400
-</code></pre>
-
-<p>可以将crontab任务修改为下列情况：</p>
-
-<pre><code>10 18  * * * exec /root/test/cron 1&gt; stdout 2&gt; stderr
-</code></pre>
-
-<p>或者</p>
-
-<pre><code>10 18  * * * bash -c '/root/test/cron 1&gt; stdout 2&gt; stderr'
 </code></pre>
 ]]></content>
   </entry>

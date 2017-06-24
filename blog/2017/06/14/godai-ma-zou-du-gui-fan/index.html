@@ -1,0 +1,376 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Go代码走读规范 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="Go代码走读时注意点，非代码规范： Gofmt
+Comment Sentences Gofmt 使用gofmt工具修复大多数代码风格问题。机会所有Go代码都是用gofmt进行格式化。剩下的非机器可以格式化的代码风格将在本篇文章中进行说明。
+一个替代工具是goimports， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/06/14/godai-ma-zou-du-gui-fan">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Go代码走读规范</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-06-14T19:27:11+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:27 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Go代码走读时注意点，非代码规范：</p>
+
+<ul>
+<li><a href="#gofmt">Gofmt</a></li>
+<li><a href="#Comment%20Sentences">Comment Sentences</a></li>
+</ul>
+
+
+<h2><span id="Gofmt">Gofmt</span></h2>
+
+<p>使用<a href="https://golang.org/cmd/gofmt/">gofmt</a>工具修复大多数代码风格问题。机会所有Go代码都是用<code>gofmt</code>进行格式化。剩下的非机器可以格式化的代码风格将在本篇文章中进行说明。<br/>
+一个替代工具是<code>goimports</code>，它是<code>gofmt</code>工具的一个超集，它会自动增加或者删除引入包行。</p>
+
+<h2><span id="Comment Sentences">Comment Sentences</span></h2>
+
+<p>查看<a href="https://golang.org/doc/effective_go.html#commentary">https://golang.org/doc/effective_go.html#commentary</a>，声明的注释应该占完整行，这样在将注释抽取到godoc文档时可以更好的格式化。注释应该以被注释声明开始，存在结束：</p>
+
+<pre><code>// Request represents a request to run a command.
+type Request struct { ...
+
+// Encode writes the JSON encoding of req to w.
+func Encode(w io.Writer, req *Request) { ...
+</code></pre>
+
+<h2><span id="Contexts">Contexts</span></h2>
+
+<p><code>context.Context</code>类型实例在API和进程边界中传递安全证书、跟踪信息、超时期限和取消信号。Go程序在从RPC或者HTTP请求开始到输出请求的整个函数调用链过程中显示传递Context实例。  <br/>
+大部分函数使用Context作为第一个参数：</p>
+
+<pre><code>func F(ctx context.Context, /* other arguments */) {}
+</code></pre>
+
+<p>如果一个函数不是请求特化的话，可以使用context.Background，即使你觉得不必要也宁可传递一个Context实例。默认情况是传递一个Context上下文，除非有更好的理由来使用<code>context.Background</code>。<br/>
+不要在结构体类型中添加<code>Context</code>成员，在结构体类型的所有需要使用Context的方法中添加一个ctx参数，用来传递Context。一个特殊情况是如果这些方法需要满足标准库或者第三方库中的接口。<br/>
+不要在函数声明中使用特定Context类型或者使用非Context接口。<br/>
+除非真的需要，否则通过参数，全局变量或者其他方法传递应用程序数据。<br/>
+Context是不可变的，所以可在多个调用中传递同一个ctx共享同样的最后期限、取消信号、资格认证和跟踪等等。</p>
+
+<h2><span id="Copying"> Copying</span></h2>
+
+<p>避免非预期的别名使用，当从其他包拷贝结构体时需要小心。比如，bytes.Buffer类型包含一个<code>[]byte</code>数组，当保存的字符串比较小时，内部<code>[]byte</code>数组就比较小。如果拷贝一个<code>Buffer</code>，新旧Buffer类型变量中的数组就发生了混淆，这样接下来对于两个Buffer对象的使用将产生不可预知的情况。<br/>
+总的来说，如果一个类型<code>T</code>，它的方法都与<code>*T</code>想对象，那就不要复制这个类型的变量。</p>
+
+<h2><span id="Declaring Empty Slices"> Declaring Empty Slices</span></h2>
+
+<p>声明一个空切片时，使用下面方式：</p>
+
+<pre><code>var t []string
+</code></pre>
+
+<p>而不是</p>
+
+<pre><code>t := []string{}
+</code></pre>
+
+<p>前者声明一个nil切片，后者定义一个长度为0的非nil切片。两种方式定义的切片<code>len</code>和<code>cap</code>的值都为0，建议使用前者。</p>
+
+<p>一些场景下建议使用后者定义空切片，比如将对象序列化为JSON格式时，<code>nil</code>序列化为<code>null</code>，<code>[]string{}</code>序列化为<code>[]</code>。</p>
+
+<p>设计接口时，避免nil切片，非nil切片和长度为0的切片产生差异，否则会产生微妙的错误。</p>
+
+<p>更多关于Go中nil的讨论见：<a href="https://www.youtube.com/watch?v=ynoY2xz-F8s">Understanding Nil</a></p>
+
+<h2><span id="Crypto Rand">Crypto Rand</span></h2>
+
+<p>即使只使用一次，也不要使用<code>math/rand</code>生成key。没有种子，生成是可预测的。使用<code>time.Nanoseconds()</code>设置种子，只有一点熵。可替换方法是，使用<code>crypto/rand</code>，如果需要文本，打印为十六进制或者base64编码。</p>
+
+<pre><code>import (
+"crypto/rand"
+// "encoding/base64"
+// "encoding/hex"
+"fmt"
+)
+
+func Key() string {
+    buf := make([]byte, 16)
+    _, err := rand.Read(buf)
+if err != nil {
+    panic(err)  // out of randomness, should never happen
+}
+return fmt.Sprintf("%x", buf)
+// or hex.EncodeToString(buf)
+// or base64.StdEncoding.EncodeToString(buf)    
+}
+</code></pre>
+
+<h2><span id="Doc Comments">Doc Comments</span></h2>
+
+<p>所有顶级，对外提供的名称应该有文档注释，一些重要的非对外提供的类型和函数定名也需要有注释。更多关于注释的信息参考：<a href="https://golang.org/doc/effective_go.html#commentary">https://golang.org/doc/effective_go.html#commentary</a></p>
+
+<h2><span id="Don't Panic">Don&rsquo;t Panic</span></h2>
+
+<p>关于错误处理参考：<a href="https://golang.org/doc/effective_go.html#errors">https://golang.org/doc/effective_go.html#errors</a>。不要使用<code>panic </code>处理普通错误。使用error和多返回值。</p>
+
+<h2><span id="Error Strings">Error Strings</span></h2>
+
+<p>错误字符串不应该大写，除非是以名词或者缩写开头，因为错误信息通常跟在其他信息后面。使用<code>fmt.Errorf("something bad")</code>，而不是<code>fmt.Errorf("Something bad")</code>，所以<code>log.Printf("Reading %s: %v", filename, err)</code>格式化的信息中不会在中间出现一个可以的大写字符。</p>
+
+<h2><span id="Examples">Examples</span></h2>
+
+<p>当添加一个新包时，包含使用示例：一个可运行示例，或者一个简单测试演示一个完整调用顺序。<br/>
+更多信息参考：<a href="https://blog.golang.org/examples">testable Example() functions</a>。</p>
+
+<h2><span id="Goroutine Lifetimes">Goroutine Lifetimes</span></h2>
+
+<p>当创建goroutine时，需要对它是否退出和什么时间退出非常清楚。</p>
+
+<p>goroutine阻塞在发送或者接收通道时可能会导致泄漏：垃圾收集不会结束这样的goroutine。</p>
+
+<p>即使这些goroutine没有泄漏，这样的goroutine有可能导致微妙的不易定位的问题。向已经关闭的通道发送数据会导致panic。</p>
+
+<p>保持并发执行的代码足够简单，这样goroutine的声明周期更明显。 如果不能这样的话，对goroutine的退出时机进行注释。</p>
+
+<h2><span id="Handle Errors">Handle Errors</span></h2>
+
+<p>查看错误处理<a href="https://golang.org/doc/effective_go.html#errors">https://golang.org/doc/effective_go.html#errors</a>，不要使用<code>_</code>丢弃错误。如果一个函数返回错误，对返回值进行检查。处理错误，返回。如果是异常情况，则panic。</p>
+
+<h2><span id="Imports">Import</span></h2>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-06-14T19:27:11+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:27 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dev/'>dev</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/" title="Previous Post: golang 工程代码结构">&laquo; golang 工程代码结构</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/" title="Next Post: golang加两边读锁导致程序死锁问题分析">golang加两边读锁导致程序死锁问题分析 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两边读锁导致程序死锁问题分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Go代码走读规范</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (2)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
+<li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 126%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+<a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

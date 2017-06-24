@@ -9,9 +9,8 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="go命令 Compile packages and dependencies Remove object files
-Description of testing flags Go工具用来管理Go语音源代码。
-使用： go command [arguments] 命令为： build &hellip;">
+  <meta name="description" content="
+">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -69,6 +68,86 @@ Description of testing flags Go工具用来管理Go语音源代码。
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc/">Golang使用protobuf搭建rpc</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-02-03T19:55:10+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2017</span></span> <span class='time'>7:55 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content">
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Go并发模型之Context</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-18T15:26:37+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>18</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:26 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Go语言中go和channel是开发高并发程序的基础。我们使用channel进行goroutine程序通讯，传送数据和控制信号，<a href="https://blog.golang.org/pipelines">Pipelines and Cancelation</a>向我们讲解了如何利用Done通道来向goroutine发送结束信号：</p>
+
+<pre><code>func main() {
+    var done = make(chan struct {})
+    go func(done chan struct{}) {
+        select {
+        case &lt;- done:
+            fmt.Println("receive exit signal")
+        }
+    }(done)
+
+    done &lt;- struct {}{}
+    time.Sleep(3 * time.Second)
+}
+</code></pre>
+
+<p>在Go服务端，每一个请求都对应会有一个goroutine进行处理。处理函数通常又会开启另外的goroutine去访问后段服务，比如数据库和RPC服务。对应一个请求创建的这一系列的goroutine通常会需要访问请求相关的信息，比如终端用户名，授权token和请求的deadline等等。当一个请求被取消或者处理超时，与这个请求相关的一些列goroutine应该尽快退出，以便系统回收资源。<br/>
+Go中<code>context</code>包提供了这样的功能，利用context包可以进行请求范围内的数据传递，发送请求信号和deadline查看。本文简单示例如何使用<code>context</code>包进行goroutine并发编程。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -646,147 +725,6 @@ drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/">Hiredis C语言Redis客户端库使用</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-11-22T11:21:43+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>11:21 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Redis是一款依据BSD开源协议发型的高性能Key-Value存储系统(cache and store)。它通常称为数据结构服务器，因为值(value)可以是字符串(String)，哈希(Hase)，列表(List)，集合(Set)和有序集合(sorted sets)等类型。</p>
-
-<p>本文对RedisC语言客户端库<a href="https://github.com/redis/hiredis#using-replies">hireis</a>的安装、使用进行简单介绍。</p>
-
-<h2>Redis安装</h2>
-
-<p>参考<a href="http://redis.io/download">Redis</a>官网中的安装指导进行安装：<br/>
-1、下载、解压和编译安装</p>
-
-<pre><code>$ wget http://download.redis.io/releases/redis-3.0.5.tar.gz
-$ tar xzf redis-3.0.5.tar.gz
-$ cd redis-3.0.5
-$ make
-</code></pre>
-
-<p>2、运行服务端
-    编译声称的二进制文件在redis目录下的src子目录中，如下运行：</p>
-
-<pre><code>$ src/redis-server
-</code></pre>
-
-<p>3、使用命令行工具与redis-server进行交互：</p>
-
-<pre><code>$ src/redis-cli
-redis&gt; set foo bar
-OK
-redis&gt; get foo
-"bar"
-</code></pre>
-
-<p>详细的redis使用文档请参考<a href="http://redis.io/documentation">官网</a></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Crontab任务设置及路径、动态库、产生多个进程问题解决</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-11-21T11:17:04+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>11:17 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。</p>
-
-<pre><code>crontab [ -u user ] file
-crontab [ -u user ] [ -i ] { -e | -l | -r }
-</code></pre>
-
-<p>命令第一种形式是用file中的命令设置crontab任务<br/>
--l 参数是打印当前crontab任务到标准输出<br/>
--e 参数是使用VISUAL或者EDITOR环境变量定义的编辑器编辑当前crontab定时任务<br/>
--r 参数删除当前定时任务<br/>
--i 与用户进行交互</p>
-
-<h2>任务设置</h2>
-
-<p>crontab文件中可以包含三种语句：<br/>
-1、注释
-以#开头的语句都是注释</p>
-
-<pre><code>#this is a comment in crontab 
-</code></pre>
-
-<p>2、设置环境变量</p>
-
-<pre><code>LD_LIBRARY_PATH = /homt/lib/
-</code></pre>
-
-<p>3、设置定时任务<br/>
-每一行定义一条定时任务，包括五个时间、日期字段，时间日期后面的内容都是命令<br/>
-时间日期包括分、时、天、月和一周某天字段：</p>
-
-<pre><code>ield          allowed values
------          --------------
-minute         0-59
-hour           0-23
-day of month   1-31
-month          1-12 (or names, see below)
-day of week    0-7 (0 or 7 is Sun, or use names)
-</code></pre>
-
-<p>字段可以是＊，代表范围内所有<br/>
-字段也可以是一个范围，比如hour字段8-10，代表8，9，10<br/>
-字段也可以是一个列表，比如hour字段8，9，10<br/>
-字段也可以是一个范围和列表的混合，比如hour字段1-7，9－12<br/>
-字段也可以为一个间隔，比如hour 1-8/2,代表1,3,5,7</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -804,6 +742,14 @@ day of week    0-7 (0 or 7 is Sun, or use names)
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两边读锁导致程序死锁问题分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Go代码走读规范</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
       </li>
     
@@ -815,14 +761,6 @@ day of week    0-7 (0 or 7 is Sun, or use names)
         <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng/">SSH常用设置(免密、别名登录、隧道转发)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -830,6 +768,7 @@ day of week    0-7 (0 or 7 is Sun, or use names)
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (2)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
@@ -845,21 +784,21 @@ day of week    0-7 (0 or 7 is Sun, or use names)
 <h1>Tags</h1>
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
-<a style="font-size: 128%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
 <a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
 <a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
-<a style="font-size: 128%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
 <a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
-<a style="font-size: 196%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
 <a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
-<a style="font-size: 128%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
 <a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
-<a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/go/">go</a>
-<a style="font-size: 90%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 126%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>

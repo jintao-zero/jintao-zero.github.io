@@ -1,24 +1,98 @@
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Tag: golang | jintao's blog]]></title>
-  <link href="http://jintao-zero.github.io/blog/tags/golang/atom.xml" rel="self"/>
-  <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-06-24T17:43:13+08:00</updated>
-  <id>http://jintao-zero.github.io/</id>
-  <author>
-    <name><![CDATA[jintao]]></name>
-    
-  </author>
-  <generator uri="http://octopress.org/">Octopress</generator>
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Golang加两边读锁导致程序死锁问题分析 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
 
   
-  <entry>
-    <title type="html"><![CDATA[golang加两边读锁导致程序死锁问题分析]]></title>
-    <link href="http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/"/>
-    <updated>2017-06-20T21:42:04+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu</id>
-    <content type="html"><![CDATA[<p>golang程序使用读写锁对共享数据进行互斥保护时，注意在同一程序调用栈不要对锁进行多次加锁，这样会导致程序死锁，如下的代码片段就会导致程序死锁：</p>
+  <meta name="description" content="golang程序使用读写锁对共享数据进行互斥保护时，注意在同一程序调用栈不要对锁进行多次加锁，这样会导致程序死锁，如下的代码片段就会导致程序死锁： import (
+"sync"
+"fmt"
+"time"
+_ "net/http/pprof"
+"net/http"
+) var mutex sync &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Golang加两边读锁导致程序死锁问题分析</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-06-20T21:42:04+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:42 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>golang程序使用读写锁对共享数据进行互斥保护时，注意在同一程序调用栈不要对锁进行多次加锁，这样会导致程序死锁，如下的代码片段就会导致程序死锁：</p>
 
 <pre><code>import (
 "sync"
@@ -232,42 +306,169 @@ func (rw *RWMutex) RLock() {
 <li><a href="https://stackoverflow.com/questions/30547916/goroutine-blocks-when-calling-rwmutex-rlock-twice-after-an-rwmutex-unlock">goroutine blocks when calling RWMutex RLock twice after an RWMutex Unlock</a></li>
 </ul>
 
-]]></content>
-  </entry>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
   
-  <entry>
-    <title type="html"><![CDATA[golang 工程代码结构]]></title>
-    <link href="http://jintao-zero.github.io/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/"/>
-    <updated>2017-06-11T12:19:45+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou</id>
-    <content type="html"><![CDATA[<p>golang工程常用代码目录结构</p>
 
-<pre><code>github.com/user/project
-    pkg
-        p1
-            *.go
-        p2
-            *.go 
-    cmd
-        cmdline
-            main.go
-    web
-            main.go
-    vendor
-        github/*/*
-    examples
-    docs
-</code></pre>
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
 
-<h2>参考</h2>
+      
 
-<ul>
-<li><p><a href="https://stackoverflow.com/questions/32634837/project-structure-for-a-tool-with-multiple-uis/32635264#32635264">Project structure for a tool with multiple UIs</a></p></li>
-<li><p><a href="https://forum.golangbridge.org/t/how-should-i-structure-packages-for-a-multiple-binary-web-application/665">How should I structure packages for a multiple-binary web application?</a></p></li>
-<li><a href="https://github.com/seccom/kpass">kpass</a></li>
+
+
+
+<time class='entry-date' datetime='2017-06-20T21:42:04+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:42 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dev/'>dev</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/" title="Previous Post: Go代码走读规范">&laquo; Go代码走读规范</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两边读锁导致程序死锁问题分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Go代码走读规范</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (2)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
+<li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 126%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+<a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+
 </ul>
+</section>
 
-]]></content>
-  </entry>
   
-</feed>
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

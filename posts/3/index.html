@@ -9,8 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="最近开始进行Hadoop分布式计算相关内容的学习，先从搭建开发环境开始。下面记录一下搭建Hadoop开发环境的过程，以及注意点。
-本节介绍如何快速搭建和配置一个单节点Hadoop环境，便于使用Hadoop MapReduce和Hadoop Distributed File System(HDFS &hellip;">
+  <meta name="description" content="Redis是一款依据BSD开源协议发型的高性能Key-Value存储系统(cache and store)。它通常称为数据结构服务器，因为值(value)可以是字符串(String)，哈希(Hase)，列表(List)，集合(Set)和有序集合(sorted sets)等类型。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +67,147 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/">Hiredis C语言Redis客户端库使用</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-11-22T11:21:43+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>22</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>11:21 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Redis是一款依据BSD开源协议发型的高性能Key-Value存储系统(cache and store)。它通常称为数据结构服务器，因为值(value)可以是字符串(String)，哈希(Hase)，列表(List)，集合(Set)和有序集合(sorted sets)等类型。</p>
+
+<p>本文对RedisC语言客户端库<a href="https://github.com/redis/hiredis#using-replies">hireis</a>的安装、使用进行简单介绍。</p>
+
+<h2>Redis安装</h2>
+
+<p>参考<a href="http://redis.io/download">Redis</a>官网中的安装指导进行安装：<br/>
+1、下载、解压和编译安装</p>
+
+<pre><code>$ wget http://download.redis.io/releases/redis-3.0.5.tar.gz
+$ tar xzf redis-3.0.5.tar.gz
+$ cd redis-3.0.5
+$ make
+</code></pre>
+
+<p>2、运行服务端
+    编译声称的二进制文件在redis目录下的src子目录中，如下运行：</p>
+
+<pre><code>$ src/redis-server
+</code></pre>
+
+<p>3、使用命令行工具与redis-server进行交互：</p>
+
+<pre><code>$ src/redis-cli
+redis&gt; set foo bar
+OK
+redis&gt; get foo
+"bar"
+</code></pre>
+
+<p>详细的redis使用文档请参考<a href="http://redis.io/documentation">官网</a></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/11/22/hiredis-cyu-yan-rediske-hu-duan-ku-shi-yong/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Crontab任务设置及路径、动态库、产生多个进程问题解决</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-11-21T11:17:04+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>11:17 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。</p>
+
+<pre><code>crontab [ -u user ] file
+crontab [ -u user ] [ -i ] { -e | -l | -r }
+</code></pre>
+
+<p>命令第一种形式是用file中的命令设置crontab任务<br/>
+-l 参数是打印当前crontab任务到标准输出<br/>
+-e 参数是使用VISUAL或者EDITOR环境变量定义的编辑器编辑当前crontab定时任务<br/>
+-r 参数删除当前定时任务<br/>
+-i 与用户进行交互</p>
+
+<h2>任务设置</h2>
+
+<p>crontab文件中可以包含三种语句：<br/>
+1、注释
+以#开头的语句都是注释</p>
+
+<pre><code>#this is a comment in crontab 
+</code></pre>
+
+<p>2、设置环境变量</p>
+
+<pre><code>LD_LIBRARY_PATH = /homt/lib/
+</code></pre>
+
+<p>3、设置定时任务<br/>
+每一行定义一条定时任务，包括五个时间、日期字段，时间日期后面的内容都是命令<br/>
+时间日期包括分、时、天、月和一周某天字段：</p>
+
+<pre><code>ield          allowed values
+-----          --------------
+minute         0-59
+hour           0-23
+day of month   1-31
+month          1-12 (or names, see below)
+day of week    0-7 (0 or 7 is Sun, or use names)
+</code></pre>
+
+<p>字段可以是＊，代表范围内所有<br/>
+字段也可以是一个范围，比如hour字段8-10，代表8，9，10<br/>
+字段也可以是一个列表，比如hour字段8，9，10<br/>
+字段也可以是一个范围和列表的混合，比如hour字段1-7，9－12<br/>
+字段也可以为一个间隔，比如hour 1-8/2,代表1,3,5,7</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -558,167 +698,6 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp Client 使用select进行I/O复用</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-04-06T11:49:13+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:49 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>在<a href="http://jintao-zero.github.io/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">tcp客户端示例</a>中，存在以下两种情况时，示例代码不能更好的处理：</p>
-
-<ul>
-<li><p>目前客户端输入一条数据并发送，等待服务端返回后，才能继续输入数据
- 这样的设计不利于客户端批量处理数据</p></li>
-<li><p>当服务端出现异常（如服务进程退出或者服务端主机崩溃等异常情况），客户端也许正在等待输入，不能够及时感知到服务端的异常，只有从send返回错误时，才能感知到服务端故障</p></li>
-</ul>
-
-
-<h1>select 函数介绍</h1>
-
-<p>上面实现的客户端示例中，客户端只能处理一个描述符，我们需要修改客户端使其可以同时处理标准输入和套接字描述符，达到I/O复用：</p>
-
-<pre><code>#include &lt;sys/select.h&gt;
-#include &lt;sys/time.h&gt;
-int select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict errorfds,
-     struct timeval *restrict timeout);
-</code></pre>
-
-<ul>
-<li><p>timeout参数，它告知内核等待所有描述符中的一个就绪可花多长时间<br/>
-  struct timeval {<br/>
-      long tv_sec;  /* seconds*/<br/>
-      long tv_usec; /* microseconds*/<br/>
-  }   <br/>
-  (1) 永远等待下去：仅在有一个描述符准备好时返回。为此，将timeout设置为   空指针<br/>
-  (2) 等待一段固定时间：在有一个描述符准备好I/O时返回，但是不超过由该参数所指向的timeval结构中指定的秒数和微秒数<br/>
-  (3) 根本不等待：检查描述符后立即返回，这称为轮询。为此，该参数必须指向一个timeval结构，而且其中的定时器值必须为0</p></li>
-<li><p>readfds, writefds, errorfds参数，这三个参数指定了，需要内核测试读、写     和异常条件的描述符集合。
-系统提供了以下宏来对描述符进行操作：<br/>
-void FD_CLR(fd, fd_set <em>fdset)<br/>
-void FD_COPY(fd_set </em>fdest_orig, fd_set <em>fdset_copy)<br/>
-int FD_ISSET(fd, fd_set </em>fdset)<br/>
-void FD_SET(fd, fd_set <em>fdset)<br/>
-void FD_ZERO(fd_set </em>fdset)</p></li>
-<li><p>nfds参数，指定待测试的描述符个数，它的值是待测试的最大描述符加1</p></li>
-</ul>
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/04/05/python-property-shu-xing-yong-fa/">Python Property 属性用法</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-04-05T17:26:05+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>5:26 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>python提供了一个property类：</p>
-
-<pre><code>class property([fget[, fset[, fdel[, doc]]]])
-</code></pre>
-
-<p>property类为新式类（继承object）返回property属性<br/>
-fget函数用来获取属性值。fset设置属性值。fdel用来删除属性。doc为属性创建docstring。<br/>
-property的典型应用是应用一个被管理的属性x：</p>
-
-<pre><code>class C(object):
-def __init__(self):
-    self._x = None
-
-def getx(self):
-    return self._x
-
-def setx(self, value):
-    self._x = value
-
-def delx(self):
-    del self._x
-
-x = property(getx, setx, delx, "I'm the 'x' property.")
-</code></pre>
-
-<p>如果c是类C的实例，c.x将会调用getx，c.x＝value将会调用setx，del c.x会调用用delx</p>
-
-<p>将property 用作decorrator可以定义只读properties：</p>
-
-<pre><code>class Parrot(object):
-    def __init__(self):
-        self._voltage = 100000
-
-    @property
-    def voltage(self):
-        """Get the current voltage."""
-        return self._voltage
-</code></pre>
-
-<p>@property修饰符将voltage函数变为voltage函数的同名属性的只读getter函数，同时这只这个属性的docstring与voltage函数相同</p>
-
-<p>一个property对象具有getter，setter和deleter方法可以用当作修饰符将属性同名函数变为属性对应的访问函数，下面是例子：</p>
-
-<pre><code>class C(object):
-    def __init__(self):
-        self._x = None
-
-    @property
-    def x(self):
-        """I'm the 'x' property."""
-        return self._x
-
-    @x.setter
-    def x(self, value):
-        self._x = value
-
-    @x.deleter
-    def x(self):
-        del self._x
-</code></pre>
-
-<p>上面的用法与第一个列子相同，需要注意的是几个函数的名字都相同</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -736,6 +715,14 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两边读锁导致程序死锁问题分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Go代码走读规范</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
       </li>
     
@@ -747,14 +734,6 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
         <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng/">SSH常用设置(免密、别名登录、隧道转发)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -762,6 +741,7 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (2)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
@@ -777,21 +757,21 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
 <h1>Tags</h1>
 <ul class="tag-cloud">
 	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
-<a style="font-size: 128%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
 <a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
 <a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
-<a style="font-size: 128%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
 <a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
 <a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
-<a style="font-size: 196%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
 <a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
-<a style="font-size: 128%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
 <a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
-<a style="font-size: 128%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/go/">go</a>
-<a style="font-size: 90%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 126%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
