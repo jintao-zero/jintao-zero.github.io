@@ -191,3 +191,4 @@ main goroutine阻塞在获取读锁的位置：
 * [Package sync](https://golang.org/pkg/sync/#RWMutex.Lock)
 * [Readers–writer lock](https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock)
 * [goroutine blocks when calling RWMutex RLock twice after an RWMutex Unlock](https://stackoverflow.com/questions/30547916/goroutine-blocks-when-calling-rwmutex-rlock-twice-after-an-rwmutex-unlock)
+* [sync: document that double RLock isn't safe #15418](https://github.com/golang/go/issues/15418)
