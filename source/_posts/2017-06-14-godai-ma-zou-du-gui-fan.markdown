@@ -35,6 +35,8 @@ Go代码走读时注意点，非代码规范：
 * [Receiver Type](#Receiver Type)
 * [Synchronous Functions](#Synchronous Functions)
 
+<!-- more -->
+
 ## <span id="Gofmt">Gofmt</span>
 使用[gofmt](https://golang.org/cmd/gofmt/)工具修复大多数代码风格问题。机会所有Go代码都是用`gofmt`进行格式化。剩下的非机器可以格式化的代码风格将在本篇文章中进行说明。  
 一个替代工具是`goimports`，它是`gofmt`工具的一个超集，它会自动增加或者删除引入包行。  
