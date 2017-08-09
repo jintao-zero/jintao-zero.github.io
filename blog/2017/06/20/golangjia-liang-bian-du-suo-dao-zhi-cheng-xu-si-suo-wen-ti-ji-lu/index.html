@@ -5,7 +5,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Golang加两边读锁导致程序死锁问题分析 - jintao&#8217;s blog</title>
+  <title>Golang加两遍读锁导致程序死锁问题分析 - jintao&#8217;s blog</title>
   <meta name="author" content="jintao">
 
   
@@ -76,7 +76,7 @@ _ "net/http/pprof"
   
   <header>
     
-      <h1 class="entry-title">Golang加两边读锁导致程序死锁问题分析</h1>
+      <h1 class="entry-title">Golang加两遍读锁导致程序死锁问题分析</h1>
     
     
       <p class="meta">
@@ -304,6 +304,7 @@ func (rw *RWMutex) RLock() {
 <li><a href="https://golang.org/pkg/sync/#RWMutex.Lock">Package sync</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">Readers–writer lock</a></li>
 <li><a href="https://stackoverflow.com/questions/30547916/goroutine-blocks-when-calling-rwmutex-rlock-twice-after-an-rwmutex-unlock">goroutine blocks when calling RWMutex RLock twice after an RWMutex Unlock</a></li>
+<li><a href="https://github.com/golang/go/issues/15418">sync: document that double RLock isn&rsquo;t safe #15418</a></li>
 </ul>
 
 </div>
@@ -382,7 +383,7 @@ var jiathis_config = {data_track_clickback:'true'};
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两边读锁导致程序死锁问题分析</a>
+        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
       </li>
     
       <li class="post">

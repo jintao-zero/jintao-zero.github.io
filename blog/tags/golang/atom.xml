@@ -4,7 +4,7 @@
   <title><![CDATA[Tag: golang | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/tags/golang/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-06-24T17:43:13+08:00</updated>
+  <updated>2017-08-09T15:52:00+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[golang加两边读锁导致程序死锁问题分析]]></title>
+    <title type="html"><![CDATA[golang加两遍读锁导致程序死锁问题分析]]></title>
     <link href="http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/"/>
     <updated>2017-06-20T21:42:04+08:00</updated>
     <id>http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu</id>
@@ -230,6 +230,7 @@ func (rw *RWMutex) RLock() {
 <li><a href="https://golang.org/pkg/sync/#RWMutex.Lock">Package sync</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">Readers–writer lock</a></li>
 <li><a href="https://stackoverflow.com/questions/30547916/goroutine-blocks-when-calling-rwmutex-rlock-twice-after-an-rwmutex-unlock">goroutine blocks when calling RWMutex RLock twice after an RWMutex Unlock</a></li>
+<li><a href="https://github.com/golang/go/issues/15418">sync: document that double RLock isn&rsquo;t safe #15418</a></li>
 </ul>
 
 ]]></content>

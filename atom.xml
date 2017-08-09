@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-06-24T17:43:13+08:00</updated>
+  <updated>2017-08-09T15:52:00+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Golang加两边读锁导致程序死锁问题分析]]></title>
+    <title type="html"><![CDATA[Golang加两遍读锁导致程序死锁问题分析]]></title>
     <link href="http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/"/>
     <updated>2017-06-20T21:42:04+08:00</updated>
     <id>http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu</id>
@@ -230,6 +230,7 @@ func (rw *RWMutex) RLock() {
 <li><a href="https://golang.org/pkg/sync/#RWMutex.Lock">Package sync</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Readers%E2%80%93writer_lock">Readers–writer lock</a></li>
 <li><a href="https://stackoverflow.com/questions/30547916/goroutine-blocks-when-calling-rwmutex-rlock-twice-after-an-rwmutex-unlock">goroutine blocks when calling RWMutex RLock twice after an RWMutex Unlock</a></li>
+<li><a href="https://github.com/golang/go/issues/15418">sync: document that double RLock isn&rsquo;t safe #15418</a></li>
 </ul>
 
 ]]></content>
@@ -245,6 +246,30 @@ func (rw *RWMutex) RLock() {
 <ul>
 <li><a href="#gofmt">Gofmt</a></li>
 <li><a href="#Comment%20Sentences">Comment Sentences</a></li>
+<li><a href="#Contexts">Contexts</a></li>
+<li><a href="#Copying">Copying</a></li>
+<li><a href="#Declaring%20Empty%20Slices">Declaring Empty Slices</a></li>
+<li><a href="#Crypto%20Rand">Crypto Rand</a></li>
+<li><a href="#Doc%20Comments">Doc Comments</a></li>
+<li><a href="#Don't%20Panic">Don&rsquo;t Panic</a></li>
+<li><a href="#Error%20Strings">Error Strings</a></li>
+<li><a href="#Examples">Examples</a></li>
+<li><a href="#Goroutine%20Lifetimes">Goroutine Lifetimes</a></li>
+<li><a href="#Handle%20Errors">Handle Errors</a></li>
+<li><a href="#Import">Import</a></li>
+<li><a href="#Import%20Dot">Import Dot</a></li>
+<li><a href="#In-Band%20Errors">In-Band Errors</a></li>
+<li><a href="#Indent%20Error%20Flow">Indent Error Flow</a></li>
+<li><a href="#Initialisms">Initialisms</a></li>
+<li><a href="#Interfaces">Interfaces</a></li>
+<li><a href="#Mixed%20Caps">Mixed Caps</a></li>
+<li><a href="#Named%20Result%20Parameters">Named Result Parameters</a></li>
+<li><a href="#Package%20Comments">Package Comments</a></li>
+<li><a href="#Package%20Names">Package Names</a></li>
+<li><a href="#Pass%20Values">Pass Values</a></li>
+<li><a href="#Receiver%20Names">Receiver Names</a></li>
+<li><a href="#Receiver%20Type">Receiver Type</a></li>
+<li><a href="#Synchronous%20Functions">Synchronous Functions</a></li>
 </ul>
 
 
@@ -358,6 +383,383 @@ return fmt.Sprintf("%x", buf)
 <p>查看错误处理<a href="https://golang.org/doc/effective_go.html#errors">https://golang.org/doc/effective_go.html#errors</a>，不要使用<code>_</code>丢弃错误。如果一个函数返回错误，对返回值进行检查。处理错误，返回。如果是异常情况，则panic。</p>
 
 <h2><span id="Imports">Import</span></h2>
+
+<p>除了避免命名冲突，不要重命名引入的包。好的包命名不需要重命名。万一出现冲突，优先考虑重命名本地包或者项目相关的引入。</p>
+
+<p>引入的包成组组织，以空行分隔。标准库总是在第一组。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>package main
+</span><span class='line'>
+</span><span class='line'>import (
+</span><span class='line'>  "fmt"
+</span><span class='line'>  "hash/adler32"
+</span><span class='line'>  "os"
+</span><span class='line'>
+</span><span class='line'>  "appengine/foo"
+</span><span class='line'>  "appengine/user"
+</span><span class='line'>
+</span><span class='line'>  "code.google.com/p/x/y"
+</span><span class='line'>  "github.com/foo/bar"
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="https://godoc.org/golang.org/x/tools/cmd/goimports">goimports</a>工具会完成上面的格式化。</p>
+
+<h2><span id="Import Dot">Import Dot</span></h2>
+
+<p>进行测试时，因为循环依赖，不能将测试用例放入被测包中时，可以用<code>import .</code>解决：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>package foo_test
+</span><span class='line'>
+</span><span class='line'>import (
+</span><span class='line'>  "bar/testutil" // also imports "foo"
+</span><span class='line'>  . "foo"
+</span><span class='line'>)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个例子中，测试文件不能放入<code>foo</code>包中，因为它使用<code>bar/testutil</code>，<code>bar/testutil</code>包引入了<code>foo</code>包。 我们使用<code>import .</code>使测试文件假装在包<code>foo</code>中，实际上不在。除了这一个特殊情况，不要使用<code>import .</code>。它使程序无法更好阅读，因为不方便区分一个大写开头的方法是当前包还是引入包中的顶级标识符。</p>
+
+<h2><span id="In-Band Errors">In-Band Errors</span></h2>
+
+<p>C或者其他类似语音中，函数返回-1或者null来表示错误是很常见的：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// Lookup returns the value for key or "" if there is no mapping for key.
+</span><span class='line'>func Lookup(key string) string
+</span><span class='line'>
+</span><span class='line'>// Failing to check a for an in-band error value can lead to bugs:
+</span><span class='line'>Parse(Lookup(key))  // returns "parse failure for value" instead of "no value for key"</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Go中的多返回值机制提供了一个更好的方案。函数直接放回一个错误值来表示函数执行结果是否正确。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// Lookup returns the value for key or ok=false if there is no mapping for key.
+</span><span class='line'>func Lookup(key string) (value string, ok bool)
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这种格式可以阻止不正确的使用函数返回值：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// Lookup returns the value for key or ok=false if there is no mapping for key.
+</span><span class='line'>func Lookup(key string) (value string, ok bool)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>一个更健壮和可阅读的风格如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>value, ok := Lookup(key)  
+</span><span class='line'>if !ok  {  
+</span><span class='line'>    return fmt.Errorf("no value for %q", key)
+</span><span class='line'>}
+</span><span class='line'>return Parse(value)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>这个规则对于导出函数和非导出函数都是有用的。</p>
+
+<h2><span id="Indent Error Flow">Indent Error Flow</span></h2>
+
+<p>保持正常流程最小缩进，缩进异常处理流程。这有助于提高可读性，可以快速查阅程序正常流程，不建议如下风格：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>if err != nil {
+</span><span class='line'>  // error handling
+</span><span class='line'>} else {
+</span><span class='line'>  // normal code
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>建议如下风格：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>if err != nil {
+</span><span class='line'>  // error handling
+</span><span class='line'>  return // or continue, etc.
+</span><span class='line'>}
+</span><span class='line'>// normal code</span></code></pre></td></tr></table></div></figure>
+
+
+<p>像下面这样<code>if</code>表达式中带初始化操作的语句：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>if x, err := f(); err != nil {
+</span><span class='line'>  // error handling
+</span><span class='line'>  return
+</span><span class='line'>} else {
+</span><span class='line'>  // use x
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>建议将声明挪到外面去，如下所示：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>x, err := f()
+</span><span class='line'>if err != nil {
+</span><span class='line'>  // error handling
+</span><span class='line'>  return
+</span><span class='line'>}
+</span><span class='line'>// use x</span></code></pre></td></tr></table></div></figure>
+
+
+<h2><span id="Initialisms"> Initialisms</span></h2>
+
+<p>命名中的首字母缩写应该保持同一大小写风格。比如，<code>URL</code>应该写为<code>URL</code>或者<code>url</code>（<code>URLPony</code>或者<code>urlPony</code>）,不应该为<code>Url</code>。又一个例子：应该为<code>ServeHTTP</code>而不应该为<code>ServeHttp</code>。<br/>
+这个规则也适用于<code>identifier</code>的缩写<code>ID</code>，应该命名为<code>appID</code>而不是<code>appid</code>。<br/>
+protocol buffer编译生成的代码可以不遵守这个规则。人类编写的程序应该比机器坚持更高标准。</p>
+
+<h2><span id="Interfaces"> Interfaces</span></h2>
+
+<p>Go 接口通常定义在使用接口的包中，而不是在实现接口的包中。实现的包应该返回具体类型（通常指针类型或者结构体）：这种方法，可以方便的在实现类型上增加新方法。</p>
+
+<p>不要因为模拟，在具体实现这边定义接口类型。</p>
+
+<p>不要在使用之前定义接口类型：没有使用的实际用例，对于判断一个接口是否需要是困难的，不要去想接口应该包含哪些方法。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>package consumer  // consumer.go
+</span><span class='line'>
+</span><span class='line'>type Thinger interface { Thing() bool }
+</span><span class='line'>
+</span><span class='line'>func Foo(t Thinger) string { … }</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>package consumer // consumer_test.go
+</span><span class='line'>
+</span><span class='line'>type fakeThinger struct{ … }
+</span><span class='line'>func (t fakeThinger) Thing() bool { … }
+</span><span class='line'>…
+</span><span class='line'>if Foo(fakeThinger{…}) == "x" { … }</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// DO NOT DO IT!!!
+</span><span class='line'>package producer
+</span><span class='line'>
+</span><span class='line'>type Thinger interface { Thing() bool }
+</span><span class='line'>
+</span><span class='line'>type defaultThinger struct{ … }
+</span><span class='line'>func (t defaultThinger) Thing() bool { … }
+</span><span class='line'>
+</span><span class='line'>func NewThinger() Thinger { return defaultThinger{ … } }</span></code></pre></td></tr></table></div></figure>
+
+
+<p>定义一个具体类型，让消费者模拟生产者实现。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>package producer
+</span><span class='line'>
+</span><span class='line'>type Thinger struct{ … }
+</span><span class='line'>func (t Thinger) Thing() bool { … }
+</span><span class='line'>
+</span><span class='line'>func NewThinger() Thinger { return Thinger{ … } }
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2><span id="Mixed Caps"> Mixed Caps</span></h2>
+
+<p>查看<a href="https://golang.org/doc/effective_go.html#mixed-caps">mixed-caps</a>，这打破了其他语言中惯例。比如一个非导出常量命名<code>maxLength</code>而不是<code>MaxLength</code>和<code>MAX_LENGTH</code>。</p>
+
+<h2><span id="Named Result Parameters"> Named Result Parameters</span></h2>
+
+<p>下面这样的定义：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>func (n *Node) Parent1() (node *Node)
+</span><span class='line'>func (n *Node) Parent2() (node *Node, err error)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>最好定义成如下方式：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>func (n *Node) Parent1() *Node
+</span><span class='line'>func (n *Node) Parent2() (*Node, error)</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其他情况，如果一个函数返回两个或者三个相同类型的值，或者一个返回值的意义不是很明确，那么应该给返回值命名。</p>
+
+<pre><code>func (f *Foo) Location() (float64, float64, error)
+</code></pre>
+
+<p>没有下面命名更清晰：</p>
+
+<pre><code>// Location returns f's latitude and longitude.
+// Negative values mean south and west, respectively.
+func (f *Foo) Location() (lat, long float64, err error)
+</code></pre>
+
+<h2><span id="Package Comments"> Package Comments</span></h2>
+
+<p>包注释，与其他被godoc工具展示的注释类似，必须紧邻着package语句，不需要空白行。</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>// Package math provides basic constants and mathematical functions.  
+</span><span class='line'>package math</span></code></pre></td></tr></table></div></figure>
+
+
+
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>/*
+</span><span class='line'>Package template implements data-driven templates for generating textual
+</span><span class='line'>output such as HTML.
+</span><span class='line'>....
+</span><span class='line'>*/
+</span><span class='line'>package template</span></code></pre></td></tr></table></div></figure>
+
+
+<p>对于<code>package main</code>可以使用一些其他风格的注释，比如，在<code>seedgen</code>目录中的<code>package main</code>包，可以采用如下注释：</p>
+
+<pre><code>// Binary seedgen ...
+package main
+</code></pre>
+
+<p>或者</p>
+
+<pre><code>// Command seedgen ...
+package main
+</code></pre>
+
+<p>或者</p>
+
+<pre><code>// Program seedgen ...
+package main
+</code></pre>
+
+<p>或者</p>
+
+<pre><code>// The seedgen command ...
+package main
+</code></pre>
+
+<p>或者
+    // The seedgen program &hellip;
+    package main</p>
+
+<p>或者</p>
+
+<pre><code>// Seedgen ..
+package main
+</code></pre>
+
+<p>上面例子的其他形式也是可以接受的。<br/>
+对于包注释，不应该以小写字母开头，因为这些注释会被公开查看，应该按照英语规则书写。
+查看<a href="https://golang.org/doc/effective_go.html#commentary">https://golang.org/doc/effective_go.html#commentary</a>关于注释的详细说明。</p>
+
+<h2><span id="Package Names"> Package Names</span></h2>
+
+<p>外界需要使用报名来引用包中的命名，所以可以在命名中将包名去掉。比如，如果<code>package chubby</code>中定义<code>File</code>，不需要定义成<code>ChubbyFile</code>，因为访问时就是这样<code>chubby.ChubbyFile</code>。直接定义成<code>File</code>，这样访问时就会是<code>chubby.File</code>。避免无意义包名，如<code>util, common,misc,api,types,interfaces</code>。查看<a href="http://golang.org/doc/effective_go.html#package-names">http://golang.org/doc/effective_go.html#package-names</a>和<a href="http://blog.golang.org/package-names">http://blog.golang.org/package-names</a>详细信息。</p>
+
+<h2><span id="Pass Values"> Pass Values</span></h2>
+
+<p>不要只是为了节省几个字节而传递指针作为函数地址。如果一个函数都是以<code>*x</code>的形式使用参数<code>x</code>，那么就参数<code>x</code>就不应该是指针形式。比如以传递一个字符串的指针<code>*string</code>或者一个指向接口的类型<code>*io.Reader</code>作为函数参数，在这两种场景中，字符串和接口类型值都是固定大小，可以直接传递。这个建议对于大的结构体类型并不适用。</p>
+
+<h2><span id="Receiver Names"> Receiver Names</span></h2>
+
+<p>方法接受者名称应该反映它的实体类型。通常是类型的一个或者两个字母缩写（比如用c和cl代表Client）。不要使用<code>me</code>，<code>this</code>或者<code>self</code>这样的面向对象语言中使用的标识符。</p>
+
+<h2><span id="Receiver Type"> Receiver Type</span></h2>
+
+<p>对于Go新手来说，定义方法时使用值还是指针作为接收者是困难的。如果有所疑虑，使用指针。下面是一些指导意见：</p>
+
+<ul>
+<li>如果接受者是<code>map``func</code>或者<code>chan</code>时，不要使用指针。如果接受者是一个<code>slice</code>并且方法中并没有重新分配slice，不要使用指针。</li>
+<li>如果方法需要修改接受者，必须使用指针。</li>
+<li>如果接受者是一个结构体并且包含sync.Mutex或者类似同步元语字段，接受者必须是指针类型避免拷贝。</li>
+<li>如果接受者是一个大的结构体或者数组，指针类型接受者更有效率。</li>
+</ul>
+
+
+<h2><span id="Synchronous Functions"> Synchronous Functions</span></h2>
+
+<h2>参考</h2>
+
+<ul>
+<li><a href="https://github.com/golang/go/wiki/CodeReviewComments#receiver-names">CodeReviewComments</a></li>
+</ul>
+
 ]]></content>
   </entry>
   
