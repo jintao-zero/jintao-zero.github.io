@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2017/08/09/zookeepershi-zhan/</loc>
+    
+    <lastmod>2017-08-09T15:57:12+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/</loc>
     
     <lastmod>2017-06-20T21:42:04+08:00</lastmod>
@@ -309,14 +317,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2017-08-09T15:52:00+08:00</lastmod>
+    <lastmod>2017-08-09T16:32:18+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2017-08-09T15:52:00+08:00</lastmod>
+    <lastmod>2017-08-09T16:32:18+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

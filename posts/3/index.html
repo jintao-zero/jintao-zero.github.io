@@ -9,7 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Redis是一款依据BSD开源协议发型的高性能Key-Value存储系统(cache and store)。它通常称为数据结构服务器，因为值(value)可以是字符串(String)，哈希(Hase)，列表(List)，集合(Set)和有序集合(sorted sets)等类型。 &hellip;">
+  <meta name="description" content="Hadoop Filesystems Hadoop对于文件系统有一个抽象设计，HDFS只是一个实现。客户端使用Java 抽象类org.apache.hadoop.fs.FileSystem来访问Hadoop中的文件系统，有多个具体实现类: FileSystem URI scheme Java &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +67,80 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao/">Hdfs文件系统java Api介绍</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-21T17:29:19+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>5:29 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h1>Hadoop Filesystems</h1>
+
+<p>Hadoop对于文件系统有一个抽象设计，HDFS只是一个实现。客户端使用Java 抽象类org.apache.hadoop.fs.FileSystem来访问Hadoop中的文件系统，有多个具体实现类:</p>
+
+<pre><code>FileSystem      URI scheme      Java implementaion  
+Local           file            fs.LocalFileSystem  
+
+HDFS            hdfs            hdfs.DistributedFileSystem
+
+WebHDFS         webhdfs         hdfs.web.WebHdfsFileSystem
+
+Secure
+WebHDFs         swebhdfs        hdfs.web.SWebHdfsFileSystem
+
+HAR             har             fs.HarFileSystem
+
+View            viewfs          viewfs.ViewFileSystem
+
+FTP             ftp             fs.ftp.FTPFileSystem
+
+S3              s3a             fs.s3a.S3AFileSystem
+
+Azure           wasb            fs.azure.NativeAzureFileSystem
+
+Swift           swift           fs.swift.snative.SwiftNative
+</code></pre>
+
+<p>Hadoop提供多个接口访问文件系统，接口利用URI的scheme来创建对应的实例与文件系统进行通讯。hdfs命令可以用来操作Hadoop各种文件系统，比如列出本地文件系统根目录内容：</p>
+
+<pre><code>[root@yun1 ~]# hdfs dfs -ls file:///
+Found 25 items
+-rw-r--r--   1 root root          0 2015-10-19 11:06 file:///.autofsck
+-rw-r--r--   1 root root          0 2014-07-04 14:16 file:///.autorelabel
+dr-xr-xr-x   - root root       4096 2014-07-04 14:36 file:///bin
+dr-xr-xr-x   - root root       1024 2014-09-17 15:54 file:///boot
+drwxr-xr-x   - root root       4096 2014-07-04 09:17 file:///data
+-rw-r--r--   1 root root       1001 2014-07-29 16:28 file:///dataplatform.log
+drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
+</code></pre>
+
+<h1>Java Interface</h1>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -341,7 +415,7 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
       
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Libnetfilter_queue学习笔记</a></h1>
+      <h1 class="entry-title"><a href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Libnetfilter_queue实战</a></h1>
     
     
       <p class="meta">
@@ -660,44 +734,6 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp server使用select进行I/O复用</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-04-12T15:30:03+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:30 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>在<a href="http://jintao-zero.github.io/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">tcp服务端示例</a>中，接受一个客户端连接，调用accept函数返回后就对本客户端连接进行业务处理，如果业务逻辑比较复杂，那么服务端有可能就阻塞在某个客户端上，而不能处理其他客户端连接，解决此问题有多种模型可以采用：<br/>
-1）多进程，为每个客户端连接创建一个子进程进行处理<br/>
-2）多线程，多个线程并行处理客户端连接<br/>
-3）I/O多路复用，服务器采用单线程模型，使用I/O多路复用模型，并行处理多个客户端文件描述符<br/>
-在上一篇示例<a href="http://jintao-zero.github.io/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">tcp client 使用select进行I/O复用</a>中介绍的select函数同样适用与对tcp server端的I/O多路复用改造，改造主要设计几下几个方面：</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -715,6 +751,10 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
       </li>
     
@@ -730,10 +770,6 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
         <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -747,6 +783,7 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (1)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -775,6 +812,7 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
 
 </ul>
 </section>

@@ -1,0 +1,400 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Zookeeper实战 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="zookeeper实战记录 环境搭建
+命令行操作
+编程 环境搭建 搭建适合生产环境使用的zookeeper集群，最好是大于等于3台机器 下载
+解压 tar xzf zookeeper***.tar.gz
+修改配置文件 进入解压目录conf子目录 cp zoo_sample.cfg zoo.cfg &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/08/09/zookeepershi-zhan">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Zookeeper实战</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-08-09T15:57:12+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:57 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>zookeeper实战记录</p>
+
+<ul>
+<li><a href="#setup">环境搭建</a></li>
+<li><a href="#cmd">命令行操作</a></li>
+<li><a href="#code">编程</a></li>
+</ul>
+
+
+<h2><span id="setup">环境搭建</span></h2>
+
+<p>搭建适合生产环境使用的zookeeper集群，最好是大于等于3台机器</p>
+
+<ol>
+<li><p><a href="http://zookeeper.apache.org/releases.html">下载</a></p></li>
+<li><p>解压</p>
+
+<p> <code>tar xzf zookeeper***.tar.gz</code></p></li>
+<li><p>修改配置文件<br/>
+ 进入解压目录conf子目录<br/>
+ <code>cp zoo_sample.cfg zoo.cfg</code><br/>
+ 修改配置文件 <br/>
+ 设置相关参数：<br/>
+ dataDir为zookeeper持久化数据存放目录   <br/>
+ dataDir=/data/zookeeper
+ 配置集群中三台机器
+ server.1=10.174.176.156:2888:3888
+ server.2=10.168.106.149:2888:3888
+ server.3=10.168.37.52:2888:3888<br/>
+ 需要在每台机器dataDir目录下建立myid文件，并将上面server后面对应的id写入myid文件中</p></li>
+<li><p>启动程序<br/>
+ bin/zkServer.sh start</p></li>
+<li><p>查看日志文件<br/>
+ tail -f zookeeper.out</p></li>
+</ol>
+
+
+<!-- more -->
+
+
+<h2><span id="cmd">命令行操作</span></h2>
+
+<p><code>bin/zkCli.sh -server 127.0.0.1:2181</code><br/>
+连接zookeeper服务端。<br/>
+查看<code>help</code>帮助命令：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 0] help  
+</span><span class='line'>ZooKeeper -server host:port cmd args
+</span><span class='line'>  stat path [watch]
+</span><span class='line'>  set path data [version]
+</span><span class='line'>  ls path [watch]
+</span><span class='line'>  delquota [-n|-b] path
+</span><span class='line'>  ls2 path [watch]
+</span><span class='line'>  setAcl path acl
+</span><span class='line'>  setquota -n|-b val path
+</span><span class='line'>  history
+</span><span class='line'>  redo cmdno
+</span><span class='line'>  printwatches on|off
+</span><span class='line'>  delete path [version]
+</span><span class='line'>  sync path
+</span><span class='line'>  listquota path
+</span><span class='line'>  rmr path
+</span><span class='line'>  get path [watch]
+</span><span class='line'>  create [-s] [-e] path data acl
+</span><span class='line'>  addauth scheme auth
+</span><span class='line'>  quit
+</span><span class='line'>  getAcl path
+</span><span class='line'>  close
+</span><span class='line'>  connect host:port
+</span><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 1]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>新建节点：</p>
+
+<pre><code>[zk: 127.0.0.1:2181(CONNECTED) 2] create /test  test_data
+Created /test
+[zk: 127.0.0.1:2181(CONNECTED) 3]
+</code></pre>
+
+<p>查看节点：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 4] ls /test
+</span><span class='line'>[]
+</span><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 5] get /test
+</span><span class='line'>test_data
+</span><span class='line'>cZxid = 0x10000002a
+</span><span class='line'>ctime = Wed Aug 09 16:26:43 CST 2017
+</span><span class='line'>mZxid = 0x10000002a
+</span><span class='line'>mtime = Wed Aug 09 16:26:43 CST 2017
+</span><span class='line'>pZxid = 0x10000002a
+</span><span class='line'>cversion = 0
+</span><span class='line'>dataVersion = 0
+</span><span class='line'>aclVersion = 0
+</span><span class='line'>ephemeralOwner = 0x0
+</span><span class='line'>dataLength = 9
+</span><span class='line'>numChildren = 0
+</span><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 6]</span></code></pre></td></tr></table></div></figure>
+
+
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-08-09T15:57:12+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:57 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ops/'>ops</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/" title="Previous Post: golang加两遍读锁导致程序死锁问题分析">&laquo; golang加两遍读锁导致程序死锁问题分析</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Go代码走读规范</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (2)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (1)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
+<li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 126%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+<a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

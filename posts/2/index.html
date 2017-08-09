@@ -9,8 +9,9 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="
-">
+  <meta name="description" content="Golang reflect包实现了运行时反射，允许程序管理任意类型对象。典型应用是使用TypeOf从静态类型interface{}中抽取动态类型信息。
+使用ValueOf返回一个Value类型变量代表运行时数据。
+The Laws of Reflection介绍了Golang &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +69,82 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/03/06/golang-reflectjie-shao/">Golang Reflect介绍</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-06T17:44:02+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>5:44 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Golang <a href="https://golang.org/pkg/reflect/">reflect</a>包实现了运行时反射，允许程序管理任意类型对象。典型应用是使用<code>TypeOf</code>从静态类型<code>interface{}</code>中抽取动态类型信息。<br/>
+使用<code>ValueOf</code>返回一个<code>Value</code>类型变量代表运行时数据。<br/>
+<a href="https://golang.org/doc/articles/laws_of_reflection.html">The Laws of Reflection</a>介绍了Golang reflect机智中的几条规则：</p>
+
+<h2>从interface反射到对象</h2>
+
+<p>反射基本功能是用来检查interface变量中保存的<code>类型</code>和<code>数据</code>对。<a href="http://golang.org/pkg/reflect/">package reflect</a>中提供了两种类型：<a href="http://golang.org/pkg/reflect/#Type">Type</a>和<a href="http://golang.org/pkg/reflect/#Value">Value</a>。这两种类型提供了反问interface内部数据的机制。调用<code>reflect.TypeOf</code>和<code>reflect.ValueOf</code>函数分别返回<code>reflect.Type</code>和<code>reflect.Value</code>变量：</p>
+
+<pre><code>ackage main
+
+import (
+"fmt"
+"reflect"
+)
+
+func main() {
+    var x float64 = 3.4
+    fmt.Println("type:", reflect.TypeOf(x))
+}
+</code></pre>
+
+<p>程序输出如下：</p>
+
+<pre><code>type: float64
+</code></pre>
+
+<p><code>reflect.TypeOf</code>函数定义如下：</p>
+
+<pre><code>// TypeOf returns the reflection Type of the value in the interface{}.
+func TypeOf(i interface{}) Type
+</code></pre>
+
+<p>当我们调用<code>TypeOf(x)</code>时，x首先存在一个空interface中，之后作为参数，reflect.TypeOf解析参数获取实际类型。  <br/>
+调用<code>Value(x)</code>时，从接口参数中获取实参值。</p>
+
+<pre><code>var x float64 = 3.4
+fmt.Println("value:", reflect.ValueOf(x))
+</code></pre>
+
+<p>打印结果如下：</p>
+
+<pre><code>value: &lt;float64 Value&gt;
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/03/06/golang-reflectjie-shao/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -651,80 +728,6 @@ This command was run using /usr/local/hadoop-2.7.1/share/hadoop/common/hadoop-co
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao/">Hdfs文件系统java Api介绍</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-12-21T17:29:19+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>5:29 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h1>Hadoop Filesystems</h1>
-
-<p>Hadoop对于文件系统有一个抽象设计，HDFS只是一个实现。客户端使用Java 抽象类org.apache.hadoop.fs.FileSystem来访问Hadoop中的文件系统，有多个具体实现类:</p>
-
-<pre><code>FileSystem      URI scheme      Java implementaion  
-Local           file            fs.LocalFileSystem  
-
-HDFS            hdfs            hdfs.DistributedFileSystem
-
-WebHDFS         webhdfs         hdfs.web.WebHdfsFileSystem
-
-Secure
-WebHDFs         swebhdfs        hdfs.web.SWebHdfsFileSystem
-
-HAR             har             fs.HarFileSystem
-
-View            viewfs          viewfs.ViewFileSystem
-
-FTP             ftp             fs.ftp.FTPFileSystem
-
-S3              s3a             fs.s3a.S3AFileSystem
-
-Azure           wasb            fs.azure.NativeAzureFileSystem
-
-Swift           swift           fs.swift.snative.SwiftNative
-</code></pre>
-
-<p>Hadoop提供多个接口访问文件系统，接口利用URI的scheme来创建对应的实例与文件系统进行通讯。hdfs命令可以用来操作Hadoop各种文件系统，比如列出本地文件系统根目录内容：</p>
-
-<pre><code>[root@yun1 ~]# hdfs dfs -ls file:///
-Found 25 items
--rw-r--r--   1 root root          0 2015-10-19 11:06 file:///.autofsck
--rw-r--r--   1 root root          0 2014-07-04 14:16 file:///.autorelabel
-dr-xr-xr-x   - root root       4096 2014-07-04 14:36 file:///bin
-dr-xr-xr-x   - root root       1024 2014-09-17 15:54 file:///boot
-drwxr-xr-x   - root root       4096 2014-07-04 09:17 file:///data
--rw-r--r--   1 root root       1001 2014-07-29 16:28 file:///dataplatform.log
-drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
-</code></pre>
-
-<h1>Java Interface</h1>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -742,6 +745,10 @@ drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
       </li>
     
@@ -757,10 +764,6 @@ drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
         <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -774,6 +777,7 @@ drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (1)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -802,6 +806,7 @@ drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
 
 </ul>
 </section>

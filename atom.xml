@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-08-09T15:52:00+08:00</updated>
+  <updated>2017-08-09T16:32:18+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,154 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Zookeeper实战]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/08/09/zookeepershi-zhan/"/>
+    <updated>2017-08-09T15:57:12+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/08/09/zookeepershi-zhan</id>
+    <content type="html"><![CDATA[<p>zookeeper实战记录</p>
+
+<ul>
+<li><a href="#setup">环境搭建</a></li>
+<li><a href="#cmd">命令行操作</a></li>
+<li><a href="#code">编程</a></li>
+</ul>
+
+
+<h2><span id="setup">环境搭建</span></h2>
+
+<p>搭建适合生产环境使用的zookeeper集群，最好是大于等于3台机器</p>
+
+<ol>
+<li><p><a href="http://zookeeper.apache.org/releases.html">下载</a></p></li>
+<li><p>解压</p>
+
+<p> <code>tar xzf zookeeper***.tar.gz</code></p></li>
+<li><p>修改配置文件<br/>
+ 进入解压目录conf子目录<br/>
+ <code>cp zoo_sample.cfg zoo.cfg</code><br/>
+ 修改配置文件 <br/>
+ 设置相关参数：<br/>
+ dataDir为zookeeper持久化数据存放目录   <br/>
+ dataDir=/data/zookeeper
+ 配置集群中三台机器
+ server.1=10.174.176.156:2888:3888
+ server.2=10.168.106.149:2888:3888
+ server.3=10.168.37.52:2888:3888<br/>
+ 需要在每台机器dataDir目录下建立myid文件，并将上面server后面对应的id写入myid文件中</p></li>
+<li><p>启动程序<br/>
+ bin/zkServer.sh start</p></li>
+<li><p>查看日志文件<br/>
+ tail -f zookeeper.out</p></li>
+</ol>
+
+
+<!-- more -->
+
+
+<h2><span id="cmd">命令行操作</span></h2>
+
+<p><code>bin/zkCli.sh -server 127.0.0.1:2181</code><br/>
+连接zookeeper服务端。<br/>
+查看<code>help</code>帮助命令：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 0] help  
+</span><span class='line'>ZooKeeper -server host:port cmd args
+</span><span class='line'>  stat path [watch]
+</span><span class='line'>  set path data [version]
+</span><span class='line'>  ls path [watch]
+</span><span class='line'>  delquota [-n|-b] path
+</span><span class='line'>  ls2 path [watch]
+</span><span class='line'>  setAcl path acl
+</span><span class='line'>  setquota -n|-b val path
+</span><span class='line'>  history
+</span><span class='line'>  redo cmdno
+</span><span class='line'>  printwatches on|off
+</span><span class='line'>  delete path [version]
+</span><span class='line'>  sync path
+</span><span class='line'>  listquota path
+</span><span class='line'>  rmr path
+</span><span class='line'>  get path [watch]
+</span><span class='line'>  create [-s] [-e] path data acl
+</span><span class='line'>  addauth scheme auth
+</span><span class='line'>  quit
+</span><span class='line'>  getAcl path
+</span><span class='line'>  close
+</span><span class='line'>  connect host:port
+</span><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 1]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>新建节点：</p>
+
+<pre><code>[zk: 127.0.0.1:2181(CONNECTED) 2] create /test  test_data
+Created /test
+[zk: 127.0.0.1:2181(CONNECTED) 3]
+</code></pre>
+
+<p>查看节点：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 4] ls /test
+</span><span class='line'>[]
+</span><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 5] get /test
+</span><span class='line'>test_data
+</span><span class='line'>cZxid = 0x10000002a
+</span><span class='line'>ctime = Wed Aug 09 16:26:43 CST 2017
+</span><span class='line'>mZxid = 0x10000002a
+</span><span class='line'>mtime = Wed Aug 09 16:26:43 CST 2017
+</span><span class='line'>pZxid = 0x10000002a
+</span><span class='line'>cversion = 0
+</span><span class='line'>dataVersion = 0
+</span><span class='line'>aclVersion = 0
+</span><span class='line'>ephemeralOwner = 0x0
+</span><span class='line'>dataLength = 9
+</span><span class='line'>numChildren = 0
+</span><span class='line'>[zk: 127.0.0.1:2181(CONNECTED) 6]</span></code></pre></td></tr></table></div></figure>
+
+
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Golang加两遍读锁导致程序死锁问题分析]]></title>
@@ -271,6 +419,9 @@ func (rw *RWMutex) RLock() {
 <li><a href="#Receiver%20Type">Receiver Type</a></li>
 <li><a href="#Synchronous%20Functions">Synchronous Functions</a></li>
 </ul>
+
+
+<!-- more -->
 
 
 <h2><span id="Gofmt">Gofmt</span></h2>
@@ -3950,152 +4101,6 @@ your    1
 </code></pre>
 
 <p>至此，讲述了最基本的mapreduce程序开发、运行过程，后续需要学习的有如果查看日志，如何调试优化程序等方面。</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Hdfs文件系统java Api介绍]]></title>
-    <link href="http://jintao-zero.github.io/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao/"/>
-    <updated>2015-12-21T17:29:19+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2015/12/21/hdfswen-jian-xi-tong-java-apijie-shao</id>
-    <content type="html"><![CDATA[<h1>Hadoop Filesystems</h1>
-
-<p>Hadoop对于文件系统有一个抽象设计，HDFS只是一个实现。客户端使用Java 抽象类org.apache.hadoop.fs.FileSystem来访问Hadoop中的文件系统，有多个具体实现类:</p>
-
-<pre><code>FileSystem      URI scheme      Java implementaion  
-Local           file            fs.LocalFileSystem  
-
-HDFS            hdfs            hdfs.DistributedFileSystem
-
-WebHDFS         webhdfs         hdfs.web.WebHdfsFileSystem
-
-Secure
-WebHDFs         swebhdfs        hdfs.web.SWebHdfsFileSystem
-
-HAR             har             fs.HarFileSystem
-
-View            viewfs          viewfs.ViewFileSystem
-
-FTP             ftp             fs.ftp.FTPFileSystem
-
-S3              s3a             fs.s3a.S3AFileSystem
-
-Azure           wasb            fs.azure.NativeAzureFileSystem
-
-Swift           swift           fs.swift.snative.SwiftNative
-</code></pre>
-
-<p>Hadoop提供多个接口访问文件系统，接口利用URI的scheme来创建对应的实例与文件系统进行通讯。hdfs命令可以用来操作Hadoop各种文件系统，比如列出本地文件系统根目录内容：</p>
-
-<pre><code>[root@yun1 ~]# hdfs dfs -ls file:///
-Found 25 items
--rw-r--r--   1 root root          0 2015-10-19 11:06 file:///.autofsck
--rw-r--r--   1 root root          0 2014-07-04 14:16 file:///.autorelabel
-dr-xr-xr-x   - root root       4096 2014-07-04 14:36 file:///bin
-dr-xr-xr-x   - root root       1024 2014-09-17 15:54 file:///boot
-drwxr-xr-x   - root root       4096 2014-07-04 09:17 file:///data
--rw-r--r--   1 root root       1001 2014-07-29 16:28 file:///dataplatform.log
-drwxr-xr-x   - root root       3580 2015-10-19 11:08 file:///dev
-</code></pre>
-
-<h1>Java Interface</h1>
-
-<!-- more -->
-
-
-<p>访问HDFS文件系统需要先获取一个文件系统实例，FileSystem是一个文件系统统一访问接口。通过以下接口可以获取访问hdfs文件系统的实例：</p>
-
-<pre><code>public static FileSystem get(Configuration conf) throws IOException
-public static FileSystem get(URI uri, Configuration conf) throws IOException
-public static FileSystem get(URI uri, Configuration conf, String user) throws IOException
-</code></pre>
-
-<p>Configuration对象封装客户端或者服务端的配置信息，这些信息由classpath目录下配置文件初始化，比如etc/hadoop/core-site.xml。第一个接口根据conf中的信息，返回文件系统。第二个接口使用URI的scheme和授权来觉得使用哪个文件系统，如果没有设置scheme，则使用conf中配置的文件系统。第三个接口是以user用户的身份获取文件系统。 使用FileSystem实例，调用open方法可以获取一个输入文件流：</p>
-
-<pre><code>public FSDataInputStream open(Path f) throws IOException
-public abstract FSDataInputStream open(Path f, int bufferSize) throws IOException 
-</code></pre>
-
-<p>下面的代码实例用于读取hdfs文件输出到标准输出：</p>
-
-<pre><code>public class FileSystemCat {
-
-    public static void main(String[] args) throws Exception {
-        String uri = args[0];
-        Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(URI.create(uri), conf);
-        InputStream in = null;
-        try {
-            in = fs.open(new Path(uri));
-            IOUtils.copyBytes(in, System.out, 4096, false);
-        } finally {
-            IOUtils.closeStream(in);
-        }
-    }
-}
-</code></pre>
-
-<p>编译文件后，使用hadoop命令运行class文件：</p>
-
-<pre><code># hadoop FileSystemCat hdfs://localhost/user/tom/quangle.txt
-On the top of the Crumpetty Tree
-The Quangle Wangle sat, 
-But his face you could not see,
-On account of his Beaver Hat.
-</code></pre>
-
-<h2>Writing Data</h2>
-
-<p>FileSystem提供多个接口来创建文件，最简单的是输入一个路径作为参数，返回一个输出流：</p>
-
-<pre><code>public FSDataOutputStream create(Path f) throws IOException 存在多个重载接口，允许指定是否重写已存在文件，文件的副本个数，写文件的缓冲区大小，文件的块大小和文件权限等等。存在append接口对已存在文件进行追加：
-public FSDataOutputStream append(Path f) throws IOException
-</code></pre>
-
-<p>下面的代码实例是拷贝一个本地文件到Hadoop文件系统中：</p>
-
-<pre><code>public class FileCopyWithProgress {
-    public static void main(String []args) throws Exception {
-        String localSrc = args[0];
-        String dst = args[1];
-
-        InputStream in = new BufferedInputStream(new FileInputStream(localSrc));
-
-        Configuration conf = new Configuration();
-        FileSystem fs = FileSystem.get(URI.create(dst), conf);
-        OutputStream out = fs.create(new Path(dst), new Progressable() {
-            public void progress() {
-                System.out.print(".");
-            }
-        });
-
-        IOUtils.copyBytes(in, out, 4096, true);
-    }
-}
-</code></pre>
-
-<p>运行程序结果如下：
-    #hadoop FileCopyWithProgress input/docs/1400-8.txt hdfs://localhost/user/tom/1400-8.txt</p>
-
-<p>创建目录使用下面的接口：</p>
-
-<pre><code>public boolean mkdirs(Path f) throws IOException
-</code></pre>
-
-<h2>Quering the FileSystem</h2>
-
-<p>FilsSystem提供了接口来获取文件或者文件夹信息，信息包括文件长度，块大小，复制，修改时间，所有权，访问权限属性。</p>
-
-<pre><code>abstract FileStatus getFileStatus(Path f)
-</code></pre>
-
-<p>FileSystem提供了接口来列出一个目录中包含的内容：</p>
-
-<pre><code>abstract FileStatus[]   listStatus(Path f)
-FileStatus[]    listStatus(Path[] files)
-FileStatus[]    listStatus(Path[] files, PathFilter filter)
-FileStatus[]    listStatus(Path f, PathFilter filter)
-</code></pre>
 ]]></content>
   </entry>
   

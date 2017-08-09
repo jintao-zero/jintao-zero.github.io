@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Dev | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/categories/dev/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-08-09T15:52:00+08:00</updated>
+  <updated>2017-08-09T16:32:18+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -271,6 +271,9 @@ func (rw *RWMutex) RLock() {
 <li><a href="#Receiver%20Type">Receiver Type</a></li>
 <li><a href="#Synchronous%20Functions">Synchronous Functions</a></li>
 </ul>
+
+
+<!-- more -->
 
 
 <h2><span id="Gofmt">Gofmt</span></h2>

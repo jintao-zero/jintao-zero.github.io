@@ -9,8 +9,9 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="在tcp客户端示例中，存在以下两种情况时，示例代码不能更好的处理： 目前客户端输入一条数据并发送，等待服务端返回后，才能继续输入数据 这样的设计不利于客户端批量处理数据
-当服务端出现异常（如服务进程退出或者服务端主机崩溃等异常情况），客户端也许正在等待输入，不能够及时感知到服务端的异常， &hellip;">
+  <meta name="description" content="在tcp服务端示例中，接受一个客户端连接，调用accept函数返回后就对本客户端连接进行业务处理，如果业务逻辑比较复杂，那么服务端有可能就阻塞在某个客户端上，而不能处理其他客户端连接，解决此问题有多种模型可以采用：
+1）多进程，为每个客户端连接创建一个子进程进行处理
+2）多线程， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +69,44 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Tcp server使用select进行I/O复用</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-04-12T15:30:03+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:30 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>在<a href="http://jintao-zero.github.io/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">tcp服务端示例</a>中，接受一个客户端连接，调用accept函数返回后就对本客户端连接进行业务处理，如果业务逻辑比较复杂，那么服务端有可能就阻塞在某个客户端上，而不能处理其他客户端连接，解决此问题有多种模型可以采用：<br/>
+1）多进程，为每个客户端连接创建一个子进程进行处理<br/>
+2）多线程，多个线程并行处理客户端连接<br/>
+3）I/O多路复用，服务器采用单线程模型，使用I/O多路复用模型，并行处理多个客户端文件描述符<br/>
+在上一篇示例<a href="http://jintao-zero.github.io/blog/2015/04/06/tcp-client-shi-yong-selectjin-xing-i-slash-ofu-yong/">tcp client 使用select进行I/O复用</a>中介绍的select函数同样适用与对tcp server端的I/O多路复用改造，改造主要设计几下几个方面：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/04/12/tcp-servershi-yong-selectjin-xing-i-slash-ofu-yong/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -593,6 +632,10 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
       </li>
     
@@ -608,10 +651,6 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
         <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -625,6 +664,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (1)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -653,6 +693,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
 
 </ul>
 </section>
