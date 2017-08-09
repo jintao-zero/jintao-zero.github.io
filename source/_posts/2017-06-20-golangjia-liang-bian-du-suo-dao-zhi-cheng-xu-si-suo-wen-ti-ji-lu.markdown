@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "golang加两边读锁导致程序死锁问题分析"
+title: "golang加两遍读锁导致程序死锁问题分析"
 date: 2017-06-20 21:42:04 +0800
 comments: true
 categories: dev
