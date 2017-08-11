@@ -1,0 +1,657 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Openssl实战 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="本篇文章主要是对openssl的使用进行实践总结。 生成密钥
+创建证书
+实践 生成密钥 生成RSA密钥 命令： 1
+2
+openssl genrsa [-out filename] [-passout arg] [-aes128] [-aes128] [-aes192] [-aes256] [- &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/08/09/opensslshi-zhan">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Openssl实战</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-08-09T17:50:42+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>5:50 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>本篇文章主要是对openssl的使用进行实践总结。</p>
+
+<ul>
+<li><a href="#key">生成密钥</a></li>
+<li><a href="#crt">创建证书</a></li>
+<li><a href="#practice">实践</a></li>
+</ul>
+
+
+<!-- more -->
+
+
+<h2><span id="key">生成密钥</span></h2>
+
+<h3>生成RSA密钥</h3>
+
+<p>命令：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>openssl genrsa [-out filename] [-passout arg] [-aes128] [-aes128] [-aes192] [-aes256] [-camellia128] [-camellia192] [-camellia256] [-aes192]
+</span><span class='line'>       [-aes256] [-camellia128] [-camellia192] [-camellia256] [-des] [-des3] [-idea] [-f4] [-3] [-rand file(s)] [-engine id] [numbits]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>参数：<br/>
+<code>-out filename</code> 输出到结果文件。如果不指定，则输出到标准输出。<br/>
+<code>-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea</code> <br/>
+指定加密算法加密密钥。<br/>
+<code>numbits</code>指定密钥位数。默认为512位</p>
+
+<p>生成一个2048位rsa非对称密钥，保存到rsa-fd.key文件中：</p>
+
+<pre><code>openssl genrsa -out rsa-fd.key 2048
+</code></pre>
+
+<p><code>rsa-fd.key</code>文件为<code>PEM</code>格式：</p>
+
+<pre><code>$ file rsa-fd.key
+rsa-fd.key: PEM RSA private key
+</code></pre>
+
+<p>使用<code>rsa</code>命令解析出私钥结构：</p>
+
+<pre><code>openssl rsa -text -in rsa-fd.key
+</code></pre>
+
+<p>查看私钥中的公开部分：</p>
+
+<pre><code>openssl rsa -in rsa-fd.key -pubout -out rsa-pub.key
+</code></pre>
+
+<h3>生成DSA密钥</h3>
+
+<p>DSA的密钥生成分成两个部分:先生成DSA的参数，然后再生成密钥。
+命令：</p>
+
+<pre><code>openssl dsaparam -genkey 2048 | openssl dsa -out dsa.key
+</code></pre>
+
+<h3>生成ECDSA密钥</h3>
+
+<p>创建ECDSA密钥的过程是类似的，但是不能创建任意长度的密钥。对于每个密钥，你需要选择一个命名曲线(named curve)，它可以控制密钥长度，同时也限定了椭圆曲线的参数。下面的例子使用secp256r1这个命名曲线创建一个256位长度的ECDSA密钥</p>
+
+<pre><code>openssl ecparam -genkey -name secp256r1 | openssl ec -out ec.key
+</code></pre>
+
+<h2><span id="crt">创建证书</span></h2>
+
+<h3>创建证书申请</h3>
+
+<blockquote><p>使用openssl req命令交互式生成创建证书申请：</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ openssl req -new -key rsa-fd.key -out rsa-fd.csr
+</span><span class='line'>You are about to be asked to enter information that will be incorporated
+</span><span class='line'>into your certificate request.
+</span><span class='line'>What you are about to enter is what is called a Distinguished Name or a DN.
+</span><span class='line'>There are quite a few fields but you can leave some blank
+</span><span class='line'>For some fields there will be a default value,
+</span><span class='line'>If you enter '.', the field will be left blank.
+</span><span class='line'>-----
+</span><span class='line'>Country Name (2 letter code) [AU]:CN
+</span><span class='line'>State or Province Name (full name) [Some-State]:ShangHai
+</span><span class='line'>Locality Name (eg, city) []:ShangHai
+</span><span class='line'>Organization Name (eg, company) [Internet Widgits Pty Ltd]:limo
+</span><span class='line'>Organizational Unit Name (eg, section) []:limo
+</span><span class='line'>Common Name (e.g. server FQDN or YOUR name) []:localhost
+</span><span class='line'>Email Address []:.
+</span><span class='line'>
+</span><span class='line'>Please enter the following 'extra' attributes
+</span><span class='line'>to be sent with your certificate request
+</span><span class='line'>A challenge password []:.
+</span><span class='line'>An optional company name []:.
+</span><span class='line'>$</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中<code>Common Name</code>指定证书保护的域名。</p>
+
+<blockquote><p>使用openssl req查看证书申请内容：</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Data:
+</span><span class='line'>        Version: 0 (0x0)
+</span><span class='line'>        Subject: C=CN, ST=ShangHai, L=ShangHai, O=limo, OU=limo, CN=localhost
+</span><span class='line'>        Subject Public Key Info:
+</span><span class='line'>            Public Key Algorithm: rsaEncryption
+</span><span class='line'>            RSA Public Key: (2048 bit)
+</span><span class='line'>                Modulus (2048 bit):
+</span><span class='line'>                    00:c0:2b:11:a0:53:7d:fa:83:7f:29:2b:b5:dc:bc:
+</span><span class='line'>                Exponent: 65537 (0x10001)
+</span><span class='line'>        Attributes:
+</span><span class='line'>            a0:00
+</span><span class='line'>Signature Algorithm: sha1WithRSAEncryption
+</span><span class='line'>        7c:3d:47:49:d5:f7:c9:89:65:81:62:3d:bb:84:b8:ed:70:c4:
+</span><span class='line'>        e8:ba:ae:03:2e:af:3a:cb:31:07:e3:ef:57:a1:c7:a8:a6:c8:</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>使用配置文件生成证书：</p></blockquote>
+
+<p>配置文件内容如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[req]
+</span><span class='line'>prompt = no
+</span><span class='line'>distinguished_name = dn
+</span><span class='line'>req_extensions     = ext
+</span><span class='line'>
+</span><span class='line'>[dn]
+</span><span class='line'>CN      = localhost
+</span><span class='line'>O       = limo
+</span><span class='line'>L       = ShangHai
+</span><span class='line'>C       = CN
+</span><span class='line'>
+</span><span class='line'>[ext]
+</span><span class='line'>subjectAltName = DNS:www.localhost.com,DNS:localhost</span></code></pre></td></tr></table></div></figure>
+
+
+<p>执行命令如下：</p>
+
+<pre><code>$ openssl req -new -config rsa-fd.conf -key rsa-fd.key -out t.csr
+</code></pre>
+
+<h3>自签名证书</h3>
+
+<p>如果已经有了csr，则执行以下命令创建证书：</p>
+
+<pre><code>$ openssl x509 -req -days 365 -in rsa-fd.csr -signkey rsa-fd.key -out rsa-fd.crt
+Signature ok
+subject=/C=CN/ST=ShangHai/L=ShangHai/O=limo/OU=limo/CN=localhost
+Getting Private key
+</code></pre>
+
+<h2><span id="practice"> 实践 </span></h2>
+
+<blockquote><p>创建根CA证书</p></blockquote>
+
+<ol>
+<li><p>创建rsa密钥</p>
+
+<pre><code class="`"> $ openssl genrsa -out ca.key 2048  
+ Generating RSA private key, 2048 bit long modulus  
+ ........+++  
+ ..................................................+++  
+ e is 65537 (0x10001)  
+</code></pre></li>
+<li><p>创建证书申请</p>
+
+<pre><code> $ openssl genrsa -out ca.key 2048 -out ca.csr
+ $ 
+</code></pre></li>
+<li><p>创建自签名证书</p>
+
+<pre><code> $ openssl x509 -req -in ca.csr -signkey ca.key  -out ca.crt
+ Signature ok
+ subject=/C=CN/ST=ShangHai/L=ShangHai/O=li/OU=li/CN=RootCA
+ Getting Private key
+</code></pre></li>
+</ol>
+
+
+<blockquote><p>创建client密钥和证书</p></blockquote>
+
+<ol>
+<li><p>创建rsa密钥</p>
+
+<pre><code class="`"> $ openssl genrsa -out client.key 2048
+Generating RSA private key, 2048 bit long modulus
+..................................+++
+..........+++
+e is 65537 (0x10001)
+</code></pre></li>
+<li><p>创建证书申请</p>
+
+<pre><code> openssl req -new -key client.key -out client.csr
+</code></pre></li>
+<li><p>使用root CA签名client证书</p>
+
+<pre><code> $ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt
+ Signature ok
+ subject=/C=CN/ST=ShangHai/L=SH/O=li/OU=li/CN=localhost  
+ Getting CA Private Key
+</code></pre>
+
+<p>需要增加<code>-CAcreateserial</code>参数否则报错</p></li>
+</ol>
+
+
+<blockquote><p>创建server密钥和证书</p></blockquote>
+
+<p>方法同生成client密钥证书类似</p>
+
+<blockquote><p>使用Go创建https server，并对客户端进行双向验证：</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>func HelloServer(w http.ResponseWriter, req *http.Request) {
+</span><span class='line'>  w.Header().Set("Content-Type", "text/plain")
+</span><span class='line'>  w.Write([]byte("This is an example server.\n"))
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>func main() {
+</span><span class='line'>  pool := x509.NewCertPool()
+</span><span class='line'>  caPath := "ca.crt"
+</span><span class='line'>  caCrt, err := ioutil.ReadFile(caPath)
+</span><span class='line'>  if err != nil {
+</span><span class='line'>      fmt.Println("ReadFile err ", err)
+</span><span class='line'>      return
+</span><span class='line'>  }
+</span><span class='line'>  ok := pool.AppendCertsFromPEM(caCrt);
+</span><span class='line'>  if !ok {
+</span><span class='line'>      fmt.Println("append err")
+</span><span class='line'>      return
+</span><span class='line'>  }
+</span><span class='line'>
+</span><span class='line'>  fmt.Println(ok)
+</span><span class='line'>  tlsConfig := &tls.Config{
+</span><span class='line'>      ClientCAs:pool,
+</span><span class='line'>      ClientAuth: tls.RequireAndVerifyClientCert,
+</span><span class='line'>  }
+</span><span class='line'>  server := http.Server{
+</span><span class='line'>      Addr:      ":443",
+</span><span class='line'>      TLSConfig: tlsConfig,
+</span><span class='line'>  }
+</span><span class='line'>  http.HandleFunc("/hello", HelloServer)
+</span><span class='line'>  err = server.ListenAndServeTLS("server.crt", "server.key")
+</span><span class='line'>  log.Fatal(err)
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>使用Go创建https client</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>func main() {
+</span><span class='line'>  pool := x509.NewCertPool()
+</span><span class='line'>  caPath := "ca.crt"
+</span><span class='line'>  caCrt, err := ioutil.ReadFile(caPath)
+</span><span class='line'>  if err != nil {
+</span><span class='line'>      fmt.Println("ReadFile err:", err)
+</span><span class='line'>      return
+</span><span class='line'>  }
+</span><span class='line'>  pool.AppendCertsFromPEM(caCrt)
+</span><span class='line'>  cliCrt, err := tls.LoadX509KeyPair("client.crt", "client.key")
+</span><span class='line'>  if err != nil {
+</span><span class='line'>      fmt.Println("Loadx509keypair err:", err)
+</span><span class='line'>      return
+</span><span class='line'>  }
+</span><span class='line'>  tlsConfig := &tls.Config{
+</span><span class='line'>      RootCAs:      pool,
+</span><span class='line'>      Certificates: []tls.Certificate{cliCrt},
+</span><span class='line'>      InsecureSkipVerify:true,
+</span><span class='line'>  }
+</span><span class='line'>  tr := http.Transport{TLSClientConfig: tlsConfig}
+</span><span class='line'>  client := http.Client{Transport: &tr}
+</span><span class='line'>  url := "https://localhost/hello"
+</span><span class='line'>  resp, err := client.Get(url)
+</span><span class='line'>  if err != nil {
+</span><span class='line'>      panic(err)
+</span><span class='line'>  }
+</span><span class='line'>  data, err := ioutil.ReadAll(resp.Body)
+</span><span class='line'>  fmt.Println(string(data))
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="https://github.com/jintao-zero/go-practice/tree/master/https">code</a></p>
+
+<h2>参考</h2>
+
+<ol>
+<li><a href="">https权威指南</a></li>
+<li><a href="http://tonybai.com/2015/04/30/go-and-https/">Go和HTTPS</a></li>
+</ol>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-08-09T17:50:42+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>5:50 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ops/'>ops</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/08/09/zookeepershi-zhan/" title="Previous Post: zookeeper实战">&laquo; zookeeper实战</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/08/09/opensslshi-zhan/">Openssl实战</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Go代码走读规范</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (2)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (2)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
+<li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 126%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+<a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/tls/">tls</a>
+<a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

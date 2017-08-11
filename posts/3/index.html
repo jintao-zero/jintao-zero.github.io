@@ -9,7 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Hadoop Filesystems Hadoop对于文件系统有一个抽象设计，HDFS只是一个实现。客户端使用Java 抽象类org.apache.hadoop.fs.FileSystem来访问Hadoop中的文件系统，有多个具体实现类: FileSystem URI scheme Java &hellip;">
+  <meta name="description" content="搭建开发环境，开发mapreduce job程序，部署mapreduce程序。 开发环境搭建 开发mapreduce程序的环境有可能与运行环境不同，我是Windows环境上开发mapreduce job程序，编译没有错误后，打包放到hadoop集群中调试和运行。这样就要求开发环境依赖的jar包， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +67,68 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/03/06/mapreduce-wordcountshi-li/">MapReduce WordCount实例</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-03-06T15:08:34+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>3:08 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>搭建开发环境，开发mapreduce job程序，部署mapreduce程序。</p>
+
+<h1>开发环境搭建</h1>
+
+<p>开发mapreduce程序的环境有可能与运行环境不同，我是Windows环境上开发mapreduce job程序，编译没有错误后，打包放到hadoop集群中调试和运行。这样就要求开发环境依赖的jar包，在hadoop集群环境中存在并且版本一致。<br/>
+我的开发环境是Windows＋eclipse＋maven，hadoop集群环境上部署的版本号为：</p>
+
+<pre><code>jintao@node0:~/Project$ hadoop  version
+Hadoop 2.7.1
+Subversion https://git-wip-us.apache.org/repos/asf/hadoop.git -r 15ecc87ccf4a0228f35af08fc56de536e6ce657a
+Compiled by jenkins on 2015-06-29T06:04Z
+Compiled with protoc 2.5.0
+From source with checksum fc0a1a23fc1868e4d5ee7fa2b28a58a
+This command was run using /usr/local/hadoop-2.7.1/share/hadoop/common/hadoop-common-2.7.1.jar
+</code></pre>
+
+<p>maven配置文件pom.xml的配置如下：</p>
+
+<pre><code>&lt;dependencies&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.apache.hadoop&lt;/groupId&gt;
+    &lt;artifactId&gt;hadoop-client&lt;/artifactId&gt;
+    &lt;version&gt;2.7.1&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;/dependencies&gt;
+</code></pre>
+
+<p>maven工程会自动将依赖的jar下载到build path中。<br/>
+你也可以建立一个普通java工程，手动将依赖的jar添加到build path中，这样需要找依赖的jar，比较麻烦，但是可以让新手更快的了解mapreduce相关类分布情况。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/03/06/mapreduce-wordcountshi-li/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -657,83 +719,6 @@ MacBook-Pro:plugins jintao$
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/">Tcp Server使用kevent进行io复用</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-05-01T08:40:25+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>8:40 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h1>概述</h1>
-
-<p>kqueue是FreeBSD系统中引入的可扩展事件通知接口，NetBSD，OpenBSD，DragonflyBSD和OS X这些系统也支持此接口。传统的io复用接口如select和poll存在以下两个缺点：</p>
-
-<ul>
-<li>支持的文件描述符数量有限，select接口支持的文件描述个数与进程能够打开的最大文件个数有关</li>
-<li>当大量描述符需要复用时，select和poll的效率会降低，内核是采用轮询方式判断描述符是否可用</li>
-</ul>
-
-
-<p>kqueue是针对传统传统的select/poll处理大量的文件描述符性能较低效而开发出来的。注册一批描述符到kqueue以后，当其中的描述符状态发生变化时，kqueue将一次性通知应用程序哪些描述符可读、可写或者发生错误。</p>
-
-<p>kqueue支持多种类型的文件描述符，包括socket、信号、定时器、AIO、VNODE、PIPE。</p>
-
-<h1>接口</h1>
-
-<h2>kqueue</h2>
-
-<pre><code>int kqueue(void);
-</code></pre>
-
-<p>kqueue系统调用创建一个新的内核事件队列并返回该队列描述符。调用fork时，子进程不继承该描述符。<br/>
-失败时，系统调用返回-1,同时设置errno</p>
-
-<h2>kevent</h2>
-
-<pre><code>int kevent(int kq, const struct kevent *changelist, int nchanges, struct kevent *eventlist, int nevents, const struct timespec *timeout);
-</code></pre>
-
-<p>使用kevent系统调用向队列注册事件和返回已经触发的事件。</p>
-
-<ul>
-<li>kq<br/>
-kq为kqueue系统调用返回的队列描述符</li>
-<li>changelist<br/>
-changelist指向一个kevnet结构体数组，kevent定义在&lt;sys/event.h>头文件中，这个数组描述了需要对kq队列中的事件进行修改，包括添加、删除、修改等操作</li>
-<li>nchanges<br/>
-nchanges是changelist参数指向数组的大小</li>
-<li>evnetlist<br/>
-指向一个kevnet结构体数组，用于返回已经触发的事件</li>
-<li>nevents<br/>
-定义eventlist数组大小</li>
-<li><p>timeout
-timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时，kevent系统调用无限阻塞等待事件发生。timeout非NULL，但是值为0时，kevent立即返回</p>
-
-<p></div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/05/01/tcp-servershi-yong-keventjin-xing-iofu-yong/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -751,6 +736,10 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/08/09/opensslshi-zhan/">Openssl实战</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
       </li>
     
@@ -766,10 +755,6 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
         <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -783,7 +768,7 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (1)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (2)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -810,8 +795,10 @@ timeout是非NULL指针时，定义系统调用超时间隔。timeout为NULL时�
 <a style="font-size: 90%" href="/blog/tags/go/">go</a>
 <a style="font-size: 126%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/tls/">tls</a>
 <a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
 
 </ul>

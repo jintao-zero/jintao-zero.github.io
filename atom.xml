@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-08-09T16:32:18+08:00</updated>
+  <updated>2017-08-11T16:25:53+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,409 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Openssl实战]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/08/09/opensslshi-zhan/"/>
+    <updated>2017-08-09T17:50:42+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/08/09/opensslshi-zhan</id>
+    <content type="html"><![CDATA[<p>本篇文章主要是对openssl的使用进行实践总结。</p>
+
+<ul>
+<li><a href="#key">生成密钥</a></li>
+<li><a href="#crt">创建证书</a></li>
+<li><a href="#practice">实践</a></li>
+</ul>
+
+
+<!-- more -->
+
+
+<h2><span id="key">生成密钥</span></h2>
+
+<h3>生成RSA密钥</h3>
+
+<p>命令：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>openssl genrsa [-out filename] [-passout arg] [-aes128] [-aes128] [-aes192] [-aes256] [-camellia128] [-camellia192] [-camellia256] [-aes192]
+</span><span class='line'>       [-aes256] [-camellia128] [-camellia192] [-camellia256] [-des] [-des3] [-idea] [-f4] [-3] [-rand file(s)] [-engine id] [numbits]</span></code></pre></td></tr></table></div></figure>
+
+
+<p>参数：<br/>
+<code>-out filename</code> 输出到结果文件。如果不指定，则输出到标准输出。<br/>
+<code>-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea</code> <br/>
+指定加密算法加密密钥。<br/>
+<code>numbits</code>指定密钥位数。默认为512位</p>
+
+<p>生成一个2048位rsa非对称密钥，保存到rsa-fd.key文件中：</p>
+
+<pre><code>openssl genrsa -out rsa-fd.key 2048
+</code></pre>
+
+<p><code>rsa-fd.key</code>文件为<code>PEM</code>格式：</p>
+
+<pre><code>$ file rsa-fd.key
+rsa-fd.key: PEM RSA private key
+</code></pre>
+
+<p>使用<code>rsa</code>命令解析出私钥结构：</p>
+
+<pre><code>openssl rsa -text -in rsa-fd.key
+</code></pre>
+
+<p>查看私钥中的公开部分：</p>
+
+<pre><code>openssl rsa -in rsa-fd.key -pubout -out rsa-pub.key
+</code></pre>
+
+<h3>生成DSA密钥</h3>
+
+<p>DSA的密钥生成分成两个部分:先生成DSA的参数，然后再生成密钥。
+命令：</p>
+
+<pre><code>openssl dsaparam -genkey 2048 | openssl dsa -out dsa.key
+</code></pre>
+
+<h3>生成ECDSA密钥</h3>
+
+<p>创建ECDSA密钥的过程是类似的，但是不能创建任意长度的密钥。对于每个密钥，你需要选择一个命名曲线(named curve)，它可以控制密钥长度，同时也限定了椭圆曲线的参数。下面的例子使用secp256r1这个命名曲线创建一个256位长度的ECDSA密钥</p>
+
+<pre><code>openssl ecparam -genkey -name secp256r1 | openssl ec -out ec.key
+</code></pre>
+
+<h2><span id="crt">创建证书</span></h2>
+
+<h3>创建证书申请</h3>
+
+<blockquote><p>使用openssl req命令交互式生成创建证书申请：</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>$ openssl req -new -key rsa-fd.key -out rsa-fd.csr
+</span><span class='line'>You are about to be asked to enter information that will be incorporated
+</span><span class='line'>into your certificate request.
+</span><span class='line'>What you are about to enter is what is called a Distinguished Name or a DN.
+</span><span class='line'>There are quite a few fields but you can leave some blank
+</span><span class='line'>For some fields there will be a default value,
+</span><span class='line'>If you enter '.', the field will be left blank.
+</span><span class='line'>-----
+</span><span class='line'>Country Name (2 letter code) [AU]:CN
+</span><span class='line'>State or Province Name (full name) [Some-State]:ShangHai
+</span><span class='line'>Locality Name (eg, city) []:ShangHai
+</span><span class='line'>Organization Name (eg, company) [Internet Widgits Pty Ltd]:limo
+</span><span class='line'>Organizational Unit Name (eg, section) []:limo
+</span><span class='line'>Common Name (e.g. server FQDN or YOUR name) []:localhost
+</span><span class='line'>Email Address []:.
+</span><span class='line'>
+</span><span class='line'>Please enter the following 'extra' attributes
+</span><span class='line'>to be sent with your certificate request
+</span><span class='line'>A challenge password []:.
+</span><span class='line'>An optional company name []:.
+</span><span class='line'>$</span></code></pre></td></tr></table></div></figure>
+
+
+<p>其中<code>Common Name</code>指定证书保护的域名。</p>
+
+<blockquote><p>使用openssl req查看证书申请内容：</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Data:
+</span><span class='line'>        Version: 0 (0x0)
+</span><span class='line'>        Subject: C=CN, ST=ShangHai, L=ShangHai, O=limo, OU=limo, CN=localhost
+</span><span class='line'>        Subject Public Key Info:
+</span><span class='line'>            Public Key Algorithm: rsaEncryption
+</span><span class='line'>            RSA Public Key: (2048 bit)
+</span><span class='line'>                Modulus (2048 bit):
+</span><span class='line'>                    00:c0:2b:11:a0:53:7d:fa:83:7f:29:2b:b5:dc:bc:
+</span><span class='line'>                Exponent: 65537 (0x10001)
+</span><span class='line'>        Attributes:
+</span><span class='line'>            a0:00
+</span><span class='line'>Signature Algorithm: sha1WithRSAEncryption
+</span><span class='line'>        7c:3d:47:49:d5:f7:c9:89:65:81:62:3d:bb:84:b8:ed:70:c4:
+</span><span class='line'>        e8:ba:ae:03:2e:af:3a:cb:31:07:e3:ef:57:a1:c7:a8:a6:c8:</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>使用配置文件生成证书：</p></blockquote>
+
+<p>配置文件内容如下：</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[req]
+</span><span class='line'>prompt = no
+</span><span class='line'>distinguished_name = dn
+</span><span class='line'>req_extensions     = ext
+</span><span class='line'>
+</span><span class='line'>[dn]
+</span><span class='line'>CN      = localhost
+</span><span class='line'>O       = limo
+</span><span class='line'>L       = ShangHai
+</span><span class='line'>C       = CN
+</span><span class='line'>
+</span><span class='line'>[ext]
+</span><span class='line'>subjectAltName = DNS:www.localhost.com,DNS:localhost</span></code></pre></td></tr></table></div></figure>
+
+
+<p>执行命令如下：</p>
+
+<pre><code>$ openssl req -new -config rsa-fd.conf -key rsa-fd.key -out t.csr
+</code></pre>
+
+<h3>自签名证书</h3>
+
+<p>如果已经有了csr，则执行以下命令创建证书：</p>
+
+<pre><code>$ openssl x509 -req -days 365 -in rsa-fd.csr -signkey rsa-fd.key -out rsa-fd.crt
+Signature ok
+subject=/C=CN/ST=ShangHai/L=ShangHai/O=limo/OU=limo/CN=localhost
+Getting Private key
+</code></pre>
+
+<h2><span id="practice"> 实践 </span></h2>
+
+<blockquote><p>创建根CA证书</p></blockquote>
+
+<ol>
+<li><p>创建rsa密钥</p>
+
+<pre><code class="`"> $ openssl genrsa -out ca.key 2048  
+ Generating RSA private key, 2048 bit long modulus  
+ ........+++  
+ ..................................................+++  
+ e is 65537 (0x10001)  
+</code></pre></li>
+<li><p>创建证书申请</p>
+
+<pre><code> $ openssl genrsa -out ca.key 2048 -out ca.csr
+ $ 
+</code></pre></li>
+<li><p>创建自签名证书</p>
+
+<pre><code> $ openssl x509 -req -in ca.csr -signkey ca.key  -out ca.crt
+ Signature ok
+ subject=/C=CN/ST=ShangHai/L=ShangHai/O=li/OU=li/CN=RootCA
+ Getting Private key
+</code></pre></li>
+</ol>
+
+
+<blockquote><p>创建client密钥和证书</p></blockquote>
+
+<ol>
+<li><p>创建rsa密钥</p>
+
+<pre><code class="`"> $ openssl genrsa -out client.key 2048
+Generating RSA private key, 2048 bit long modulus
+..................................+++
+..........+++
+e is 65537 (0x10001)
+</code></pre></li>
+<li><p>创建证书申请</p>
+
+<pre><code> openssl req -new -key client.key -out client.csr
+</code></pre></li>
+<li><p>使用root CA签名client证书</p>
+
+<pre><code> $ openssl x509 -req -in client.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out client.crt
+ Signature ok
+ subject=/C=CN/ST=ShangHai/L=SH/O=li/OU=li/CN=localhost  
+ Getting CA Private Key
+</code></pre>
+
+<p>需要增加<code>-CAcreateserial</code>参数否则报错</p></li>
+</ol>
+
+
+<blockquote><p>创建server密钥和证书</p></blockquote>
+
+<p>方法同生成client密钥证书类似</p>
+
+<blockquote><p>使用Go创建https server，并对客户端进行双向验证：</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>func HelloServer(w http.ResponseWriter, req *http.Request) {
+</span><span class='line'>  w.Header().Set("Content-Type", "text/plain")
+</span><span class='line'>  w.Write([]byte("This is an example server.\n"))
+</span><span class='line'>}
+</span><span class='line'>
+</span><span class='line'>func main() {
+</span><span class='line'>  pool := x509.NewCertPool()
+</span><span class='line'>  caPath := "ca.crt"
+</span><span class='line'>  caCrt, err := ioutil.ReadFile(caPath)
+</span><span class='line'>  if err != nil {
+</span><span class='line'>      fmt.Println("ReadFile err ", err)
+</span><span class='line'>      return
+</span><span class='line'>  }
+</span><span class='line'>  ok := pool.AppendCertsFromPEM(caCrt);
+</span><span class='line'>  if !ok {
+</span><span class='line'>      fmt.Println("append err")
+</span><span class='line'>      return
+</span><span class='line'>  }
+</span><span class='line'>
+</span><span class='line'>  fmt.Println(ok)
+</span><span class='line'>  tlsConfig := &tls.Config{
+</span><span class='line'>      ClientCAs:pool,
+</span><span class='line'>      ClientAuth: tls.RequireAndVerifyClientCert,
+</span><span class='line'>  }
+</span><span class='line'>  server := http.Server{
+</span><span class='line'>      Addr:      ":443",
+</span><span class='line'>      TLSConfig: tlsConfig,
+</span><span class='line'>  }
+</span><span class='line'>  http.HandleFunc("/hello", HelloServer)
+</span><span class='line'>  err = server.ListenAndServeTLS("server.crt", "server.key")
+</span><span class='line'>  log.Fatal(err)
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>使用Go创建https client</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>func main() {
+</span><span class='line'>  pool := x509.NewCertPool()
+</span><span class='line'>  caPath := "ca.crt"
+</span><span class='line'>  caCrt, err := ioutil.ReadFile(caPath)
+</span><span class='line'>  if err != nil {
+</span><span class='line'>      fmt.Println("ReadFile err:", err)
+</span><span class='line'>      return
+</span><span class='line'>  }
+</span><span class='line'>  pool.AppendCertsFromPEM(caCrt)
+</span><span class='line'>  cliCrt, err := tls.LoadX509KeyPair("client.crt", "client.key")
+</span><span class='line'>  if err != nil {
+</span><span class='line'>      fmt.Println("Loadx509keypair err:", err)
+</span><span class='line'>      return
+</span><span class='line'>  }
+</span><span class='line'>  tlsConfig := &tls.Config{
+</span><span class='line'>      RootCAs:      pool,
+</span><span class='line'>      Certificates: []tls.Certificate{cliCrt},
+</span><span class='line'>      InsecureSkipVerify:true,
+</span><span class='line'>  }
+</span><span class='line'>  tr := http.Transport{TLSClientConfig: tlsConfig}
+</span><span class='line'>  client := http.Client{Transport: &tr}
+</span><span class='line'>  url := "https://localhost/hello"
+</span><span class='line'>  resp, err := client.Get(url)
+</span><span class='line'>  if err != nil {
+</span><span class='line'>      panic(err)
+</span><span class='line'>  }
+</span><span class='line'>  data, err := ioutil.ReadAll(resp.Body)
+</span><span class='line'>  fmt.Println(string(data))
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<p><a href="https://github.com/jintao-zero/go-practice/tree/master/https">code</a></p>
+
+<h2>参考</h2>
+
+<ol>
+<li><a href="">https权威指南</a></li>
+<li><a href="http://tonybai.com/2015/04/30/go-and-https/">Go和HTTPS</a></li>
+</ol>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Zookeeper实战]]></title>
@@ -3780,327 +4183,6 @@ zgrep，zegrep，zfgrep分别与grep，egrep，fgrep功能类似，只是可以�
 
 <pre><code>egrep '19|20|25' calendar
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[MapReduce WordCount实例]]></title>
-    <link href="http://jintao-zero.github.io/blog/2016/03/06/mapreduce-wordcountshi-li/"/>
-    <updated>2016-03-06T15:08:34+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2016/03/06/mapreduce-wordcountshi-li</id>
-    <content type="html"><![CDATA[<p>搭建开发环境，开发mapreduce job程序，部署mapreduce程序。</p>
-
-<h1>开发环境搭建</h1>
-
-<p>开发mapreduce程序的环境有可能与运行环境不同，我是Windows环境上开发mapreduce job程序，编译没有错误后，打包放到hadoop集群中调试和运行。这样就要求开发环境依赖的jar包，在hadoop集群环境中存在并且版本一致。<br/>
-我的开发环境是Windows＋eclipse＋maven，hadoop集群环境上部署的版本号为：</p>
-
-<pre><code>jintao@node0:~/Project$ hadoop  version
-Hadoop 2.7.1
-Subversion https://git-wip-us.apache.org/repos/asf/hadoop.git -r 15ecc87ccf4a0228f35af08fc56de536e6ce657a
-Compiled by jenkins on 2015-06-29T06:04Z
-Compiled with protoc 2.5.0
-From source with checksum fc0a1a23fc1868e4d5ee7fa2b28a58a
-This command was run using /usr/local/hadoop-2.7.1/share/hadoop/common/hadoop-common-2.7.1.jar
-</code></pre>
-
-<p>maven配置文件pom.xml的配置如下：</p>
-
-<pre><code>&lt;dependencies&gt;
-&lt;dependency&gt;
-    &lt;groupId&gt;org.apache.hadoop&lt;/groupId&gt;
-    &lt;artifactId&gt;hadoop-client&lt;/artifactId&gt;
-    &lt;version&gt;2.7.1&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;/dependencies&gt;
-</code></pre>
-
-<p>maven工程会自动将依赖的jar下载到build path中。<br/>
-你也可以建立一个普通java工程，手动将依赖的jar添加到build path中，这样需要找依赖的jar，比较麻烦，但是可以让新手更快的了解mapreduce相关类分布情况。</p>
-
-<!-- more -->
-
-
-<h1>开发mapreduce job程序</h1>
-
-<p>一般情况下，一个job包含一个map类和一个reduce类，但是也可以只有一个类，或者都不包含。本文例子中的WordCount是mapreduce程序开发的helloworld程序，包含map和reduce类，通过WordCount我们可以了解mapreduce程序开发的基本框架。</p>
-
-<h2>Mapper</h2>
-
-<p>map程序的基类为：</p>
-
-<pre><code>@InterfaceAudience.Public
-@InterfaceStability.Stable
-public class Mapper&lt;KEYIN,VALUEIN,KEYOUT,VALUEOUT&gt; extends Object
-</code></pre>
-
-<p>Maps将输入的key/value对处理并输出一个key/value形式的中间结果集。</p>
-
-<p>Maps是一个个独立的任务线程分别处理不同的记录集合，输出中间结果集。输出结果集的类型不一定与初始的输入记录相同。一个输入key/value对，有可能输出零个或多个key/value结果对。</p>
-
-<p>Hadoop Map-Reduce框架对于job的<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/InputFormat.html">InputFormat</a>输入数据产生的每个<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/InputSplit.html">InputSplit</a>派生一个map任务。Mapper的具体实现可以通过<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/JobContext.html#getConfiguration(">JobContext.getConfiguration()</a>)获取job的<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/conf/Configuration.html">Configuration配置</a>。</p>
-
-<p>框架首先调用Mapper实现类的<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/Mapper.html#setup(org.apache.hadoop.mapreduce.Mapper.Context">setup(org.apache.hadoop.mapreduce.Mapper.Context)</a>)，然后对于对于获取的每一个输入记录，调用map方法进行处理。最后调用<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/Mapper.html#cleanup(org.apache.hadoop.mapreduce.Mapper.Context">cleanup(org.apache.hadoop.mapreduce.Mapper.Context)</a>)。</p>
-
-<p>框架将与某个key相关的所有value值形成一组，传给Reducer来产生最后结果。通过指定key比较类，用户可以控制key/value的排序和分组。</p>
-
-<p>Mapper的输出结果对于每个Reducer进行分片。通过实现一个特定的<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/Partitioner.html">Partitioner</a>，用户可以控制keys分片到Reducer。</p>
-
-<p>视情况，通过<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/Job.html#setCombinerClass(java.lang.Class">Job.setCombinerClass(Class)</a>)用户可以指定一个combiner，combiner可以在Mapper本地对输出结果进行聚合，这样可以减少从Mapper传输到Reducer的数据量。</p>
-
-<p>通过对Configuration程序可以指定是否并且如何对Mapper结果进行压缩。</p>
-
-<p>如果reducer个数为0，那么不会对Mapper的结果不对结果进行排序，并且直接输出到<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/OutputFormat.html">OutputFormat</a>。<br/>
-WordCount对应Mapper实现类如下：</p>
-
-<pre><code>public class WordCountMapper extends Mapper&lt;LongWritable, Text, Text, IntWritable&gt; {
-
-    private final static IntWritable one = new IntWritable(1);
-    private Text word = new Text();
-    private static Logger logger = Logger.getLogger(WordCountMapper.class);
-
-    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException{
-        StringTokenizer iTokenizer = new StringTokenizer(value.toString());
-        while (iTokenizer.hasMoreTokens()) {
-            word.set(iTokenizer.nextToken());
-            context.write(word, one);
-        }
-    }   
-}
-</code></pre>
-
-<p>应用也可以重写<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/Mapper.html#run(org.apache.hadoop.mapreduce.Mapper.Context"> run(org.apache.hadoop.mapreduce.Mapper.Context)</a>)来更多的控制map处理，比如multi-threaded Mapper。</p>
-
-<h2>Reducer</h2>
-
-<p>Reducer的基类定义如下：</p>
-
-<pre><code>@Checkpointable
-@InterfaceAudience.Public
-@InterfaceStability.Stable
-public class Reducer&lt;KEYIN,VALUEIN,KEYOUT,VALUEOUT&gt; extends Object
-</code></pre>
-
-<p>Reducer将Mapper输出的中间结果集处理输出最终结果集。<br/>
-Reducer实现类可以通过<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/JobContext.html#getConfiguration("> JobContext.getConfiguration()</a>)获取job的配置信息<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/conf/Configuration.html">Configuration</a>。<br/>
-Reducer主要有三个步骤：</p>
-
-<ol>
-<li><p>Shuffle<br/>
- Reducer使用Http从个Mapper拷贝传输中间结果集到本地。</p></li>
-<li><p>Sort<br/>
- 框架将从不同Mapper传输过来的结果集按照key进行合并排序。</p></li>
-<li>Reduce
- 在这一阶段，对于每个&lt;key, (collection of values)>调用<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/Reducer.html#reduce(KEYIN,%20java.lang.Iterable,%20org.apache.hadoop.mapreduce.Reducer.Context">reduce(Object, Iterable, org.apache.hadoop.mapreduce.Reducer.Context)</a>)方法进行处理。<br/>
- reduce任务调用<a href="TaskInputOutputContext.write(Object,%20Object">TaskInputOutputContext.write(Object, Object)</a>)将最终结果写到<a href="http://hadoop.apache.org/docs/current/api/org/apache/hadoop/mapreduce/RecordWriter.html">RecordWriter</a>。<br/>
- Reducer的输出不是有序的。</li>
-</ol>
-
-
-<p>WordCount的Reduce实现类为：</p>
-
-<pre><code>public class WordCountReducer extends Reducer&lt;Text, IntWritable, Text, IntWritable&gt; {
-    private IntWritable result = new IntWritable();
-
-    public void reduce(Text key, Iterable&lt;IntWritable&gt; values,
-            Context context) throws IOException, InterruptedException {
-        int total = 0;
-        for (IntWritable count : values) {
-            total += count.get();
-        }
-        result.set(total);
-        context.write(key, result);
-    }
-}
-</code></pre>
-
-<h2>Driver</h2>
-
-<p>已经完成mapper和reducer的编写。接下来写一个job driver用来提交程序到hadoop中运行。<br/>
-可以有两种方式编写job driver：</p>
-
-<ol>
-<li>实现一个普通Java类，在类中设置job属性信息，提交job</li>
-<li>实现<a href="http://hadoop.apache.org/docs/current/api/index.html">Tool</a>接口</li>
-</ol>
-
-
-<p>实际应用中，我们采用实现Tool接口的方式，这种方式能够更好的控制程序运行。<br/>
-WordCount Job的属性设置如下：</p>
-
-<pre><code>public class WordCountDriver extends Configured implements Tool {
-
-    public int run(String[] arg0) throws Exception {
-        // TODO Auto-generated method stub
-        if (arg0.length != 2) {
-            System.err.printf("Usage: %s [generic options] &lt;input&gt; &lt;output&gt;\n", 
-                    getClass().getSimpleName());
-            ToolRunner.printGenericCommandUsage(System.err);
-            return -1;
-        }
-
-        //Create new job
-        Job job = Job.getInstance();
-        job.setJarByClass(getClass());
-
-        job.setJobName("WordCount");
-
-        job.setMapperClass(WordCountMapper.class);
-        job.setReducerClass(WordCountReducer.class);
-
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(IntWritable.class);
-
-        job.setNumReduceTasks(1);
-
-        FileInputFormat.addInputPath(job, new Path(arg0[0]));
-        FileOutputFormat.setOutputPath(job, new Path(arg0[1]));
-
-        return job.waitForCompletion(true) ? 0 : 1;
-    }   
-
-    public static void main(String[] args) {
-        // TODO Auto-generated method stub
-        try {
-            int exitCode = ToolRunner.run(new WordCountDriver(), args);
-            System.exit(exitCode);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-    }
-
-}   
-</code></pre>
-
-<p>WordCountDriver实现了Tool接口，这样我们运行程序时可以使用GenericOptionParser支持的参数项。<br/>
-调用Job.getInstance()获取一个Job实例。设置Job名称。设置输入路径和输出路径。设置mapper和reducer类名。设置输出key和value类型（输入类型由数据源格式确定，数据源缺省为TextInputFormat文本格式，默认key类型为LongWritable，value类型为Text）。</p>
-
-<h2>本地运行WordCount</h2>
-
-<p>将程序打成jar包，放到hadoop集群一台机器上去。在jar包文件所在目录，新建一个input目录，input目录中放置一个文本文件words.txt，运行以下命令：</p>
-
-<pre><code>$ hadoop jar hadoopjob.jar com.hugedata.jobs.WordCountDriver -fs file:/// -jt local input/ output/
-</code></pre>
-
-<p>-fs file:///指定使用本地文件系统，-jt local 指定mapreduce任务运行在本地。<br/>
-当前目录会产生一个output目录，里面有两个文件（part-r-00000、_SUCCESS），其中part-r-00000即为</p>
-
-<pre><code>jintao@node0:~/Project$ cat output/part-r-00000
-is  2
-jintao  1
-jintao. 1
-mx  1
-my  2
-mz  1
-name    2
-name.   1
-too.    1
-whit's  1
-your    1
-</code></pre>
-
-<h2>集群运行WordCount</h2>
-
-<p>前提是集群环境已经运行正常。将本地目录下的input拷贝到hdfs上：</p>
-
-<pre><code>jintao@node0:~/Project$ hdfs dfs -put input
-jintao@node0:~/Project$ hdfs dfs -ls
-Found 2 items
-drwxr-xr-x   - jintao supergroup          0 2016-03-07 16:51 input
-drwxr-xr-x   - jintao supergroup          0 2016-03-05 14:04 tmp
-</code></pre>
-
-<p>屏幕上打印的过程信息如下：</p>
-
-<pre><code>16/03/07 16:55:18 INFO client.RMProxy: Connecting to ResourceManager at node0/192.168.88.120:8032
-16/03/07 16:55:20 INFO input.FileInputFormat: Total input paths to process : 1
-16/03/07 16:55:20 INFO mapreduce.JobSubmitter: number of splits:1
-16/03/07 16:55:20 INFO mapreduce.JobSubmitter: Submitting tokens for job: job_1457076326520_0001
-16/03/07 16:55:21 INFO impl.YarnClientImpl: Submitted application application_1457076326520_0001
-16/03/07 16:55:21 INFO mapreduce.Job: The url to track the job: http://node0:8088/proxy/application_1457076326520_0001/
-16/03/07 16:55:21 INFO mapreduce.Job: Running job: job_1457076326520_0001
-16/03/07 16:55:32 INFO mapreduce.Job: Job job_1457076326520_0001 running in uber mode : false
-16/03/07 16:55:32 INFO mapreduce.Job:  map 0% reduce 0%
-16/03/07 16:55:43 INFO mapreduce.Job:  map 100% reduce 0%
-16/03/07 16:55:51 INFO mapreduce.Job:  map 100% reduce 100%
-16/03/07 16:55:52 INFO mapreduce.Job: Job job_1457076326520_0001 completed successfully
-16/03/07 16:55:52 INFO mapreduce.Job: Counters: 49
-File System Counters
-    FILE: Number of bytes read=156
-    FILE: Number of bytes written=230351
-    FILE: Number of read operations=0
-    FILE: Number of large read operations=0
-    FILE: Number of write operations=0
-    HDFS: Number of bytes read=177
-    HDFS: Number of bytes written=77
-    HDFS: Number of read operations=6
-    HDFS: Number of large read operations=0
-    HDFS: Number of write operations=2
-Job Counters
-    Launched map tasks=1
-    Launched reduce tasks=1
-    Data-local map tasks=1
-    Total time spent by all maps in occupied slots (ms)=8022
-    Total time spent by all reduces in occupied slots (ms)=4886
-    Total time spent by all map tasks (ms)=8022
-    Total time spent by all reduce tasks (ms)=4886
-    Total vcore-seconds taken by all map tasks=8022
-    Total vcore-seconds taken by all reduce tasks=4886
-    Total megabyte-seconds taken by all map tasks=8214528
-    Total megabyte-seconds taken by all reduce tasks=5003264
-Map-Reduce Framework
-    Map input records=3
-    Map output records=14
-    Map output bytes=122
-    Map output materialized bytes=156
-    Input split bytes=110
-    Combine input records=0
-    Combine output records=0
-    Reduce input groups=11
-    Reduce shuffle bytes=156
-    Reduce input records=14
-    Reduce output records=11
-    Spilled Records=28
-    Shuffled Maps =1
-    Failed Shuffles=0
-    Merged Map outputs=1
-    GC time elapsed (ms)=243
-    CPU time spent (ms)=2860
-    Physical memory (bytes) snapshot=444420096
-    Virtual memory (bytes) snapshot=3891036160
-    Total committed heap usage (bytes)=348651520
-Shuffle Errors
-    BAD_ID=0
-    CONNECTION=0
-    IO_ERROR=0
-    WRONG_LENGTH=0
-    WRONG_MAP=0
-    WRONG_REDUCE=0
-File Input Format Counters
-    Bytes Read=67
-File Output Format Counters
-    Bytes Written=77
-jintao@node0:~/Project$ 
-</code></pre>
-
-<p>程序执行成功后，会产生一个output目录，执行一下命令，可以产看结果：</p>
-
-<pre><code>jintao@node0:~/Project$ hdfs dfs -cat output/part-r-00000
-is  2
-jintao  1
-jintao. 1
-mx  1
-my  2
-mz  1
-name    2
-name.   1
-too.    1
-whit's  1
-your    1
-</code></pre>
-
-<p>至此，讲述了最基本的mapreduce程序开发、运行过程，后续需要学习的有如果查看日志，如何调试优化程序等方面。</p>
 ]]></content>
   </entry>
   
