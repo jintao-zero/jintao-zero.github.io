@@ -4,7 +4,7 @@
   <title><![CDATA[Tag: golang | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/tags/golang/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-08-11T16:25:53+08:00</updated>
+  <updated>2017-09-04T20:23:38+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,137 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[golang 加密包学习与实践]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/"/>
+    <updated>2017-08-19T10:57:59+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian</id>
+    <content type="html"><![CDATA[<p>Go标准库<a href="https://golang.org/pkg/crypto/">crypto</a>提供了多种加解密算法、摘要算法。本文主要是对加密包中各个算法接口进行学习实践的总结。</p>
+
+<ul>
+<li><p><a href="#aes">aes</a></p></li>
+<li><p><a href="#rsa">rsa</a></p></li>
+</ul>
+
+
+<!-- more -->
+
+
+<h2><span id="aes">aes</span></h2>
+
+<h2><span id="rsa">rsa</span></h2>
+
+<p><a href="https://golang.org/pkg/crypto/rsa/">rsa</a>包实现了<a href="https://en.wikipedia.org/wiki/RSA_(cryptosystem">RSA</a>)加密算法，关于<code>RSA</code>的标准为<a href="https://en.wikipedia.org/wiki/PKCS_1">PKCS #1</a>。<br/>
+<code>RSA</code>既可以用与加解密也可以用与签名。<br/>
+使用RSA进行加密和签名的最初标准是<code>PKCS#1</code>，<code>RSA encryption</code>和<code>RSA signatures</code>默认参照<code>PKCS#1</code>1.5版本。但是这个版本的标注存在缺陷，新的的设计应该参照第二版本，以<code>OAEP</code>和<code>PSS</code>称呼。</p>
+
+<p><code>rsa</code>包中的相关操作不是常量时间复杂度。 <br/>
+对使用包中进行加解密操作和签名操作进行说明：</p>
+
+<blockquote><p>生成key</p></blockquote>
+
+<pre><code>func GenerateKey(random io.Reader, bits int) (*PrivateKey, error)
+</code></pre>
+
+<p><code>random</code>为随机数源，比如<code>crypto/rand.Reader</code> <br/>
+<code>bits</code>为密钥位数，目前建议是2048位</p>
+
+<blockquote><p>加密</p></blockquote>
+
+<pre><code>func EncryptOAEP(hash hash.Hash, random io.Reader, pub *PublicKey, msg []byte, label []byte) ([]byte, error)
+</code></pre>
+
+<p><code>EncryptOAEP</code>函数对消息体进行加密。<br/>
+<code>hash</code>参数是一个哈希函数。对同一消息进行加解密必须使用同一种哈希函数，<code>sha256.New()</code>是一个合理选择。<br/>
+<code>random</code>参数为随机数源，用来保证对同一个消息体进行两次加密时的输出不同。<br/>
+<code>label</code>参数可以包含任意数据，这些数据不会被加密，标签参数给消息增加了重要的上下文信息。加解密时传入的<code>label</code>标签需要一致。如果不需要，可以为空。
+<code>msg</code>待加密消息长度必须小于等于公钥长度减去2倍哈希长度。</p>
+
+<blockquote><p>解密</p></blockquote>
+
+<pre><code>func DecryptOAEP(hash hash.Hash, random io.Reader, priv *PrivateKey, ciphertext []byte, label []byte) ([]byte, error)
+</code></pre>
+
+<p><code>hash</code>加解密使用的哈希函数必须一致，<code>sha256.New()</code>是一个合理选择。<br/>
+<code>random</code>随机数源。<br/>
+<code>label</code>参数值必须与加密时传入的值一致。</p>
+
+<blockquote><p>加解密实践</p></blockquote>
+
+<pre><code>func TestCrypt() {
+    //create private key
+    privateKey, err := rsa.GenerateKey(rand.Reader,2048)
+    if err != nil {
+        log.Fatal("generateKey err ",err)
+        return
+    }
+    // encrypt
+    ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, &amp;privateKey.PublicKey, []byte("hahaha"), []byte("label"))
+    if err != nil {
+        log.Fatal("encrypt err ", err)
+        return
+    }
+    log.Printf("Ciphertext: %x\n", ciphertext)
+    log.Println(hex.EncodeToString(ciphertext))
+    plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, ciphertext, []byte("label"))
+    if err != nil || bytes.Compare([]byte("hahaha"), plaintext) != 0 {
+        log.Fatal("decrypt err: ", err)
+        return
+    }
+    log.Println("plaintext :", string(plaintext))
+}
+</code></pre>
+
+<blockquote><p>签名</p></blockquote>
+
+<pre><code>func SignPSS(rand io.Reader, priv *PrivateKey, hash crypto.Hash, hashed []byte, opts *PSSOptions) ([]byte, error)
+</code></pre>
+
+<p><code>rand</code>为随机数源。<br/>
+<code>priv</code>为进行签名用到的私钥。<br/>
+<code>SignPSS</code>函数依据<code>RSASSA-PSS</code>标准计算摘要数据的签名。注意：摘要数据必须是使用指定哈希函数对输入数据计算得出的摘要值。<code>opts</code>参数可以为空，此时使用默认值。</p>
+
+<blockquote><p>验证签名</p></blockquote>
+
+<pre><code>func VerifyPSS(pub *PublicKey, hash crypto.Hash, hashed []byte, sig []byte, opts *PSSOptions) error
+</code></pre>
+
+<p>VerifyPSS验证PSS签名。<code>hashed</code>是使用指定函数对输入数据计算得出的摘要值。sig为签名数据。opts可以为空。</p>
+
+<blockquote><p>签名实践</p></blockquote>
+
+<pre><code>func TestSign() {
+    //create private key
+    privateKey, err := rsa.GenerateKey(rand.Reader,2048)
+    if err != nil {
+        log.Fatal("generateKey err ",err)
+        return
+    }
+    // sign
+    hashed := sha256.Sum256([]byte("hahaha"))
+    /*
+    opts := rsa.PSSOptions{
+       SaltLength:10,
+        Hash:crypto.SHA256,
+    }
+    */
+    sig, err := rsa.SignPSS(rand.Reader,privateKey, crypto.SHA256,  hashed[:], nil)
+    if err != nil {
+        log.Fatal("SignPSS err ", err)
+        return
+    }
+    log.Println(hex.EncodeToString(sig))
+    err = rsa.VerifyPSS(&amp;privateKey.PublicKey, crypto.SHA256, hashed[:], sig, nil)
+    if err != nil {
+        log.Fatal("VerifyPSS err", err)
+        return
+    }
+    log.Println("VerifyPSS suc")
+}
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[golang加两遍读锁导致程序死锁问题分析]]></title>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Tag: Linux | jintao's blog]]></title>
+  <title><![CDATA[Tag: linux | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/tags/linux/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-08-11T16:25:53+08:00</updated>
+  <updated>2017-09-04T20:23:38+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -14,420 +14,171 @@
 
   
   <entry>
-    <title type="html"><![CDATA[libnetfilter_queue实战]]></title>
-    <link href="http://jintao-zero.github.io/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/"/>
-    <updated>2015-06-16T18:53:42+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji</id>
-    <content type="html"><![CDATA[<p>项目需要将某个进程发出的报文截获，待用户态业务处理后再将报文送回系统协议栈中处理。调研后，采用iptables添加防火墙规则截获报文传递到用户态队列，用户态进程使用libnetfilter_queue库接受报文，待业务处理后，将报文送回系统协议栈这样的方案完成。下面介绍下，学习的几个知识点：</p>
-
-<h1>netfilter</h1>
-
-<h2>简介</h2>
-
-<p><a href="http://netfilter.org/">netfilter</a>是Linux 2.4.x开始以后内核版本中的报文过滤框架。netfilter框架的用户态工具是<a href="http://netfilter.org/projects/iptables/index.html">iptables</a>防火墙配置工具。<br/>
-netfilter框架实现了报文过滤，网络地址转换，端口转换和其他报文管理。它是对Linux 2.2.x ipchains和Linux 2.0.x ipfwadm系统的重构和显著改进。<br/>
-netfilter是位于Linux内核中的一组回调函数集合，各个模块可以在网络协议栈注册回调函数。每个报文到来时，将会遍历协议栈中的回调函数并调用。<br/>
-iptables定义了规则集的通用格式。IP table中的每一条规则是有一些分类和相关的目标组成。<br/>
-netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和NAT子系统是netfilter的主要组成部分。</p>
-
-<h2>主要特性</h2>
-
-<ul>
-<li>无状态报文过滤</li>
-<li>有状态报文过滤</li>
-<li>所有网络地址和端口转换，比如NAT/NAPT(IPv4和IPv6)</li>
-<li>灵活的、可扩展的框架</li>
-<li>为第三方扩展提供API访问网络各层</li>
-</ul>
-
-
-<h2>可以做哪些</h2>
-
-<ul>
-<li>基于无状态或者有状态报文过滤构建互联网防火墙</li>
-<li>托管高可用有状态或者无状态的防火墙集群</li>
-<li>使用NAT和ip伪装共享共网ip</li>
-<li>使用NAT实现传输代理</li>
-<li>与tc和iproute2系统一起构建复杂Qos和策略路由器</li>
-<li>更进一步进行报文管理，比如修改IP头中的TOS/DSCP/ECN</li>
-</ul>
-
+    <title type="html"><![CDATA[使用strace调试进程]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/"/>
+    <updated>2017-09-04T18:44:00+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng</id>
+    <content type="html"><![CDATA[<p><code>Strace</code>调试工具可以帮助定位问题。  <br/>
+<code>Strace</code>工具可以用来记录指定程序运行过程中涉及的系统调用和信号。在没有获取程序源代码的情况下，strace工具可以有效帮助对程序的调试。strace工具提供一个二进制程序从开始到结束的执行顺序。  <br/>
+下面几个例子展示如何使用<code>strace</code>工具：</p>
 
 <!-- more -->
 
 
-<h1>libnetfilter_queue</h1>
+<ol>
+<li><p>跟踪可执行程序的执行<br/>
+可以使用strace工具跟踪任何可执行程序的执行。下面例子是使用strace跟踪linux ls命令的执行过程：</p>
 
-<p>libnetfilter_queue是一个用户态库，它提供了接口用来访问已经被内核报文过滤模块放置在队列中的报文。libnetfilter_queue的前身是libnfnetlink_queue。<br/>
-libnetfilter_queue需要libnfnetlink和包含nfnetlink_queue子系统的内核（2.6.14以后）。<br/>
-主要特性：</p>
+<pre><code class="``">$  strace ls
+execve("/bin/ls", ["ls"], [/* 21 vars */]) = 0
+brk(0)                                  = 0x8c31000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+mmap2(NULL, 8192, PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb78c7000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=65354, ...}) = 0
+...
+...
+...
+</code></pre></li>
+<li><p>使用-e参数跟踪特定系统调用<br/>
+strace默认跟踪执行程序的所有系统调用。可以使用<code>-e</code>参数跟踪特定系统调用：</p>
 
-<ul>
-<li>接收来自内核nfnetlink_queue子系统的报文</li>
-<li>做出裁决，是否将修改后的报文重新注入内核nfnetlink_queue子系统</li>
-</ul>
-
-
-<h2>安装</h2>
-
-<p>libnetfilter_queue需要libnfnetlink和libmnl库<br/>
-1、安装libnfnetlink</p>
-
-<pre><code>#wget http://netfilter.org/projects/libnfnetlink/files/libnfnetlink-1.0.1.tar.bz2
-#tar jxvf libnfnetlink-1.0.1.tar.bz2
-#cd libnfnetlink-1.0.1  
-#./configure
-#make &amp;&amp; make install
+<pre><code class="``">$ strace -e open ls
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libselinux.so.1", O_RDONLY)  = 3
+open("/lib/librt.so.1", O_RDONLY)       = 3
+open("/lib/libacl.so.1", O_RDONLY)      = 3
+open("/lib/libc.so.6", O_RDONLY)        = 3
+open("/lib/libdl.so.2", O_RDONLY)       = 3
+open("/lib/libpthread.so.0", O_RDONLY)  = 3
+open("/lib/libattr.so.1", O_RDONLY)     = 3
+open("/proc/filesystems", O_RDONLY|O_LARGEFILE) = 3
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_LARGEFILE) = 3
+open(".", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 3
+Desktop  Documents  Downloads  examples.desktop  libflashplayer.so 
+Music  Pictures  Public  Templates  Ubuntu_OS  Videos
 </code></pre>
 
-<p>2、安装libmnl</p>
+<p>如果想执行多个系统调用，可以使用<code>-e trace=</code>选项。下面例子跟踪open和read系统调用：</p>
 
-<pre><code>#wget http://netfilter.org/projects/libmnl/files/libmnl-1.0.3.tar.bz2
-#tar jxvf libmnl-1.0.3.tar.bz2
-#cd libmnl-1.0.3
-#./configure
-#make &amp;&amp; make install
+<pre><code class="``">  $ strace -e trace=open,read ls /home
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+open("/lib/libselinux.so.1", O_RDONLY)  = 3
+read(3, "\177ELF\1\1\1\3\3\1\260G004"..., 512) = 512
+open("/lib/librt.so.1", O_RDONLY)       = 3
+read(3, "\177ELF\1\1\1\3\3\1\300\30004"..., 512) = 512
+..
+open("/lib/libattr.so.1", O_RDONLY)     = 3
+read(3, "\177ELF\1\1\1\3\3\1\360\r004"..., 512) = 512
+open("/proc/filesystems", O_RDONLY|O_LARGEFILE) = 3
+read(3, "nodev\tsysfs\nnodev\trootfs\nnodev\tb"..., 1024) = 315
+read(3, "", 1024)                       = 0
+open("/usr/lib/locale/locale-archive", O_RDONLY|O_LARGEFILE) = 3
+open("/home", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 3
+bala
+</code></pre></li>
+<li><p>保存调用过程到文件<br/>
+下面例子使用<code>-o</code>参数保存调用过程到文件中：</p>
+
+<pre><code class="``">  $ strace -o output.txt ls
+  Desktop  Documents  Downloads  examples.desktop  libflashplayer.so
+Music  output.txt  Pictures  Public  Templates  Ubuntu_OS  Videos
+
+  $ cat output.txt 
+execve("/bin/ls", ["ls"], [/* 37 vars */]) = 0
+brk(0)                                  = 0x8637000
+access("/etc/ld.so.nohwcap", F_OK)      = -1 ENOENT (No such file or directory)
+mmap2(NULL, 8192, PROT_READ, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb7860000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat64(3, {st_mode=S_IFREG|0644, st_size=67188, ...}) = 0
+...
+...
+</code></pre></li>
+<li><p>使用<code>-p</code>参数跟踪正在运行的进程<br/>
+ 先使用ps命令获取正在运行进程的id<br/>
+ <code>
+ $ ps -C firefox-bin
+   PID TTY          TIME CMD
+ 1725 ?        00:40:50 firefox-bin
+</code>
+ 使用<code>-p</code>指定strace需要跟踪进程的id</p>
+
+<pre><code class="`"> $ sudo strace -p 1725 -o firefox_trace.txt
+
+ $ tail -f firefox_trace.txt
 </code></pre>
 
-<p>3、安装libnetfilter_queue</p>
+<p> 进程系统调用将会被写入到文件中，使用tail命令可以查看最近执行序列。</p></li>
+<li><p>使用<code>-t</code>参数为每行输出显示时间戳</p>
 
-<pre><code>#wget http://netfilter.org/projects/libnetfilter_queue/files/libnetfilter_queue-1.0.2.tar.bz2
-#tar jxvf libnetfilter_queue-1.0.2.tar.bz2
-#cd libnetfilter_queue-1.0.2
-#./configure
-#make &amp;&amp; make install
-</code></pre>
+<pre><code class="`"> $ strace -t -e open ls /home
+20:42:37 open("/etc/ld.so.cache", O_RDONLY) = 3
+20:42:37 open("/lib/libselinux.so.1", O_RDONLY) = 3
+20:42:37 open("/lib/librt.so.1", O_RDONLY) = 3
+20:42:37 open("/lib/libacl.so.1", O_RDONLY) = 3
+20:42:37 open("/lib/libc.so.6", O_RDONLY) = 3
+20:42:37 open("/lib/libdl.so.2", O_RDONLY) = 3
+20:42:37 open("/lib/libpthread.so.0", O_RDONLY) = 3
+20:42:37 open("/lib/libattr.so.1", O_RDONLY) = 3
+20:42:37 open("/proc/filesystems", O_RDONLY|O_LARGEFILE) = 3
+20:42:37 open("/usr/lib/locale/locale-archive", O_RDONLY|O_LARGEFILE) = 3
+20:42:37 open("/home", O_RDONLY|O_NONBLOCK|O_LARGEFILE|O_DIRECTORY|O_CLOEXEC) = 3
+bala
+</code></pre></li>
+<li><p>使用<code>-r</code>参数输出每个系统调用执行时间</p>
 
-<h2>接口</h2>
+<pre><code class="`"> $ strace -r ls 
+  0.000000 execve("/bin/ls", ["ls"], [/* 37 vars */]) = 0
+  0.000846 brk(0)                    = 0x8418000
+  0.000143 access("/etc/ld.so.nohwcap", F_OK) = -1 ENOENT (No such file or directory)
+  0.000163 mmap2(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xb787b000
+  0.000119 access("/etc/ld.so.preload", R_OK) = -1 ENOENT (No such file or directory)
+  0.000123 open("/etc/ld.so.cache", O_RDONLY) = 3
+  0.000099 fstat64(3, {st_mode=S_IFREG|0644, st_size=67188, ...}) = 0
+  0.000155 mmap2(NULL, 67188, PROT_READ, MAP_PRIVATE, 3, 0) = 0xb786a000
+  ...
+  ...
+</code></pre></li>
+<li><p>使用<code>-c</code>参数显示系统调用统计报告<br/>
+ 使用<code>-c</code>参数可以输出程序执行期间系统调用的统计数据：包括执行时间占比，执行时间，执行次数，错误数:</p>
 
-<h3>初始化库</h3>
-
-<pre><code>struct nfq_handle *     nfq_open (void)
-int     nfq_close (struct nfq_handle *h)
-int     nfq_bind_pf (struct nfq_handle *h, u_int16_t pf)
-int     nfq_unbind_pf (struct nfq_handle *h, u_int16_t pf)
-</code></pre>
-
-<p>libnetfilter_queue初始化分为两部。<br/>
-第一步调用nfq_open打开一个NFQUEUE句柄。<br/>
-第二部通知内核指定协议的用户空间队列由NFQUEUE处理。调用nfq_unbind_pf()和nfq_bind接口进行绑定。<br/>
-以下为初始化片段：</p>
-
-<pre><code>h = nfq_open();
-if (!h) {
-    fprintf(stderr, "error during nfq_open()\n");
-    exit(1);
-}
-
-printf("unbinding existing nf_queue handler for AF_INET (if any)\n");
-if (nfq_unbind_pf(h, AF_INET) &lt; 0) {
-    fprintf(stderr, "error during nfq_unbind_pf()\n");
-    exit(1);
-}
-
-printf("binding nfnetlink_queue as nf_queue handler for AF_INET\n");
-if (nfq_bind_pf(h, AF_INET) &lt; 0) {
-    fprintf(stderr, "error during nfq_bind_pf()\n");
-    exit(1);
-}
-</code></pre>
-
-<p>nfq_open</p>
-
-<pre><code>struct nfq_handle* nfq_open (void) 
-</code></pre>
-
-<p>nfq_open返回一个netfilter队列连接句柄。当使用完毕，调用nfq_close销毁句柄。在系统内部，会新创建一个netlink连接并与队列连接句柄相关联。</p>
-
-<p>nfq_bind_pf</p>
-
-<pre><code>int nfq_bind_pf (   struct nfq_handle *     h,
-                    u_int16_t   pf   
-                )   
-</code></pre>
-
-<p>nfq_bind_pf绑定一个协议域到nfqueue句柄。<br/>
-队列连接句柄将会处理属于pf指定的协议报文，比如（PF_INET，PF_INET6）。
-<a href="http://netfilter.org/projects/libnetfilter_queue/doxygen/group__LibrarySetup.html">详细说明文档</a></p>
-
-<h3>处理报文队列</h3>
-
-<pre><code>int     nfq_fd (struct nfq_handle *h)   
-struct nfq_q_handle *   nfq_create_queue (struct nfq_handle *h, u_int16_t num, nfq_callback *cb, void *data)
-int     nfq_destroy_queue (struct nfq_q_handle *qh)
-int     nfq_handle_packet (struct nfq_handle *h, char *buf,     int len)
-int     nfq_set_mode (struct nfq_q_handle *qh, u_int8_t mode, u_int32_t range)
-int     nfq_set_queue_maxlen (struct nfq_q_handle *qh, u_int32_t queuelen)
-int     nfq_set_verdict (struct nfq_q_handle *qh, u_int32_t id, u_int32_t verdict, u_int32_t data_len, const unsigned char *buf)
-int     nfq_set_verdict2 (struct nfq_q_handle *qh, u_int32_t id, u_int32_t verdict, u_int32_t mark, u_int32_t data_len, const unsigned char *buf)
-int     nfq_set_verdict_mark (struct nfq_q_handle *qh, u_int32_t id, u_int32_t verdict, u_int32_t mark, u_int32_t data_len, const unsigned char *buf)
-</code></pre>
-
-<p>libnetfilter_queue库初始化后，可以绑定程序到具体报文队列。使用nfq_create_queue()进行绑定。
-使用nfq_set_mode()和nfq_set_queue_maxlen()函数设置队列。
-下面是创建队列0的代码片段：</p>
-
-<pre><code>printf("binding this socket to queue '0'\n");
-qh = nfq_create_queue(h,  0, &amp;cb, NULL);
-if (!qh) {
-    fprintf(stderr, "error during nfq_create_queue()\n");
-    exit(1);
-}
-
-printf("setting copy_packet mode\n");
-if (nfq_set_mode(qh, NFQNL_COPY_PACKET, 0xffff) &lt; 0) {
-    fprintf(stderr, "can't set packet_copy mode\n");
-    exit(1);
-}
-</code></pre>
-
-<p>下一步是，循环读取队列中的报文进行处理：</p>
-
-<pre><code>fd = nfq_fd(h);
-
-while ((rv = recv(fd, buf, sizeof(buf), 0)) &gt;= 0) {
-    printf("pkt received\n");
-    nfq_handle_packet(h, buf, rv);
-}
-</code></pre>
-
-<p>我们需要对每一个报文做出处理结果，通过nfq_set_verdict()或者nfq_set_verdict2()结果来传递结果。裁决结果决定报文的命运：</p>
-
-<ul>
-<li>NF_DROP   丢弃此报文</li>
-<li>NF_ACCEPT 接受报文，继续迭代</li>
-<li>NF_STOLEN gone away</li>
-<li>NF_QUEUE  将报文注入另外一个队列</li>
-<li>NF_REPEAT 重新再迭代一次</li>
-<li>NF_STOP 接受，但是不再继续迭代</li>
-</ul>
+<pre><code> $ strace -c ls /home
+ bala
+ % time     seconds  usecs/call     calls    errors syscall
+ ------ ----------- ----------- --------- --------- ----------------
+ -nan    0.000000           0         9           read
+ -nan    0.000000           0         1           write
+ -nan    0.000000           0        11           open
 
 
-<p><a href="http://netfilter.org/projects/libnetfilter_queue/doxygen/group__Queue.html">详细说明文档</a></p>
+ -nan    0.000000           0        13           close
+ -nan    0.000000           0         1           execve
+ -nan    0.000000           0         9         9 access
+ -nan    0.000000           0         3           brk
+ -nan    0.000000           0         2           ioctl
+ -nan    0.000000           0         3           munmap
+ -nan    0.000000           0         1           uname
+ -nan    0.000000           0        11           mprotect
+ -nan    0.000000           0         2           rt_sigaction
+ -nan    0.000000           0         1           rt_sigprocmask
+ -nan    0.000000           0         1           getrlimit
+ -nan    0.000000           0        25           mmap2
+ -nan    0.000000           0         1           stat64
+ -nan    0.000000           0        11           fstat64
+ -nan    0.000000           0         2           getdents64
+ -nan    0.000000           0         1           fcntl64
+ -nan    0.000000           0         2         1 futex
+ -nan    0.000000           0         1         set_thread_area
+ -nan    0.000000           0         1           set_tid_address
+ -nan    0.000000           0         1           statfs64
+ -nan    0.000000           0         1              set_robust_list
+ ------ ----------- ----------- --------- --------- ----------------
+ 100.00    0.000000                   114        10 total
+</code></pre></li>
+</ol>
 
-<h3>解析报文</h3>
-
-<p>主要涉及以下接口：</p>
-
-<pre><code>struct nfqnl_msg_packet_hdr *   nfq_get_msg_packet_hdr (struct nfq_data *nfad)
-uint32_t    nfq_get_nfmark (struct nfq_data *nfad)
-int     nfq_get_timestamp (struct nfq_data *nfad, struct timeval *tv)
-u_int32_t   nfq_get_indev (struct nfq_data *nfad)
-u_int32_t   nfq_get_physindev (struct nfq_data *nfad)
-u_int32_t   nfq_get_outdev (struct nfq_data *nfad)
-u_int32_t   nfq_get_physoutdev (struct nfq_data *nfad)
-int     nfq_get_indev_name (struct nlif_handle *nlif_handle,    struct nfq_data *nfad, char *name)
-int     nfq_get_physindev_name (struct nlif_handle *nlif_handle, struct nfq_data *nfad, char *name)
-int     nfq_get_outdev_name (struct nlif_handle *nlif_handle, struct nfq_data *nfad, char *name)
-int     nfq_get_physoutdev_name (struct nlif_handle *nlif_handle, struct nfq_data *nfad, char *name)
-struct nfqnl_msg_packet_hw *    nfq_get_packet_hw (struct nfq_data *nfad)
-int     nfq_get_payload (struct nfq_data *nfad, unsigned char **data)
-</code></pre>
-
-<p><a href="http://netfilter.org/projects/libnetfilter_queue/doxygen/group__Parsing.html">详细说明文档</a></p>
-
-<h2>示例</h2>
-
-<p>示例源自libnetfilter_queue源代码中的例子<a href="http://netfilter.org/projects/libnetfilter_queue/doxygen/nfqnl__test_8c_source.html">nfqnl_test.c</a></p>
-
-<pre><code>00001 
-00002 #include &lt;stdio.h&gt;
-00003 #include &lt;stdlib.h&gt;
-00004 #include &lt;unistd.h&gt;
-00005 #include &lt;netinet/in.h&gt;
-00006 #include &lt;linux/types.h&gt;
-00007 #include &lt;linux/netfilter.h&gt;            /* for NF_ACCEPT */
-00008 
-00009 #include &lt;libnetfilter_queue/libnetfilter_queue.h&gt;
-00010 
-00011 /* returns packet id */
-00012 static u_int32_t print_pkt (struct nfq_data *tb)
-00013 {
-00014         int id = 0;
-00015         struct nfqnl_msg_packet_hdr *ph;
-00016         struct nfqnl_msg_packet_hw *hwph;
-00017         u_int32_t mark,ifi; 
-00018         int ret;
-00019         unsigned char *data;
-00020 
-00021         ph = nfq_get_msg_packet_hdr(tb); // 返回报文头信息
-00022         if (ph) {
-00023                 id = ntohl(ph-&gt;packet_id);
-00024                 printf("hw_protocol=0x%04x hook=%u id=%u ",
-00025                         ntohs(ph-&gt;hw_protocol), ph-&gt;hook, id);
-00026         }
-00027 
-00028         hwph = nfq_get_packet_hw(tb); // 返回报文硬件地址信息
-00029         if (hwph) {
-00030                 int i, hlen = ntohs(hwph-&gt;hw_addrlen);
-00031 
-00032                 printf("hw_src_addr=");
-00033                 for (i = 0; i &lt; hlen-1; i++)
-00034                         printf("%02x:", hwph-&gt;hw_addr[i]);
-00035                 printf("%02x ", hwph-&gt;hw_addr[hlen-1]);
-00036         }
-00037 
-00038         mark = nfq_get_nfmark(tb); // 返回报文标记
-00039         if (mark)
-00040                 printf("mark=%u ", mark);
-00041 
-00042         ifi = nfq_get_indev(tb); // 获取报文接收网卡的索引
-00043         if (ifi)
-00044                 printf("indev=%u ", ifi);
-00045 
-00046         ifi = nfq_get_outdev(tb); // 获取报文发送网卡的索引
-00047         if (ifi)
-00048                 printf("outdev=%u ", ifi); 
-00049         ifi = nfq_get_physindev(tb); // 接收此报文的物理网卡索引
-00050         if (ifi)
-00051                 printf("physindev=%u ", ifi);
-00052  
-00053         ifi = nfq_get_physoutdev(tb); // 发送次报文的物理网卡索引
-00054         if (ifi)
-00055                 printf("physoutdev=%u ", ifi);
-00056 
-00057         ret = nfq_get_payload(tb, &amp;data); // 获取报文内容的长度
-00058         if (ret &gt;= 0)
-00059                 printf("payload_len=%d ", ret);
-00060 
-00061         fputc('\n', stdout);
-00062 
-00063         return id;
-00064 }
-00065         
-00066 
-00067 static int cb(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg,
-00068               struct nfq_data *nfa, void *data)
-00069 {
-00070         u_int32_t id = print_pkt(nfa);
-00071         printf("entering callback\n");
-00072         return nfq_set_verdict(qh, id, NF_ACCEPT, 0, NULL);
-00073 }
-00074 
-00075 int main(int argc, char **argv)
-00076 {
-00077         struct nfq_handle *h;
-00078         struct nfq_q_handle *qh;
-00079         struct nfnl_handle *nh;
-00080         int fd;
-00081         int rv;
-00082         char buf[4096] __attribute__ ((aligned));
-00083           
-00084         printf("opening library handle\n");
-00085         h = nfq_open(); // 获取libnetfilter 队列句柄
-00086         if (!h) {
-00087                 fprintf(stderr, "error during nfq_open()\n");
-00088                 exit(1);
-00089         }
-00090 
-00091         printf("unbinding existing nf_queue handler for AF_INET (if any)\n");
-00092         if (nfq_unbind_pf(h, AF_INET) &lt; 0) { // 先将队列连接句柄与AF_INET地址域解绑
-00093                 fprintf(stderr, "error during nfq_unbind_pf()\n");
-00094                 exit(1);
-00095         }
-00096 
-00097         printf("binding nfnetlink_queue as nf_queue handler for AF_INET\n");
-00098         if (nfq_bind_pf(h, AF_INET) &lt; 0) { // 将队列连接句柄与AF_INET地址绑定
-00099                 fprintf(stderr, "error during nfq_bind_pf()\n");
-00100                 exit(1);
-00101         }
-00102 
-00103         printf("binding this socket to queue '0'\n");
-00104         qh = nfq_create_queue(h,  0, &amp;cb, NULL); // 创建队列句柄用来处理0队列报文
-00105         if (!qh) {
-00106                 fprintf(stderr, "error during nfq_create_queue()\n");
-00107                 exit(1);
-00108         }
-00109 
-00110         printf("setting copy_packet mode\n");
-00111         if (nfq_set_mode(qh, NFQNL_COPY_PACKET, 0xffff) &lt; 0) { // 设置队列工作模式
-00112                 fprintf(stderr, "can't set packet_copy mode\n");
-00113                 exit(1);
-00114         }
-00115 
-00116         fd = nfq_fd(h); // 获取队列连接描述符
-00117 
-00118         while ((rv = recv(fd, buf, sizeof(buf), 0)) &amp;&amp; rv &gt;= 0) {
-00119                 printf("pkt received\n");
-00120                 nfq_handle_packet(h, buf, rv); // 处理收到的每个报文
-00121         }
-00122 
-00123         printf("unbinding from queue 0\n");
-00124         nfq_destroy_queue(qh); // 从队列0解绑
-00125 
-00126 #ifdef INSANE
-00127         /* normally, applications SHOULD NOT issue this command, since
-00128          * it detaches other programs/sockets from AF_INET, too ! */
-00129         printf("unbinding from AF_INET\n");
-00130         nfq_unbind_pf(h, AF_INET);
-00131 #endif
-00132 
-00133         printf("closing library handle\n");
-00134         nfq_close(h); // 关闭库句柄
-00135 
-00136         exit(0);
-00137 }
-</code></pre>
-
-<p>编译程序：</p>
-
-<pre><code>gcc nfqnl_test.c -lnetfilter_queue -o nfqnl_test
-</code></pre>
-
-<p>配置iptables：
-使用iptables命令修改防火墙规则，将发送到112.80.248.74的报文放置到队列0中：</p>
-
-<pre><code>#iptables -t filter -A OUTPUT -d 112.80.248.74 -j NFQUEUE --queue-num 0
-#iptables -t filter -L
-Chain INPUT (policy ACCEPT)
-target     prot opt source               destination
-
-Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination
-
-Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination
-NFQUEUE    all  --  anywhere             112.80.248.74  NFQUEUE num 0
-</code></pre>
-
-<p>启动ping程序：</p>
-
-<pre><code># ping 112.80.248.74
-PING 112.80.248.74 (112.80.248.74) 56(84) bytes of data.
-</code></pre>
-
-<p>当nfqnl_test程序未启动时，ping程序不能正确发送出icmp报文，也就不能收到icmp回复。</p>
-
-<p>启动nfqnl_test程序：</p>
-
-<pre><code># ./nfqnl_test
-opening library handle
-unbinding existing nf_queue handler for AF_INET (if any)
-binding nfnetlink_queue as nf_queue handler for AF_INET
-binding this socket to queue '0'
-setting copy_packet mode
-pkt received
-hw_protocol=0x0000 hook=3 id=1 outdev=2 payload_len=84
-entering callback
-pkt received
-hw_protocol=0x0000 hook=3 id=2 outdev=2 payload_len=84
-</code></pre>
-
-<p>nfqnl_test程序从nfqueue_num 0中读取报文，打印相关信息后，将报文送回协议栈，完成了发送流程，从目标收到了icmp报文回复</p>
-
-<pre><code>64 bytes from 112.80.248.74: icmp_req=612 ttl=58 time=1.84 ms
-64 bytes from 112.80.248.74: icmp_req=613 ttl=58 time=1.83 ms
-64 bytes from 112.80.248.74: icmp_req=614 ttl=58 time=1.76 ms
-64 bytes from 112.80.248.74: icmp_req=615 ttl=58 time=1.83 ms
-64 bytes from 112.80.248.74: icmp_req=616 ttl=58 time=1.97 ms
-64 bytes from 112.80.248.74: icmp_req=617 ttl=58 time=1.92 ms
-64 bytes from 112.80.248.74: icmp_req=618 ttl=58 time=2.07 ms   
-</code></pre>
-
-<h1>参考</h1>
-
-<p>netfilter<a href="http://www.netfilter.org/">官网</a><br/>
-<a href="http://bbs.chinaunix.net/forum.php?mod=viewthread&amp;tid=1196223">用户态修改网络数据包例子</a></p>
 ]]></content>
   </entry>
   

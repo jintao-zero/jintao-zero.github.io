@@ -9,9 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="本篇文章主要是对openssl的使用进行实践总结。 生成密钥
-创建证书
-实践 ">
+  <meta name="description" content="Strace调试工具可以帮助定位问题。 Strace工具可以用来记录指定程序运行过程中涉及的系统调用和信号。在没有获取程序源代码的情况下，strace工具可以有效帮助对程序的调试。strace工具提供一个二进制程序从开始到结束的执行顺序。 下面几个例子展示如何使用strace工具： ">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -69,6 +67,82 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-09-04T18:44:00+08:00'><span class='date'><span class='date-month'>Sep</span> <span class='date-day'>4</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>6:44 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p><code>Strace</code>调试工具可以帮助定位问题。  <br/>
+<code>Strace</code>工具可以用来记录指定程序运行过程中涉及的系统调用和信号。在没有获取程序源代码的情况下，strace工具可以有效帮助对程序的调试。strace工具提供一个二进制程序从开始到结束的执行顺序。  <br/>
+下面几个例子展示如何使用<code>strace</code>工具：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-08-19T10:57:59+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>10:57 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Go标准库<a href="https://golang.org/pkg/crypto/">crypto</a>提供了多种加解密算法、摘要算法。本文主要是对加密包中各个算法接口进行学习实践的总结。</p>
+
+<ul>
+<li><p><a href="#aes">aes</a></p></li>
+<li><p><a href="#rsa">rsa</a></p></li>
+</ul>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -586,154 +660,6 @@ go tool工具会忽略名为<code>testdata</code>的文件夹，使用这个文�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Golang 实现HTTP代理</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-03-29T16:51:16+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>4:51 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>使用Golang实现一个HTTP代理程序，程序部署在海外VPS节点，可以实现翻墙功能<br/>
-HTTP Proxy的基本原理是将客户端HTTP请求发送到目标主机，将目标主机返回的HTTP应答转发到客户端,对于HTTPS协议略有不同，HTTPS协议需要Proxy先建立一条到目标主机的链路，之后再进行协议本身的通讯，下面简单介绍一个HTTP Proxy的实现过程：</p>
-
-<h3>分析第一条请求</h3>
-
-<ol>
-<li><p>启动一个简版HTTP Proxy程序，代码如下：</p>
-
-<pre><code> func handleConn(conn net.Conn) {
-     defer conn.Close()
-     log.Println("client conn form ", conn.RemoteAddr())
-     var buffer [1024]byte
-     _, err := conn.Read(buffer[:])
-     if err != nil {
-         return
-     }
-     log.Println(string(buffer[:]))
- }
-
- func main() {
-     // listen on tcp port
-     l, err := net.Listen("tcp", ":8081")
-     if err != nil {
-         log.Println(err)
-         return
-     }
-     for {
-         conn, err := l.Accept()
-         if err != nil {
-             log.Println(err)
-             return
-         }
-         go handleConn(conn)
-     }
- }  
- go run httpproxy.go
-</code></pre>
-
-<p> 这个程序主要是用来接收客户端发送的第一条HTTP请求</p></li>
-</ol>
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/03/29/golang-shi-xian-httpdai-li/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Protocol-buffers Proto3 翻译</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-03-12T18:09:36+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>6:09 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><ul>
-<li><a href="#message">定义Message类型</a></li>
-<li><a href="#type">标量值类型</a></li>
-<li><a href="#default">默认值</a></li>
-<li><a href="#enum">枚举</a></li>
-<li><a href="#other_message">使用其他消息类型</a></li>
-<li><a href="#nested">嵌套类型</a></li>
-<li><a href="#update">更新消息类型</a></li>
-<li><a href="#unknown">未知字段</a></li>
-<li><a href="#any">Any</a></li>
-<li><a href="#oneof">Oneof</a></li>
-<li><a href="#maps">Maps</a></li>
-<li><a href="#packages">包</a></li>
-<li><a href="#services">服务</a></li>
-<li><a href="#json">json</a></li>
-<li><a href="#options">选项</a></li>
-<li><a href="#protoc">生成代码</a></li>
-</ul>
-
-
-<p>这个指导文档如何使用protocol buffer语言结构化你的protocol buffer数据，包括<code>.proto</code>文件语法和如何根据<code>.proto</code>文件生成代码访问数据。本文主要描述<code>proto3</code>版本。  <br/>
-本文是参考文档，如果需要例子的话可以访问，你选择语言相关的<a href="https://developers.google.com/protocol-buffers/docs/tutorials">入门指导</a></p>
-
-<h2><a name="message"></a>Message定义</h2>
-
-<p>一个简单例子。下面定义一个搜索请求消息格式，这个消息包含一个查询字符串，包含一个搜索结果页码，和每页包含搜索结果数。下面是该消息<code>.proto</code>文件：</p>
-
-<pre><code>syntax = "proto3";
-
-message SearchRequest {
-    string query = 1;
-    int32 page_number = 2;
-    int32 result_per_page = 3;
-}
-</code></pre>
-
-<ul>
-<li>第一行说明正在使用<code>proto3</code>语法：如果不指定proto版本，protocol buffer编译器默认认为正在使用<code>proto2</code>。这行语句必须是第一条非空、非注释语句。</li>
-<li><code>SearchRequest</code>消息包含三个字段。每个字段有都有一个名字和类型。</li>
-</ul>
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/03/12/protocol-buffers-proto3-fan-yi/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -749,6 +675,14 @@ message SearchRequest {
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/08/09/opensslshi-zhan/">Openssl实战</a>
       </li>
     
@@ -760,14 +694,6 @@ message SearchRequest {
         <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Go代码走读规范</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -775,13 +701,13 @@ message SearchRequest {
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
-<li class='category'><a href='/blog/categories/dev/'>dev (2)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (3)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (3)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -805,10 +731,13 @@ message SearchRequest {
 <a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
 <a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
 <a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/crypt/">crypt</a>
 <a style="font-size: 90%" href="/blog/tags/go/">go</a>
-<a style="font-size: 126%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 147%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
+<a style="font-size: 90%" href="/blog/tags/ops/">ops</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
 <a style="font-size: 90%" href="/blog/tags/tls/">tls</a>

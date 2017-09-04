@@ -1,0 +1,441 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Golang 加密包学习与实践 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="Go标准库crypto提供了多种加解密算法、摘要算法。本文主要是对加密包中各个算法接口进行学习实践的总结。 aes
+rsa aes rsa rsa包实现了RSA)加密算法，关于RSA的标准为PKCS #1。
+RSA既可以用与加解密也可以用与签名。
+使用RSA进行加密和签名的最初标准是PKCS#1， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Golang 加密包学习与实践</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-08-19T10:57:59+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>10:57 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Go标准库<a href="https://golang.org/pkg/crypto/">crypto</a>提供了多种加解密算法、摘要算法。本文主要是对加密包中各个算法接口进行学习实践的总结。</p>
+
+<ul>
+<li><p><a href="#aes">aes</a></p></li>
+<li><p><a href="#rsa">rsa</a></p></li>
+</ul>
+
+
+<!-- more -->
+
+
+<h2><span id="aes">aes</span></h2>
+
+<h2><span id="rsa">rsa</span></h2>
+
+<p><a href="https://golang.org/pkg/crypto/rsa/">rsa</a>包实现了<a href="https://en.wikipedia.org/wiki/RSA_(cryptosystem">RSA</a>)加密算法，关于<code>RSA</code>的标准为<a href="https://en.wikipedia.org/wiki/PKCS_1">PKCS #1</a>。<br/>
+<code>RSA</code>既可以用与加解密也可以用与签名。<br/>
+使用RSA进行加密和签名的最初标准是<code>PKCS#1</code>，<code>RSA encryption</code>和<code>RSA signatures</code>默认参照<code>PKCS#1</code>1.5版本。但是这个版本的标注存在缺陷，新的的设计应该参照第二版本，以<code>OAEP</code>和<code>PSS</code>称呼。</p>
+
+<p><code>rsa</code>包中的相关操作不是常量时间复杂度。 <br/>
+对使用包中进行加解密操作和签名操作进行说明：</p>
+
+<blockquote><p>生成key</p></blockquote>
+
+<pre><code>func GenerateKey(random io.Reader, bits int) (*PrivateKey, error)
+</code></pre>
+
+<p><code>random</code>为随机数源，比如<code>crypto/rand.Reader</code> <br/>
+<code>bits</code>为密钥位数，目前建议是2048位</p>
+
+<blockquote><p>加密</p></blockquote>
+
+<pre><code>func EncryptOAEP(hash hash.Hash, random io.Reader, pub *PublicKey, msg []byte, label []byte) ([]byte, error)
+</code></pre>
+
+<p><code>EncryptOAEP</code>函数对消息体进行加密。<br/>
+<code>hash</code>参数是一个哈希函数。对同一消息进行加解密必须使用同一种哈希函数，<code>sha256.New()</code>是一个合理选择。<br/>
+<code>random</code>参数为随机数源，用来保证对同一个消息体进行两次加密时的输出不同。<br/>
+<code>label</code>参数可以包含任意数据，这些数据不会被加密，标签参数给消息增加了重要的上下文信息。加解密时传入的<code>label</code>标签需要一致。如果不需要，可以为空。
+<code>msg</code>待加密消息长度必须小于等于公钥长度减去2倍哈希长度。</p>
+
+<blockquote><p>解密</p></blockquote>
+
+<pre><code>func DecryptOAEP(hash hash.Hash, random io.Reader, priv *PrivateKey, ciphertext []byte, label []byte) ([]byte, error)
+</code></pre>
+
+<p><code>hash</code>加解密使用的哈希函数必须一致，<code>sha256.New()</code>是一个合理选择。<br/>
+<code>random</code>随机数源。<br/>
+<code>label</code>参数值必须与加密时传入的值一致。</p>
+
+<blockquote><p>加解密实践</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>func TestCrypt() {
+</span><span class='line'>    //create private key
+</span><span class='line'>    privateKey, err := rsa.GenerateKey(rand.Reader,2048)
+</span><span class='line'>    if err != nil {
+</span><span class='line'>        log.Fatal("generateKey err ",err)
+</span><span class='line'>        return
+</span><span class='line'>    }
+</span><span class='line'>    // encrypt
+</span><span class='line'>    ciphertext, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, &privateKey.PublicKey, []byte("hahaha"), []byte("label"))
+</span><span class='line'>    if err != nil {
+</span><span class='line'>        log.Fatal("encrypt err ", err)
+</span><span class='line'>        return
+</span><span class='line'>    }
+</span><span class='line'>    log.Printf("Ciphertext: %x\n", ciphertext)
+</span><span class='line'>    log.Println(hex.EncodeToString(ciphertext))
+</span><span class='line'>    plaintext, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, privateKey, ciphertext, []byte("label"))
+</span><span class='line'>    if err != nil || bytes.Compare([]byte("hahaha"), plaintext) != 0 {
+</span><span class='line'>        log.Fatal("decrypt err: ", err)
+</span><span class='line'>        return
+</span><span class='line'>    }
+</span><span class='line'>    log.Println("plaintext :", string(plaintext))
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+<blockquote><p>签名</p></blockquote>
+
+<pre><code>func SignPSS(rand io.Reader, priv *PrivateKey, hash crypto.Hash, hashed []byte, opts *PSSOptions) ([]byte, error)
+</code></pre>
+
+<p><code>rand</code>为随机数源。<br/>
+<code>priv</code>为进行签名用到的私钥。<br/>
+<code>SignPSS</code>函数依据<code>RSASSA-PSS</code>标准计算摘要数据的签名。注意：摘要数据必须是使用指定哈希函数对输入数据计算得出的摘要值。<code>opts</code>参数可以为空，此时使用默认值。</p>
+
+<blockquote><p>验证签名</p></blockquote>
+
+<pre><code>func VerifyPSS(pub *PublicKey, hash crypto.Hash, hashed []byte, sig []byte, opts *PSSOptions) error
+</code></pre>
+
+<p>VerifyPSS验证PSS签名。<code>hashed</code>是使用指定函数对输入数据计算得出的摘要值。sig为签名数据。opts可以为空。</p>
+
+<blockquote><p>签名实践</p></blockquote>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>func TestSign() {
+</span><span class='line'>    //create private key
+</span><span class='line'>    privateKey, err := rsa.GenerateKey(rand.Reader,2048)
+</span><span class='line'>    if err != nil {
+</span><span class='line'>        log.Fatal("generateKey err ",err)
+</span><span class='line'>        return
+</span><span class='line'>    }
+</span><span class='line'>    // sign
+</span><span class='line'>    hashed := sha256.Sum256([]byte("hahaha"))
+</span><span class='line'>    /*
+</span><span class='line'>    opts := rsa.PSSOptions{
+</span><span class='line'>       SaltLength:10,
+</span><span class='line'>        Hash:crypto.SHA256,
+</span><span class='line'>    }
+</span><span class='line'>    */
+</span><span class='line'>    sig, err := rsa.SignPSS(rand.Reader,privateKey, crypto.SHA256,  hashed[:], nil)
+</span><span class='line'>    if err != nil {
+</span><span class='line'>        log.Fatal("SignPSS err ", err)
+</span><span class='line'>        return
+</span><span class='line'>    }
+</span><span class='line'>    log.Println(hex.EncodeToString(sig))
+</span><span class='line'>    err = rsa.VerifyPSS(&privateKey.PublicKey, crypto.SHA256, hashed[:], sig, nil)
+</span><span class='line'>    if err != nil {
+</span><span class='line'>        log.Fatal("VerifyPSS err", err)
+</span><span class='line'>        return
+</span><span class='line'>    }
+</span><span class='line'>    log.Println("VerifyPSS suc")
+</span><span class='line'>}</span></code></pre></td></tr></table></div></figure>
+
+
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-08-19T10:57:59+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>10:57 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dev/'>dev</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/08/09/opensslshi-zhan/" title="Previous Post: openssl实战">&laquo; openssl实战</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/" title="Next Post: 使用strace调试进程">使用strace调试进程 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/08/09/opensslshi-zhan/">Openssl实战</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (3)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (3)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
+<li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/crypt/">crypt</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 147%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
+<a style="font-size: 90%" href="/blog/tags/ops/">ops</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+<a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/tls/">tls</a>
+<a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
