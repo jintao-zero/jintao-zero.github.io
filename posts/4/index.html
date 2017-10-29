@@ -9,8 +9,9 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="非root用户运行tcpdump 有些时候，我们希望以非root用户运行一些程序，比如以普通用户运行tcpdump命令进行抓包时，系统报如下异常信息： Mac OS 系统： MacBook-Pro:plugins jintao$ tcpdump
-tcpdump: ioctl( &hellip;">
+  <meta name="description" content="本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。 冒泡排序 冒泡排序算法（百度百科）的运作如下：（从后往前）
+1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。
+2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +69,192 @@ tcpdump: ioctl( &hellip;">
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">冒泡、选择、插入、归并、快速、堆排序</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-08-02T20:40:24+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>8:40 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。</p>
+
+<h1>冒泡排序</h1>
+
+<p><a href="http://baike.baidu.com/view/254413.htm#ref_[1]_254413">冒泡排序算法</a>（百度百科）的运作如下：（从后往前）<br/>
+1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。<br/>
+2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。在这一点，最后的元素应该会是最大的数。<br/>
+3. 针对所有的元素重复以上的步骤，除了最后一个。<br/>
+4. 持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较。</p>
+
+<p>代码实现</p>
+
+<pre><code>void BubbleSort(int array[], int len)    
+{  
+    for (int i = 0; i &lt; len-1; i++) {
+        for (int j = 0; j &lt; len-i-1; j++) {
+            if (array[j+1] &lt; array[j]) {
+                int tmp = array[j+1];
+                array[j+1] = array[j];
+                array[j] = tmp;
+            }
+        }
+    }
+}
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Libnetfilter_queue实战</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-16T18:53:42+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>6:53 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>项目需要将某个进程发出的报文截获，待用户态业务处理后再将报文送回系统协议栈中处理。调研后，采用iptables添加防火墙规则截获报文传递到用户态队列，用户态进程使用libnetfilter_queue库接受报文，待业务处理后，将报文送回系统协议栈这样的方案完成。下面介绍下，学习的几个知识点：</p>
+
+<h1>netfilter</h1>
+
+<h2>简介</h2>
+
+<p><a href="http://netfilter.org/">netfilter</a>是Linux 2.4.x开始以后内核版本中的报文过滤框架。netfilter框架的用户态工具是<a href="http://netfilter.org/projects/iptables/index.html">iptables</a>防火墙配置工具。<br/>
+netfilter框架实现了报文过滤，网络地址转换，端口转换和其他报文管理。它是对Linux 2.2.x ipchains和Linux 2.0.x ipfwadm系统的重构和显著改进。<br/>
+netfilter是位于Linux内核中的一组回调函数集合，各个模块可以在网络协议栈注册回调函数。每个报文到来时，将会遍历协议栈中的回调函数并调用。<br/>
+iptables定义了规则集的通用格式。IP table中的每一条规则是有一些分类和相关的目标组成。<br/>
+netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和NAT子系统是netfilter的主要组成部分。</p>
+
+<h2>主要特性</h2>
+
+<ul>
+<li>无状态报文过滤</li>
+<li>有状态报文过滤</li>
+<li>所有网络地址和端口转换，比如NAT/NAPT(IPv4和IPv6)</li>
+<li>灵活的、可扩展的框架</li>
+<li>为第三方扩展提供API访问网络各层</li>
+</ul>
+
+
+<h2>可以做哪些</h2>
+
+<ul>
+<li>基于无状态或者有状态报文过滤构建互联网防火墙</li>
+<li>托管高可用有状态或者无状态的防火墙集群</li>
+<li>使用NAT和ip伪装共享共网ip</li>
+<li>使用NAT实现传输代理</li>
+<li>与tc和iproute2系统一起构建复杂Qos和策略路由器</li>
+<li>更进一步进行报文管理，比如修改IP头中的TOS/DSCP/ECN</li>
+</ul>
+
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">使用FIFO命名管道进行进程间通讯</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-14T15:56:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>管道是进程间通讯的一种方式。使用<code>pipe</code>，<code>popen</code>，<code>pclose</code>，等接口我们可以使用管道来进行进程间通讯。但是这一种管道只能由相关进程使用，这些相关进程的共同祖先进程创建了管道。通过FIFO，也称为命名管道，不相关的进程也可以进行通讯。</p>
+
+<h1>创建命名管道</h1>
+
+<p>调用mkfifo接口创建命名管道：</p>
+
+<pre><code>#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+int mkfifo(const char *path, mode_t mode);
+</code></pre>
+
+<p>创建FIFO类似于创建文件。FIFO的路径名存在于文件系统中。FIFO是一种文件类型。stat结构成员st_mode的编码指明文件是否是FIFO类型。可以用S_ISFIFO宏对此进行测试。 mkfifo函数创建一个路径名为path的fifo。mode和umask掩码规定了命名管道的访问权限。<br/>
+参数：<br/>
+path是管道在文件系统中的存在路径。<br/>
+mode于open函数中定义的mode一样。</p>
+
+<p>返回值：<br/>
+成功返回0。失败返回-1，同时设置errno错误码。</p>
+
+<p>错误原因：</p>
+
+<ul>
+<li>ENOTSUP       系统内核不支持fifo</li>
+<li>ENOTDIR       path前缀不是合法目录</li>
+<li>ENAMETOOLONG  path路径太长</li>
+<li>EACCESS       用户对于path中的目录没有权限访问</li>
+<li>EROFS         path指定的目录在只读文件系统</li>
+<li><p>EEXIST        path指定文件已经存在</p>
+
+<p>  </div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -525,206 +712,6 @@ for ( ; ; ) {
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">Tcp 服务端例子</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-02-13T11:04:43+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>11:04 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>实现了一个简单服务端，使用tcp与客户端进行通讯。本片文章主要介绍在tcp服务端网络编程中用到的几个基本函数：<br/>
-1、创建套接字socket函数</p>
-
-<pre><code>int socket(int domain, int type, int protocol)
-</code></pre>
-
-<p>socket函数创建一个通讯端并返回这个终端的文件描述符。</p>
-
-<p>参数domain指定发生整个通讯过程所在的协议域。协议域定义在&lt;sys/socket.h>头文件中，常用协议域名为：</p>
-
-<pre><code>PF_LOCAL 主机内部通讯协议，之前名为PF_UNIX
-PF_UNIX  主机内部通讯协议，废弃，使用PF_LOCAL
-PF_INET  IPV4通讯协议
-PF_INET6 IPV6通讯协议
-。。。
-</code></pre>
-
-<p>本例子中使用PF_INET ipv4通讯协议域</p>
-
-<p>参数type指定socket类型，目前定义类型为：</p>
-
-<pre><code>SOCK_STREAM                                      
-SOCK_DGRAM
-SOCK_RAW
-SOCK_SEQPACKET
-SOCK_RDM
-</code></pre>
-
-<p>SOCK_STREAM 类型提供序列化、可靠的、全双工字节流套接字
-SOCK_DGRAM 类型提供无连接的、不可靠的，有报文最大限制的数据报通讯套接字
-SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字，需要有超级用户权限<br/>
-本例子中使用SOCK_STREAM流套接字类型</p>
-
-<p>失败时，函数返回-1，成功时，返回套接字文件描述符</p>
-
-<p>2、bind函数</p>
-
-<pre><code>int bind(int socket, const struct sockaddr *address, socklen_t address_len);
-</code></pre>
-
-<p>bind函数把一个本地协议地址赋予一个套接字。
-参数socket，为需要赋予地址的套接字。
-参数address，为赋予到套接字的地址结构，有ip和端口号标识。
-参数address_len, 为该地址结构大小</p>
-
-<p>对于服务端来讲，在调用监听函数之前，都需要bind到特定地址和端口</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/02/13/tcp-fu-wu-duan-li-zi/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">Tcp 客户端示例</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-02-10T19:07:27+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:07 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>实现了一个简单客户端，使用tcp与服务端进行通讯。本片文章主要介绍在tcp客户端网络编程中用到的几个基本函数：<br/>
-1、创建socket</p>
-
-<pre><code>int socket(int domain, int type, int protocol)
-</code></pre>
-
-<p>socket函数创建一个通讯端并返回这个终端的文件描述符。</p>
-
-<p>参数domain指定发生整个通讯过程所在的协议域。协议域定义在&lt;sys/socket.h>头文件中，常用协议域名为：</p>
-
-<pre><code>PF_LOCAL 主机内部通讯协议，之前名为PF_UNIX
-PF_UNIX  主机内部通讯协议，废弃，使用PF_LOCAL
-PF_INET  IPV4通讯协议
-PF_INET6 IPV6通讯协议
-。。。
-</code></pre>
-
-<p>本例子中使用PF_INET ipv4通讯协议域</p>
-
-<p>参数type指定socket类型，目前定义类型为：</p>
-
-<pre><code>SOCK_STREAM                                      
-SOCK_DGRAM
-SOCK_RAW
-SOCK_SEQPACKET
-SOCK_RDM
-</code></pre>
-
-<p>SOCK_STREAM 类型提供序列化、可靠的、全双工字节流套接字
-SOCK_DGRAM 类型提供无连接的、不可靠的，有报文最大限制的数据报通讯套接字
-SOCK_RAW 类型提供读取内部网络协议和网卡接口的原始套接字，需要有超级用户权限<br/>
-本例子中使用SOCK_STREAM流套接字类型</p>
-
-<p>失败时，函数返回－1，成功时，返回套接字文件描述符</p>
-
-<p>2、connect连接服务端</p>
-
-<pre><code>int connect(int socket, const struct sockaddr *address, socklen_t address_len);
-</code></pre>
-
-<p>connect函数在一个socket上面初始化一个连接</p>
-
-<p>参数socket为要建立连接的套接字<br/>
-参数address为要对端连接的地址，不同协议域会有不同的方式解析这个参数内容
-参数address_len为传入的address地址所对应地址结构体占据的内存大小</p>
-
-<p>连接成功，函数返回0，失败，则返回－1，同时置错误码errno</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/02/10/tcp-ke-hu-duan-shi-li/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/12/11/centos-6-dot-5-an-zhuang-ip-netns/">CentOS 6.5 安装ip Netns</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-12-11T16:42:57+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:42 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>项目需要用到网络空间这一个技术，但是在CentOS 6.x版本中，ip命令并不能够使用netns这个参数：</p>
-
-<pre><code>[root@gaichao ~]# ip netns
-Object "netns" is unknown, try "ip help".
-[root@gaichao ~]#
-</code></pre>
-
-<p>下面分别介绍以下安装失败与成功的经验：</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/12/11/centos-6-dot-5-an-zhuang-ip-netns/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/5">&larr; Older</a>
@@ -742,23 +729,23 @@ Object "netns" is unknown, try "ip help".
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng/">使用daemontools管理进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/">RabbitMQ 入门实践</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
       </li>
     
       <li class="post">
         <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/08/09/opensslshi-zhan/">Openssl实战</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
       </li>
     
   </ul>
@@ -768,13 +755,13 @@ Object "netns" is unknown, try "ip help".
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
-<li class='category'><a href='/blog/categories/dev/'>dev (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (4)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (3)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (4)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -799,8 +786,9 @@ Object "netns" is unknown, try "ip help".
 <a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
 <a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/crypt/">crypt</a>
+<a style="font-size: 90%" href="/blog/tags/daemon/">daemon</a>
 <a style="font-size: 90%" href="/blog/tags/go/">go</a>
-<a style="font-size: 147%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 162%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>

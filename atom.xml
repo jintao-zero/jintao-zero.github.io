@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-09-04T20:23:38+08:00</updated>
+  <updated>2017-10-29T22:02:45+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,529 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Go Context包源码分析]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/"/>
+    <updated>2017-10-26T10:38:30+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi</id>
+    <content type="html"><![CDATA[<p>Go标准库<code>context</code>定义了一个<code>Context</code>类型，Context类型包含超时时间，取消信号和请求范围内的变量值。<br/>
+context包提供了<code>WithCancel</code>，<code>WithDeadline</code>和<code>WithTimeout</code>函数来分别返回不同类型的Context接口。  <br/>
+下面对context包的源码进行分析：</p>
+
+<ul>
+<li><a href="#Context">Context接口</a></li>
+<li><a href="#emptyCtx">空Context接口对象</a></li>
+<li><a href="#cancelCtx">cancelCtx</a></li>
+<li><a href="#WithDealine">WithDeadline</a></li>
+<li><a href="#WithValue">WithValue</a></li>
+</ul>
+
+
+<!-- more -->
+
+
+<h2><span id="Context">Context接口</span></h2>
+
+<pre><code>type Context interface {
+    // Dealine 返回任务完成的最后期限时间，如果没有设置Deadline，则ok返回false。
+    Deadline() (deadline time.Time, ok bool)
+
+    // Done返回一个channel，当这个Conetext代表的任务应该取消时，这个channel将会被关闭。如果这个context不应该被取消，那么Done返回nil。
+    Done() &lt;- chan struct{}
+
+    // 如果Done返回的channel没有被关闭，Err返回nil。
+    // 如果Done返回的channel被关闭了，Err返回一个非nil error表示原因：Canceled表示被取消，DeadlineExceeded表示达到超时时间
+    Err() error
+
+    // Value返回context中key对应的值。如果没有key对应的值则返回nil
+    Value(key interface{}) interface{}
+}   
+</code></pre>
+
+<h2><span id="emptyCtx">空Context接口对象</span></h2>
+
+<p>context包提供了两个函数<code>TODO</code>和<code>Background</code>来返回一个非nil、空Context对象。</p>
+
+<pre><code>var (
+    background = new(emptyCtx)
+    todo       = new(emptyCtx)
+)
+func Background() Context {
+    return background   
+}
+func TODO() Context {
+    return todo
+}
+</code></pre>
+
+<p><code>emptyCtx</code>类型定义如下：</p>
+
+<pre><code>// 一个emptyCtx类型Context不可以取消，没有值，没有超时时间。它不是一个空struct{}类型，因为我们需要不同类型的emptyCtx变量拥有不同地址。  
+type emptyCtx int
+</code></pre>
+
+<p>   // 下面是实现的Context接口方法
+    func (*emptyCtx) Deadline() (deadline time.Time, ok bool) {
+        return
+    }</p>
+
+<pre><code>func (*emptyCtx) Done() &lt;-chan struct{} {
+    return nil
+}
+
+func (*emptyCtx) Err() error {
+    return nil
+}
+
+func (*emptyCtx) Value(key interface{}) interface{} {
+    return nil
+}
+
+func (e *emptyCtx) String() string {
+    switch e {
+        case background:
+            return "context.Background"
+        case todo:
+            return "context.TODO"
+    }
+    return "unknown empty Context"
+}
+</code></pre>
+
+<h2><span id="cancelCtx">cancelCtx</span></h2>
+
+<p>使用<code>WithCancel</code>创建可取消Context接口</p>
+
+<pre><code>// WithCancel返回一个新Context接口对象和一个CancelFunc函数，当parent对象Donechannel激活或者调用CancelFunc函数时，新产生的Context对象Done返回的channel通道被激活
+func WithCancel(parent Context) (ctx Context, cancel CancelFunc) {
+    c := newCancelCtx(parent)
+    propagateCancel(parent, &amp;c)
+    return &amp;c, func() { c.cancel(true, Canceled) }
+}
+
+// newCancelCtx 返回一个初始化的cancelCtx对象.
+func newCancelCtx(parent Context) cancelCtx {
+    return cancelCtx{
+        Context: parent,
+        done:    make(chan struct{}),
+    }
+}
+
+
+// cancelCtx可以被取消. 当cancelCtx被取消时，它同时也会取消孩子中那些实现了canceler接口的孩子
+type cancelCtx struct {
+    Context
+    done chan struct{} // 调用取消函数时，通道被关闭
+
+    mu       sync.Mutex
+    children map[canceler]struct{} // 第一次调用cancel函数时，children设置为nil
+    err      error                 // 调用cancel函数时，设置为非空
+}
+</code></pre>
+
+<p>propagateCancel方法用来向父Context添加一个canceler孩子，这样当父对象结束时，同时会将孩子结束。</p>
+
+<pre><code>func propagateCancel(parent Context, child canceler) {
+    if parent.Done() == nil {
+        return // 如果parent的Done为空，则parent不可以取消，比如默认的context.BackGround和context.TODO返回的接口对象
+    }
+    // 使用parentCancelCtx查找context链上的父cancelContext对象
+    if p, ok := parentCancelCtx(parent); ok {
+        p.mu.Lock()
+        if p.err != nil {
+            // 父对象已经被取消，那么也就没有必要再向父对象添加，此时取消子对象
+            child.cancel(false, p.err)
+        } else {
+            // 向父对象中添加子对象
+            if p.children == nil {
+                p.children = make(map[canceler]struct{})
+            }
+            p.children[child] = struct{}{}
+        }
+        p.mu.Unlock()
+    } else {
+    // 如果父对象不是可取消对象，那么新建goroutine等待父对象结束后，取消子对象，在目前已知的集中Context接口实现，好像不能走到此流程
+        go func() {
+            select {
+            case &lt;-parent.Done():
+                child.cancel(false, parent.Err())
+            case &lt;-child.Done():
+            }
+        }()
+    }
+}
+
+// 此函数判断查找父cancelCtx对象
+func parentCancelCtx(parent Context) (*cancelCtx, bool) {
+    for {
+        switch c := parent.(type) {
+        case *cancelCtx:
+            return c, true
+        case *timerCtx:
+            return &amp;c.cancelCtx, true
+        case *valueCtx:
+            parent = c.Context
+        default:
+            return nil, false
+        }
+    }
+}
+</code></pre>
+
+<p>cancelCtx实现：</p>
+
+<pre><code>// cancelCtx结构体定义
+type cancelCtx struct {
+    Context
+    done chan struct{} // closed by the first cancel call.
+    mu       sync.Mutex
+    children map[canceler]struct{} // set to nil by the first cancel call
+    err      error                 // set to non-nil by the first cancel call
+}
+
+// 实现Context接口Done方法，返回channel
+func (c *cancelCtx) Done() &lt;-chan struct{} {
+    return c.done
+}
+</code></pre>
+
+<p>   // 实现Context接口Err方法，返回错误原因
+    func (c *cancelCtx) Err() error {
+        c.mu.Lock()
+        defer c.mu.Unlock()
+        return c.err
+    }</p>
+
+<pre><code>// 以字符串形式打印对象
+func (c *cancelCtx) String() string {
+    return fmt.Sprintf("%v.WithCancel", c.Context)
+}
+
+// cacel关闭c.done通道，取消所有子Context对象，并且从父对象中删除
+func (c *cancelCtx) cancel(removeFromParent bool, err error) {
+    if err == nil {
+        panic("context: internal error: missing cancel error")
+    }   
+    c.mu.Lock()
+    if c.err != nil {
+        c.mu.Unlock()
+        return // already canceled
+    }
+    c.err = err
+    close(c.done)
+    for child := range c.children {
+        // NOTE: acquiring the child's lock while holding parent's lock.
+    child.cancel(false, err)
+    }
+    c.children = nil
+    c.mu.Unlock()
+
+    if removeFromParent {
+        removeChild(c.Context, c)
+    }
+}
+</code></pre>
+
+<h2><span id="WithDeadline">WithDealine</span></h2>
+
+<p>WithDeadline创建一个具有超时时间的Conetext对象</p>
+
+<pre><code>func WithDeadline(parent Context, deadline time.Time) (Context, CancelFunc) {
+    if cur, ok := parent.Deadline(); ok &amp;&amp; cur.Before(deadline) {
+    //如果父Context的超时时间更早
+        return WithCancel(parent)
+    }
+    c := &amp;timerCtx{
+        cancelCtx: newCancelCtx(parent),
+        deadline:  deadline,
+    }
+    propagateCancel(parent, c)
+    d := time.Until(deadline)
+    if d &lt;= 0 {
+        c.cancel(true, DeadlineExceeded) // 超时时间已过
+        return c, func() { c.cancel(true, Canceled) }
+    }
+    c.mu.Lock()
+    defer c.mu.Unlock()
+    if c.err == nil {
+        c.timer = time.AfterFunc(d, func() {
+            c.cancel(true, DeadlineExceeded)
+        })
+    }
+    return c, func() { c.cancel(true, Canceled) }
+}
+</code></pre>
+
+<h2><span id="WithValue"> WithValue </span></h2>
+
+<pre><code>//返回一个Context接口对象，这个对象包含一个key、value对  // key必须是可比较的
+func WithValue(parent Context, key, val interface{}) Context {
+    if key == nil {
+        panic("nil key")
+    }
+    if !reflect.TypeOf(key).Comparable() {
+        panic("key is not comparable")
+    }
+    return &amp;valueCtx{parent, key, val}
+}
+
+// valueCtx包含一个键值对，它实现了Value接口方法
+// 它将接口的其他方法委托给Context父对象
+type valueCtx struct {
+    Context
+    key, val interface{}
+}
+
+
+func (c *valueCtx) String() string {
+    return fmt.Sprintf("%v.WithValue(%#v, %#v)", c.Context, c.key, c.val)
+}
+
+func (c *valueCtx) Value(key interface{}) interface{} {
+    if c.key == key {
+        return c.val
+    }
+    return c.Context.Value(key)
+}
+</code></pre>
+
+<h2>参考</h2>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[使用daemontools管理进程]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng/"/>
+    <updated>2017-10-19T11:23:50+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng</id>
+    <content type="html"><![CDATA[<p>本片博客介绍如何使用<a href="http://cr.yp.to/daemontools.html">daemontools</a>管理在后台一直运行的进程，当程序异常退出时，deemontools可以将进程重新拉起。</p>
+
+<h2>安装</h2>
+
+<p>deemontools只可以运行在UNIX系统。<br/>
+步骤：</p>
+
+<ul>
+<li><p>创建<code>/package</code>目录</p>
+
+<pre><code>  mkdir -p /package  
+  chmod 1755 /package  
+  cd /package  
+</code></pre></li>
+<li><p>下载<a href="http://cr.yp.to/daemontools/daemontools-0.76.tar.gz">daemontools-0.76.tar.gz</a></p>
+
+<pre><code>  cd /package  
+  wget http://cr.yp.to/daemontools/daemontools-0.76.tar.gz  
+  tar xzvf daemontools-0.76.tar.gz   
+  cd admin/daemontools   
+</code></pre></li>
+<li><p>编译安装</p>
+
+<pre><code>  package/install
+</code></pre>
+
+<p>在CentOS 7上编译时报错：</p>
+
+<pre><code>  /usr/bin/ld: errno: TLS defini  tion in /lib/libc.so.6 section .tbss mismatches non-TLS reference in envdir.o
+</code></pre>
+
+<p>解决方法如下：</p>
+
+<pre><code>  将admin/daemontools-0.76/src/error.h中的extern int errno;替换为#include &lt;errno.h&gt;
+</code></pre>
+
+<p>安装完成后会自动创建<code>/command  /service</code>两个目录，command目录下面包含各种daemontools工具 service目录包含daemontools管理的服务</p></li>
+</ul>
+
+
+<!-- more -->
+
+
+<h2>配置daemontools开机启动</h2>
+
+<p>CentOS 7使用systemd来管理服务，新建/etc/systemd/system/daemontools.service文件，将如下内容放到新建文件中：</p>
+
+<pre><code>    [Unit]
+    Description=daemontools Start supervise
+    After=getty.target
+    [Service]
+    Type=simple
+    User=root
+    Group=root
+    Restart=always
+    ExecStart=/command/svscanboot /dev/ttyS0
+    TimeoutSec=0
+    [Install]
+    WantedBy=multi-user.target
+</code></pre>
+
+<ul>
+<li><p>启动服务</p>
+
+<pre><code>  systemctl start deamontools.service
+</code></pre></li>
+<li><p>查看服务状态</p>
+
+<pre><code>  systemctl status deamontools.service
+</code></pre></li>
+<li><p>设置开机启动</p>
+
+<pre><code>  systemctl enable daemontools.service
+</code></pre></li>
+</ul>
+
+
+<h2>使用daemontools管理进程</h2>
+
+<p>   daemontools.service服务的启动进程为/command/svscanboot，查看svscanboot程序的进程树：</p>
+
+<pre><code>    [root@hq-test command]# ps aux | grep svs
+    root     19658  0.0  0.0 113116  1428 ?        Ss   Oct18   0:00 /bin/sh /command/svscanboot /dev/ttyS0
+    root     19660  0.0  0.0   4344   480 ?        S    Oct18   0:00 svscan /service
+    root     30566  0.0  0.0 112640   956 pts/0    R+   14:35   0:00 grep --color=auto svs
+    [root@hq-test command]# pstree -ap 19658
+    svscanboot,19658 /command/svscanboot /dev/ttyS0
+      ├─readproctitle,19661 service errors:...
+        └─svscan,19660 /service
+              └─supervise,20625 test
+                        └─test,22043
+</code></pre>
+
+<p>   通过进程树我们看到svscanboot进程启动svscan进程，svscan读取/service目录，svscan启动supervise进程管理我们的应用进程test
+   下面讲解如何向daemontools添加一个应用进程:<br/>
+   应用进程所在目录为：<code>/tmp/test</code></p>
+
+<pre><code>    [root@hq-test test]# ls
+    test
+    [root@hq-test test]#
+</code></pre>
+
+<ul>
+<li><p> 在应用进程所在文件夹新建run文件</p>
+
+<pre><code>[root@hq-test test]# cat run
+#!/bin/sh
+exec /tmp/test/test 1&gt;&gt;/tmp/test/1.out 2&gt;&amp;1
+[root@hq-test test]# pwd
+/tmp/test
+[root@hq-test test]# ls
+run  test
+[root@hq-test test]#
+</code></pre>
+
+<ul>
+<li><p>向svscanboot注册服务</p>
+
+<p>  [root@hq-test test]# ln -s /tmp/test /service/test
+  [root@hq-test test]# ls /service/
+  test
+  [root@hq-test test]# ls -al /service/
+  total 8
+  drwxr-xr-x   2 root root 4096 Oct 19 17:23 .
+  drwxr-xr-x. 23 root root 4096 Oct 18 19:25 ..
+  lrwxrwxrwx   1 root root    9 Oct 19 17:23 test -> /tmp/test
+  [root@hq-test test]#</p>
+
+<p> 在/service目录中建立到应用程序目录的软连接后，svscan将会新建supervise进程，启动应用进程:</p>
+
+<p>  [root@hq-test test]# pstree -ap 19658
+  svscanboot,19658 /command/svscanboot /dev/ttyS0
+    ├─readproctitle,19661 service errors:&hellip;
+      └─svscan,19660 /service
+            └─supervise,5821 test
+                      └─test,5822</p></li>
+<li><p>查看服务状态
+  svstat services
+  services 为/service目录下的软链接</p>
+
+<p>  [root@hq-test test]# svstat /service/test/
+  /service/test/: up (pid 5822) 303 seconds</p></li>
+<li><p>管理服务</p>
+
+<p> svc opts services
+ opts包含如下选项：</p>
+
+<pre><code>  -u: Up。 如果服务不在运行，启动服务。如果服务停止了，重启服务。  
+  -d: Down。 如果服务在运行，发送一个TERM信号，之后发送CONT信号。服务停止后，不重启服务。  
+  -o: Once。如果服务不在运行，则启动服务。服务停止后，不在启动服务。  
+  -p: Pause。向服务发送STOP信号。  
+  -c: Continue。向服务发送一个CONT信号。  
+  -h: Hangup。向服务发送一个HUP信号。  
+  -a: Alarm。向服务发送一个ALARM信号。  
+  -i: Interrupt。向服务发送一个INT信号。  
+  -t: Terminate。向服务发送一个TERM信号。  
+  -k: Kill。 向服务发送一个KILL信号。  
+  -x: Exit。服务进程退出后supervise将会退出。  
+</code></pre>
+
+<p>停止服务进程：</p>
+
+<pre><code>  [root@hq-test test]# pstree -pa 19658
+  svscanboot,19658 /command/svscanboot /dev/ttyS0
+    ├─readproctitle,19661 service errors:...
+      └─svscan,19660 /service
+            └─supervise,10630 test
+                      └─test,10631
+  [root@hq-test test]# svstat /service/test/
+  /service/test/: up (pid 10631) 67 seconds
+  [root@hq-test test]# svc -d /service/test/
+  [root@hq-test test]# svstat /service/test/
+  /service/test/: down 5 seconds, normally up
+  [root@hq-test test]#
+</code></pre></li>
+</ul>
+
+
+<p> 重启服务进程：</p>
+
+<pre><code>   [root@hq-test test]# svc -u /service/test/
+   [root@hq-test test]# svstat /service/test/
+   /service/test/: up (pid 10750) 2 seconds
+   [root@hq-test test]# pstree -pa 19658
+   svscanboot,19658 /command/svscanboot /dev/ttyS0
+     ├─readproctitle,19661 service errors:...
+       └─svscan,19660 /service
+             └─supervise,10630 test
+                       └─test,10750
+   [root@hq-test test]# svstat /service/test/
+   /service/test/: up (pid 10750) 12 seconds
+   [root@hq-test test]#
+</code></pre>
+
+<p>删除服务：<br/>
+       先删除/service目录中的服务链接，
+       svc 命令中使用服务的目标链接</p>
+
+<pre><code>   [root@hq-test test]# rm /service/test
+   rm: remove symbolic link ‘/service/test’? y
+   [root@hq-test test]# svc -dx /tmp/test
+   [root@hq-test test]# pstree -pa 19658
+   svscanboot,19658 /command/svscanboot /dev/ttyS0
+     ├─readproctitle,19661 service errors:...
+       └─svscan,19660 /service
+   [root@hq-test test]#
+</code></pre>
+
+<h2>参考</h2>
+
+<ul>
+<li><a href="http://cr.yp.to/daemontools/svc.html">daemontools</a></li>
+</ul>
+</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[RabbitMQ 入门实践]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/09/21/rabbitmq-ru-men-shi-jian/"/>
+    <updated>2017-09-21T20:31:11+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/09/21/rabbitmq-ru-men-shi-jian</id>
+    <content type="html"><![CDATA[
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[使用strace调试进程]]></title>
@@ -3635,500 +4158,6 @@ MAINFILE(.exe)   from go build MAINFILE.go
 -v
     Verbose output: log all tests as they are run. Also print all text from Log and Logf calls even if the test succeeds.
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Golang 通过http服务获取程序性能统计数据]]></title>
-    <link href="http://jintao-zero.github.io/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/"/>
-    <updated>2017-01-08T22:55:07+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju</id>
-    <content type="html"><![CDATA[<p>Golang标准库<code>net/http/pprof</code>通过HTTP服务对外提供性能统计数据，以便<code>pprof</code>这样的可视化工具使用。</p>
-
-<p>引入此<code>pprof</code>库向http服务注册路径处理函数。此库注册的http服务路径都是以<code>/debug/pprof</code>开头。</p>
-
-<h2>使用方法</h2>
-
-<h3>方式引入库</h3>
-
-<pre><code>import _ "net/http/pprof"
-</code></pre>
-
-<h3>开启HTTP服务</h3>
-
-<p>如果程序中已经运行了一个或者多个HTTP服务，那么就无需再开启HTTP服务，否则需要像如下代码片段，开启一个HTTP服务：</p>
-
-<pre><code>go func() {
-    log.Println(http.ListenAndServe("localhost:6060",   nil))
-}()
-</code></pre>
-
-<p>其中地址也可以不绑定到localhost,可以选择监听所有端口,比如:</p>
-
-<pre><code>go func() {
-    log.Println(http.ListenAndServe(":6060",    nil))
-}()
-</code></pre>
-
-<h3>获取性能数据</h3>
-
-<p>1、查看堆栈性能数据</p>
-
-<pre><code>go tool pprof http://localhost:6060/debug/pprof/heap
-</code></pre>
-
-<p>2、查看30s CPU性能数据</p>
-
-<pre><code>go tool pprof http://localhost:6060/debug/pprof/profile
-</code></pre>
-
-<p>3、查看goroutine阻塞性能数据</p>
-
-<pre><code>go tool pprof http://localhost:6060/debug/pprof/block
-</code></pre>
-
-<p>4、查看5s执行栈</p>
-
-<pre><code>wget http://localhost:6060/debug/pprof/trace?seconds=5
-</code></pre>
-
-<p>5、查看所有可用性能数据</p>
-
-<pre><code>浏览器打开  http://localhost:6060/debug/pprof/
-</code></pre>
-
-<p>参考：<br/>
-<a href="https://golang.org/pkg/net/http/pprof/">Golang官博</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[golang创建、解压.tar.gz文件简单库]]></title>
-    <link href="http://jintao-zero.github.io/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/"/>
-    <updated>2017-01-05T19:17:06+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian</id>
-    <content type="html"><![CDATA[<p>golang提供了<code>tar</code>包和<code>compress/gzip</code>包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。</p>
-
-<h2>tar打包功能</h2>
-
-<p>利用tar中<code>Writer</code>和<code>Reader</code>可以实现将文件和文件夹进行打包的功能。</p>
-
-<h3>打包</h3>
-
-<p>创建目标文件</p>
-
-<pre><code>f, err := os.Create(dstPath)
-</code></pre>
-
-<p>创建<code>Writer</code></p>
-
-<pre><code>tw := tar.NewWriter(f)
-</code></pre>
-
-<p>循环遍历文件夹，写入Writer</p>
-
-<pre><code>fileInfo, err := os.Stat(path)
-if err != nil {
-    return err
-}
-if fileInfo.Mode().IsRegular() {
-    header, err := tar.FileInfoHeader(fileInfo, "")
-    if err != nil {
-        return err
-    }
-    header.Name = path
-    if err = tw.WriteHeader(header); err != nil {
-        return err
-    }
-    file, err := os.Open(path)
-    if err != nil {
-        return err
-    }
-    if _, err = io.Copy(tw, file); err != nil {
-        return err
-    }
-}
-
-if fileInfo.Mode().IsDir() {
-    // tar each file and dir in the dir
-    var file *os.File
-    if file, err = os.Open(path); err != nil {
-        return err
-    }
-    fileInfos, err := file.Readdir(0)
-    if err != nil {
-        return err
-    }
-    for _, info := range fileInfos {
-        if err = tarPath(filepath.Join(path, info.Name()), tw); err != nil {
-            return err
-        }
-    }
-}
-</code></pre>
-
-<!-- more -->
-
-
-<h3>解包</h3>
-
-<p>打开源文件</p>
-
-<pre><code>tarFile, err := os.Open(srcPath)
-</code></pre>
-
-<p>创建Reader</p>
-
-<pre><code>tr := tar.NewReader(tarFile)
-</code></pre>
-
-<p>循环遍历解压文件</p>
-
-<pre><code>for {
-    hdr, err := tr.Next()
-    if err == io.EOF {
-        break
-    }
-    fullPath := filepath.Join(dstPath, hdr.Name)
-    os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
-    log.Println("fullPath", fullPath)
-    file, err := os.Create(fullPath)
-    if err != nil {
-        return err
-    }
-    if _, err := io.Copy(file, tr); err != nil {
-        return err
-    }
-    file.Close()
-}
-</code></pre>
-
-<h2>Gzip压缩功能</h2>
-
-<h3>压缩</h3>
-
-<p>创建目标文件</p>
-
-<pre><code>dstFile, err := os.Create(dstPath)
-</code></pre>
-
-<p>创建Writer</p>
-
-<pre><code>gw := gzip.NewWriter(dstFile)
-</code></pre>
-
-<p>将源内容写入Writer</p>
-
-<pre><code>if _, err = io.Copy(gw, srcFile); err != nil {
-    return err
-}
-</code></pre>
-
-<h3>解压</h3>
-
-<p>打开源文件</p>
-
-<pre><code>srcFile, err := os.Open(srcPath)
-</code></pre>
-
-<p>创建Reader</p>
-
-<pre><code>gr, err := gzip.NewReader(srcFile)
-</code></pre>
-
-<p>进行解压</p>
-
-<pre><code>if _, err = io.Copy(dstFile, gr); err != nil {
-    return err
-}
-</code></pre>
-
-<h2>.tar.gz文件</h2>
-
-<p>将上面tar包进行打包和解包湿的的<code>io.Writer</code>和 <code>io.Reader</code>实参传入<code>gzip.Writer</code>和<code>gzip.Reader</code> ，即可将打包的目的文件进行压缩和解包时的源文件进行解压</p>
-
-<h3>打包压缩</h3>
-
-<pre><code>func Targz(srcPath, dstPath string) error {
-dstFile, err := os.Create(dstPath)
-if err != nil {
-    return err
-}
-defer dstFile.Close()
-gw := gzip.NewWriter(dstFile)
-defer gw.Close()
-tw := tar.NewWriter(gw)
-defer tw.Close()
-if err = tarPath(srcPath, tw); err != nil {
-    dstFile.Close()
-    os.Remove(dstPath)
-    return err
-}
-return nil
-</code></pre>
-
-<p>}</p>
-
-<h3>解压解包</h3>
-
-<pre><code>srcFile, err := os.Open(srcPath)
-if err != nil {
-    return err
-}
-gr, err := gzip.NewReader(srcFile)
-if err != nil {
-    return err
-}
-tr := tar.NewReader(gr)
-for {
-    hdr, err := tr.Next()
-    if err == io.EOF {
-        break
-    }
-    fullPath := filepath.Join(dstPath, hdr.Name)
-    os.MkdirAll(filepath.Dir(fullPath), os.ModePerm)
-    file, err := os.Create(fullPath)
-    if err != nil {
-        return err
-    }
-    if _, err := io.Copy(file, tr); err != nil {
-        return err
-    }
-    file.Close()
-}
-</code></pre>
-
-<h3>备注</h3>
-
-<p>完整源代码请参考<a href="https://github.com/jintao-zero/targz">targz</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Golang Cpu性能优化]]></title>
-    <link href="http://jintao-zero.github.io/blog/2017/01/01/golang-cpuxing-neng-you-hua/"/>
-    <updated>2017-01-01T17:18:20+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2017/01/01/golang-cpuxing-neng-you-hua</id>
-    <content type="html"><![CDATA[<p>本文根据<a href="https://blog.golang.org/profiling-go-programs">Profiling Go Programs</a>文章，进行演示如何利用Golang性能工具进行cpu性能统计和优化。</p>
-
-<h2>准备工作</h2>
-
-<p>1、Golang编译运行环境。</p>
-
-<pre><code>go version go1.7 darwin/amd64
-</code></pre>
-
-<p>2、下载<a href="https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/benchgraffiti/source-archive.zip">测试源码</a></p>
-
-<pre><code>-rw-r--r-- 1 jintao staff 16594  1  1 16:58 havlak1.go
--rw-r--r-- 1 jintao staff 16597  1  1 16:58 havlak2.go
--rw-r--r-- 1 jintao staff 16832  1  1 16:58 havlak3.go
--rw-r--r-- 1 jintao staff 16905  1  1 16:58 havlak4.go
--rw-r--r-- 1 jintao staff 17501  1  1 16:58 havlak5.go
--rw-r--r-- 1 jintao staff  9467  1  1 16:58 havlak6.go
-</code></pre>
-
-<p>havlak1-6是源文件，以及优化后的源文件</p>
-
-<h2>采集CPU性能数据</h2>
-
-<p>优化程序之前，需要采集性能数据。多种方法可以使用，本文中采用的方法是引入<code>runtime/pprof</code>包，在代码文件main函数中添加如下代码片段:</p>
-
-<pre><code>var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-
-func main() {
-    flag.Parse()
-    if *cpuprofile != "" {
-        f, err := os.Create(*cpuprofile)
-        if err != nil {
-          log.Fatal(err)
-        }
-        pprof.StartCPUProfile(f)
-        defer pprof.StopCPUProfile()
-    }
-    ... 
-</code></pre>
-
-<p>利用flag包设置并解析cpuprofile参数，传入文件名，创建文件，调用<code>ppfof.StartCPUProfile</code>方法开始进行采样，并将采样结果保存在文件中，在程序返回之前调用<code>pprof.StopCPUProfile</code>方法确保所有采样数据刷新到结果文件中。</p>
-
-<pre><code>MacBook-Pro-2:havlak_new jintao$ time ./havlak1 -cpuprofile=havlak1.prof
-# of loops: 76000 (including 1 artificial root node)
-
-real    0m21.768s
-user    0m31.026s
-sys 0m0.284s
-</code></pre>
-
-<p>产生性能文件havlak1.prof</p>
-
-<!-- more -->
-
-
-<h2>分析性能文件</h2>
-
-<p><code>go tool pprof</code>是<a href="https://code.google.com/p/gperftools/wiki/GooglePerformanceTools">Google&rsquo;s pprof C++ profiler</a>一个变种，利用go tool pprof命令读取分析性能文件:</p>
-
-<pre><code>MacBook-Pro-2:havlak_new jintao$ go tool pprof havlak1 havlak1.prof
-Entering interactive mode (type "help" for commands)
-(pprof)
-</code></pre>
-
-<p>输入<code>help</code>可以查看哪些可用命令，最常用是<code>top n</code>命令，查看前n个样本：</p>
-
-<pre><code>(pprof) top
-18750ms of 27430ms total (68.36%)
-Dropped 95 nodes (cum &lt;= 137.15ms)
-Showing top 10 nodes out of 80 (cum &gt;= 790ms)
-      flat  flat%   sum%        cum   cum%
-    3360ms 12.25% 12.25%     6790ms 24.75%  runtime.scanobject
-    2890ms 10.54% 22.79%    14430ms 52.61%  main.FindLoops
-    2470ms  9.00% 31.79%     2760ms 10.06%  runtime.mapaccess1_fast64
-    1950ms  7.11% 38.90%     5140ms 18.74%  runtime.mapassign1
-    1690ms  6.16% 45.06%     4080ms 14.87%  runtime.mallocgc
-    1630ms  5.94% 51.00%     1630ms  5.94%  runtime.heapBitsForObject
-    1580ms  5.76% 56.76%     3440ms 12.54%  main.DFS
-    1250ms  4.56% 61.32%     1250ms  4.56%  runtime.memmove
-    1140ms  4.16% 65.48%     1890ms  6.89%  runtime.greyobject
-     790ms  2.88% 68.36%      790ms  2.88%  runtime/internal/atomic.Or8
-(pprof)
-</code></pre>
-
-<p>启动性能分析时，Go程序每秒钟停止100次并对当前正在执行的goroutine调用栈进行采样。从上面数据可以看到，程序总执行时间为27430ms，采样top10函数一共占用18750ms（68.36%）。每行是一个函数的统计数据，前两列数据分别为采样时goroutine正在当前函数中的时间和占比，后两列为采样时此函数出现（正在执行或正在等待调用函数返回）的时间和占比。sum%列为前n行消耗时间之和对于总时间的占比。<code>main.FindLoops</code>函数正在执行的时间是2890ms占10.54%，在调用栈中出现的时间为14430ms占比为52.61%。<code>runtime.mapaccess1_fast64</code>执行的时间为2470ms占9.00%，在调用栈中出现的时间为2760ms占比为10.06%。使用-cum参数，按照第四第五列排序</p>
-
-<pre><code>(pprof) top5 -cum
-2.89s of 27.43s total (10.54%)
-Dropped 95 nodes (cum &lt;= 0.14s)
-Showing top 5 nodes out of 80 (cum &gt;= 14.43s)
-  flat  flat%   sum%        cum   cum%
-     0     0%     0%     22.79s 83.08%  runtime.goexit
-     0     0%     0%     14.52s 52.93%  main.main
-     0     0%     0%     14.52s 52.93%  runtime.main
-     0     0%     0%     14.43s 52.61%  main.FindHavlakLoops
- 2.89s 10.54% 10.54%     14.43s 52.61%  main.FindLoops
-(pprof)
-</code></pre>
-
-<p>调用栈采样数据中关于函数间的调用关系可以有其他的有趣方式进行展现。比如<code>web</code>命令输出一个图片并用浏览器打开。<code>gv</code>命令写PostScript并在Ghostview中打开。</p>
-
-<pre><code>(pprof) web
-(pprof)
-</code></pre>
-
-<p>以下为图片部分截图： <br/>
-<img src="http://jintao-zero.github.io/images/havlak1.png" alt="web" />
-    图中每个方块对应一个单独函数，方块的大小与函数消耗的时间相对应。从X到Y的边显示X调用Y；边上的数字代表在被调用函数中消耗的时间。从图中我们可以发现在runtime.mapaccess1_fast64和runtime.mapassign1函数上消耗了较多时间。<br/>
-    可以只显示包含某个函数的调用关系图：</p>
-
-<pre><code>(pprof) web mapaccess
-(pprof)
-</code></pre>
-
-<p><img src="http://jintao-zero.github.io/images/havlak1-mapaccess.png" alt="mapaccess" /><br/>
-从上图我们可以发现主要是main.DFS和main.FindLoops函数调用了runtime.mapaccess<br/>
-接下来重点分析<code>main.DFS</code>和<code>main.FindLoops</code>两个函数的时间消耗情况：</p>
-
-<pre><code>(pprof) list DFS
-Total: 27.43s
-ROUTINE ======================== main.DFS in /Users/jintao/Project/opensource/benchgraffiti/havlak_new/havlak1.go
-     1.58s      6.84s (flat, cum) 24.94% of Total
-         .          .    235:   return false
-         .          .    236:}
-         .          .    237:
-         .          .    238:// DFS - Depth-First-Search and node numbering.
-         .          .    239://
-      20ms       20ms    240:func DFS(currentNode *BasicBlock, nodes []*UnionFindNode, number map[*BasicBlock]int, last []int, current int) int {
-     140ms      140ms    241:   nodes[current].Init(currentNode, current)
-         .      310ms    242:   number[currentNode] = current
-         .          .    243:
-         .          .    244:   lastid := current
-        1s         1s    245:   for _, target := range currentNode.OutEdges {
-     160ms      1.31s    246:       if number[target] == unvisited {
-      40ms      3.44s    247:           lastid = DFS(target, nodes, number, last, lastid+1)
-         .          .    248:       }
-         .          .    249:   }
-     200ms      600ms    250:   last[number[currentNode]] = lastid
-      20ms       20ms    251:   return lastid
-         .          .    252:}
-         .          .    253:
-         .          .    254:// FindLoops
-         .          .    255://
-         .          .    256:// Find loops and build loop forest using Havlak's algorithm, which
-(pprof)
-</code></pre>
-
-<p><code>list DFS</code> 会列出所有匹配DFS函数名的函数。从上面的代码我们发现耗时的语句分别在<code>242 246 247 250</code>行其中 247行是与DFS行数调用有关，其他三行都是与number变量有关，number是一个map数据结构，可以考虑改为采用slice，使用block number作为索引。</p>
-
-<p>对文件进行修改，diff修改如下：</p>
-
-<pre><code>240c240
-&lt; func DFS(currentNode *BasicBlock, nodes []*UnionFindNode, number map[*BasicBlock]int, last []int, current int) int {
----
-&gt; func DFS(currentNode *BasicBlock, nodes []*UnionFindNode, number []int, last []int, current int) int {
-242c242
-&lt;   number[currentNode] = current
----
-&gt;   number[currentNode.Name] = current
-246c246
-&lt;       if number[target] == unvisited {
----
-&gt;       if number[target.Name] == unvisited {
-250c250
-&lt;   last[number[currentNode]] = lastid
----
-&gt;   last[number[currentNode.Name]] = lastid
-271c271
-&lt;   number := make(map[*BasicBlock]int)
----
-&gt;   number := make([]int, size)
-287c287
-&lt;       number[bb] = unvisited
----
-&gt;       number[bb.Name] = unvisited
-315c315
-&lt;               v := number[nodeV]
----
-&gt;               v := number[nodeV.Name]
-</code></pre>
-
-<p>测试修改后的cpu性能：</p>
-
-<pre><code>MacBook-Pro-2:havlak_new jintao$ go build havlak2.go
-MacBook-Pro-2:havlak_new jintao$ time ./havlak2 -   cpuprofile=havlak2.prof
-# of loops: 76000 (including 1 artificial root node)
-
-real    0m11.685s
-user    0m19.647s
-sys 0m0.268s
-</code></pre>
-
-<p>再次使用go tool profile工具查看topn数据：</p>
-
-<pre><code>MacBook-Pro-2:havlak_new jintao$ go tool pprof havlak2 havlak2.prof
-Entering interactive mode (type "help" for commands)
-(pprof) top
-11460ms of 16610ms total (68.99%)
-Dropped 92 nodes (cum &lt;= 83.05ms)
-Showing top 10 nodes out of 87 (cum &gt;= 540ms)
-   flat  flat%   sum%        cum   cum%
-2950ms 17.76% 17.76%     5630ms 33.90%  runtime.scanobject
-1500ms  9.03% 26.79%     4100ms 24.68%  runtime.mallocgc
-1260ms  7.59% 34.38%     1260ms  7.59%  runtime.heapBitsForObject
-1250ms  7.53% 41.90%     8700ms 52.38%  main.FindLoops
- 920ms  5.54% 47.44%     1450ms  8.73%  runtime.greyobject
- 920ms  5.54% 52.98%     2120ms 12.76%  runtime.mapassign1
- 770ms  4.64% 57.62%      780ms  4.70%  runtime.heapBitsSetType
- 760ms  4.58% 62.19%      760ms  4.58%  runtime.memmove
- 590ms  3.55% 65.74%     1500ms  9.03%  runtime.makemap
- 540ms  3.25% 68.99%      540ms  3.25%  runtime/internal/atomic.Or8
-(pprof)
-</code></pre>
-
-<p>从上面可以看到<code>main.DFS</code>已经不在topn列表上，其他函数的时间也在显著下降。现在累计有24.68%的时间用在分配内存和垃圾回收（<code>runtime.mallocgc</code>）。下面需要使用进行内存性能优化。</p>
-
-<h2>参考</h2>
-
-<p>1、<a href="https://blog.golang.org/profiling-go-programs">Golang官方博客</a><br/>
-2、<a href="https://code.google.com/p/gperftools/wiki/GooglePerformanceTools">C++ pprof</a></p>
 ]]></content>
   </entry>
   

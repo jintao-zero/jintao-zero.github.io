@@ -9,8 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="golang中time包提供了时间操作函数。 获取时间 type Time struct { // contains filtered or unexported fields
-} func Date(year int, month Month, day, hour, min, sec, nsec &hellip;">
+  <meta name="description" content="Golang标准库net/http/pprof通过HTTP服务对外提供性能统计数据，以便pprof这样的可视化工具使用。 引入此pprof库向http服务注册路径处理函数。此库注册的http服务路径都是以/debug/pprof开头。 使用方法 方式引入库 import _ "net/http/ &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +67,266 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-08T22:55:07+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>10:55 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Golang标准库<code>net/http/pprof</code>通过HTTP服务对外提供性能统计数据，以便<code>pprof</code>这样的可视化工具使用。</p>
+
+<p>引入此<code>pprof</code>库向http服务注册路径处理函数。此库注册的http服务路径都是以<code>/debug/pprof</code>开头。</p>
+
+<h2>使用方法</h2>
+
+<h3>方式引入库</h3>
+
+<pre><code>import _ "net/http/pprof"
+</code></pre>
+
+<h3>开启HTTP服务</h3>
+
+<p>如果程序中已经运行了一个或者多个HTTP服务，那么就无需再开启HTTP服务，否则需要像如下代码片段，开启一个HTTP服务：</p>
+
+<pre><code>go func() {
+    log.Println(http.ListenAndServe("localhost:6060",   nil))
+}()
+</code></pre>
+
+<p>其中地址也可以不绑定到localhost,可以选择监听所有端口,比如:</p>
+
+<pre><code>go func() {
+    log.Println(http.ListenAndServe(":6060",    nil))
+}()
+</code></pre>
+
+<h3>获取性能数据</h3>
+
+<p>1、查看堆栈性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/heap
+</code></pre>
+
+<p>2、查看30s CPU性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/profile
+</code></pre>
+
+<p>3、查看goroutine阻塞性能数据</p>
+
+<pre><code>go tool pprof http://localhost:6060/debug/pprof/block
+</code></pre>
+
+<p>4、查看5s执行栈</p>
+
+<pre><code>wget http://localhost:6060/debug/pprof/trace?seconds=5
+</code></pre>
+
+<p>5、查看所有可用性能数据</p>
+
+<pre><code>浏览器打开  http://localhost:6060/debug/pprof/
+</code></pre>
+
+<p>参考：<br/>
+<a href="https://golang.org/pkg/net/http/pprof/">Golang官博</a></p>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">golang创建、解压.tar.gz文件简单库</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-05T19:17:06+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>golang提供了<code>tar</code>包和<code>compress/gzip</code>包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。</p>
+
+<h2>tar打包功能</h2>
+
+<p>利用tar中<code>Writer</code>和<code>Reader</code>可以实现将文件和文件夹进行打包的功能。</p>
+
+<h3>打包</h3>
+
+<p>创建目标文件</p>
+
+<pre><code>f, err := os.Create(dstPath)
+</code></pre>
+
+<p>创建<code>Writer</code></p>
+
+<pre><code>tw := tar.NewWriter(f)
+</code></pre>
+
+<p>循环遍历文件夹，写入Writer</p>
+
+<pre><code>fileInfo, err := os.Stat(path)
+if err != nil {
+    return err
+}
+if fileInfo.Mode().IsRegular() {
+    header, err := tar.FileInfoHeader(fileInfo, "")
+    if err != nil {
+        return err
+    }
+    header.Name = path
+    if err = tw.WriteHeader(header); err != nil {
+        return err
+    }
+    file, err := os.Open(path)
+    if err != nil {
+        return err
+    }
+    if _, err = io.Copy(tw, file); err != nil {
+        return err
+    }
+}
+
+if fileInfo.Mode().IsDir() {
+    // tar each file and dir in the dir
+    var file *os.File
+    if file, err = os.Open(path); err != nil {
+        return err
+    }
+    fileInfos, err := file.Readdir(0)
+    if err != nil {
+        return err
+    }
+    for _, info := range fileInfos {
+        if err = tarPath(filepath.Join(path, info.Name()), tw); err != nil {
+            return err
+        }
+    }
+}
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Golang Cpu性能优化</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-01T17:18:20+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2017</span></span> <span class='time'>5:18 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>本文根据<a href="https://blog.golang.org/profiling-go-programs">Profiling Go Programs</a>文章，进行演示如何利用Golang性能工具进行cpu性能统计和优化。</p>
+
+<h2>准备工作</h2>
+
+<p>1、Golang编译运行环境。</p>
+
+<pre><code>go version go1.7 darwin/amd64
+</code></pre>
+
+<p>2、下载<a href="https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/benchgraffiti/source-archive.zip">测试源码</a></p>
+
+<pre><code>-rw-r--r-- 1 jintao staff 16594  1  1 16:58 havlak1.go
+-rw-r--r-- 1 jintao staff 16597  1  1 16:58 havlak2.go
+-rw-r--r-- 1 jintao staff 16832  1  1 16:58 havlak3.go
+-rw-r--r-- 1 jintao staff 16905  1  1 16:58 havlak4.go
+-rw-r--r-- 1 jintao staff 17501  1  1 16:58 havlak5.go
+-rw-r--r-- 1 jintao staff  9467  1  1 16:58 havlak6.go
+</code></pre>
+
+<p>havlak1-6是源文件，以及优化后的源文件</p>
+
+<h2>采集CPU性能数据</h2>
+
+<p>优化程序之前，需要采集性能数据。多种方法可以使用，本文中采用的方法是引入<code>runtime/pprof</code>包，在代码文件main函数中添加如下代码片段:</p>
+
+<pre><code>var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
+
+func main() {
+    flag.Parse()
+    if *cpuprofile != "" {
+        f, err := os.Create(*cpuprofile)
+        if err != nil {
+          log.Fatal(err)
+        }
+        pprof.StartCPUProfile(f)
+        defer pprof.StopCPUProfile()
+    }
+    ... 
+</code></pre>
+
+<p>利用flag包设置并解析cpuprofile参数，传入文件名，创建文件，调用<code>ppfof.StartCPUProfile</code>方法开始进行采样，并将采样结果保存在文件中，在程序返回之前调用<code>pprof.StopCPUProfile</code>方法确保所有采样数据刷新到结果文件中。</p>
+
+<pre><code>MacBook-Pro-2:havlak_new jintao$ time ./havlak1 -cpuprofile=havlak1.prof
+# of loops: 76000 (including 1 artificial root node)
+
+real    0m21.768s
+user    0m31.026s
+sys 0m0.284s
+</code></pre>
+
+<p>产生性能文件havlak1.prof</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -516,192 +775,6 @@ GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以�
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">冒泡、选择、插入、归并、快速、堆排序</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-08-02T20:40:24+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2015</span></span> <span class='time'>8:40 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。</p>
-
-<h1>冒泡排序</h1>
-
-<p><a href="http://baike.baidu.com/view/254413.htm#ref_[1]_254413">冒泡排序算法</a>（百度百科）的运作如下：（从后往前）<br/>
-1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。<br/>
-2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对。在这一点，最后的元素应该会是最大的数。<br/>
-3. 针对所有的元素重复以上的步骤，除了最后一个。<br/>
-4. 持续每次对越来越少的元素重复上面的步骤，直到没有任何一对数字需要比较。</p>
-
-<p>代码实现</p>
-
-<pre><code>void BubbleSort(int array[], int len)    
-{  
-    for (int i = 0; i &lt; len-1; i++) {
-        for (int j = 0; j &lt; len-i-1; j++) {
-            if (array[j+1] &lt; array[j]) {
-                int tmp = array[j+1];
-                array[j+1] = array[j];
-                array[j] = tmp;
-            }
-        }
-    }
-}
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/08/02/mou-pao-,-xuan-ze-,-cha-ru-,-gui-bing-,-kuai-su-,-dui-pai-xu/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Libnetfilter_queue实战</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-06-16T18:53:42+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>6:53 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>项目需要将某个进程发出的报文截获，待用户态业务处理后再将报文送回系统协议栈中处理。调研后，采用iptables添加防火墙规则截获报文传递到用户态队列，用户态进程使用libnetfilter_queue库接受报文，待业务处理后，将报文送回系统协议栈这样的方案完成。下面介绍下，学习的几个知识点：</p>
-
-<h1>netfilter</h1>
-
-<h2>简介</h2>
-
-<p><a href="http://netfilter.org/">netfilter</a>是Linux 2.4.x开始以后内核版本中的报文过滤框架。netfilter框架的用户态工具是<a href="http://netfilter.org/projects/iptables/index.html">iptables</a>防火墙配置工具。<br/>
-netfilter框架实现了报文过滤，网络地址转换，端口转换和其他报文管理。它是对Linux 2.2.x ipchains和Linux 2.0.x ipfwadm系统的重构和显著改进。<br/>
-netfilter是位于Linux内核中的一组回调函数集合，各个模块可以在网络协议栈注册回调函数。每个报文到来时，将会遍历协议栈中的回调函数并调用。<br/>
-iptables定义了规则集的通用格式。IP table中的每一条规则是有一些分类和相关的目标组成。<br/>
-netfilter，ip_tables，connection tracking（ip_conntrack，nf_conntrack）和NAT子系统是netfilter的主要组成部分。</p>
-
-<h2>主要特性</h2>
-
-<ul>
-<li>无状态报文过滤</li>
-<li>有状态报文过滤</li>
-<li>所有网络地址和端口转换，比如NAT/NAPT(IPv4和IPv6)</li>
-<li>灵活的、可扩展的框架</li>
-<li>为第三方扩展提供API访问网络各层</li>
-</ul>
-
-
-<h2>可以做哪些</h2>
-
-<ul>
-<li>基于无状态或者有状态报文过滤构建互联网防火墙</li>
-<li>托管高可用有状态或者无状态的防火墙集群</li>
-<li>使用NAT和ip伪装共享共网ip</li>
-<li>使用NAT实现传输代理</li>
-<li>与tc和iproute2系统一起构建复杂Qos和策略路由器</li>
-<li>更进一步进行报文管理，比如修改IP头中的TOS/DSCP/ECN</li>
-</ul>
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">使用FIFO命名管道进行进程间通讯</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-06-14T15:56:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:56 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>管道是进程间通讯的一种方式。使用<code>pipe</code>，<code>popen</code>，<code>pclose</code>，等接口我们可以使用管道来进行进程间通讯。但是这一种管道只能由相关进程使用，这些相关进程的共同祖先进程创建了管道。通过FIFO，也称为命名管道，不相关的进程也可以进行通讯。</p>
-
-<h1>创建命名管道</h1>
-
-<p>调用mkfifo接口创建命名管道：</p>
-
-<pre><code>#include &lt;sys/types.h&gt;
-#include &lt;sys/stat.h&gt;
-int mkfifo(const char *path, mode_t mode);
-</code></pre>
-
-<p>创建FIFO类似于创建文件。FIFO的路径名存在于文件系统中。FIFO是一种文件类型。stat结构成员st_mode的编码指明文件是否是FIFO类型。可以用S_ISFIFO宏对此进行测试。 mkfifo函数创建一个路径名为path的fifo。mode和umask掩码规定了命名管道的访问权限。<br/>
-参数：<br/>
-path是管道在文件系统中的存在路径。<br/>
-mode于open函数中定义的mode一样。</p>
-
-<p>返回值：<br/>
-成功返回0。失败返回-1，同时设置errno错误码。</p>
-
-<p>错误原因：</p>
-
-<ul>
-<li>ENOTSUP       系统内核不支持fifo</li>
-<li>ENOTDIR       path前缀不是合法目录</li>
-<li>ENAMETOOLONG  path路径太长</li>
-<li>EACCESS       用户对于path中的目录没有权限访问</li>
-<li>EROFS         path指定的目录在只读文件系统</li>
-<li><p>EEXIST        path指定文件已经存在</p>
-
-<p>  </div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -719,23 +792,23 @@ mode于open函数中定义的mode一样。</p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng/">使用daemontools管理进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/">RabbitMQ 入门实践</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
       </li>
     
       <li class="post">
         <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/08/09/opensslshi-zhan/">Openssl实战</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
       </li>
     
   </ul>
@@ -745,13 +818,13 @@ mode于open函数中定义的mode一样。</p>
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
-<li class='category'><a href='/blog/categories/dev/'>dev (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (4)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (3)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (4)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -776,8 +849,9 @@ mode于open函数中定义的mode一样。</p>
 <a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
 <a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/crypt/">crypt</a>
+<a style="font-size: 90%" href="/blog/tags/daemon/">daemon</a>
 <a style="font-size: 90%" href="/blog/tags/go/">go</a>
-<a style="font-size: 147%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 162%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>

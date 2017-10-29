@@ -9,8 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="使用Golang实现一个HTTP代理程序，程序部署在海外VPS节点，可以实现翻墙功能
-HTTP Proxy的基本原理是将客户端HTTP请求发送到目标主机，将目标主机返回的HTTP应答转发到客户端,对于HTTPS协议略有不同，HTTPS协议需要Proxy先建立一条到目标主机的链路， &hellip;">
+  <meta name="description" content="Test packages 使用： go test [build/test flags] [packages] [build/test flags &amp; test binary flags] Go test命令自动测试packages参数指定的包。它以如下格式打印测试结果摘要信息： ok &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +67,217 @@ HTTP Proxy的基本原理是将客户端HTTP请求发送到目标主机，将目
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/05/29/go-testming-ling-xiang-jie/">Go Test命令详解</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-05-29T10:58:11+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>10:58 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>Test packages</h2>
+
+<p>使用：</p>
+
+<pre><code>go test [build/test flags] [packages] [build/test flags &amp; test binary flags]
+</code></pre>
+
+<p><code>Go test</code>命令自动测试<code>packages</code>参数指定的包。它以如下格式打印测试结果摘要信息：</p>
+
+<pre><code>ok   archive/tar   0.011s
+FAIL archive/zip   0.022s
+ok   compress/gzip 0.033s
+...
+</code></pre>
+
+<p><code>Go test</code>重新编译每个包中文件名为<code>*_test.go</code>模式的文件，将这些文件与测试库进行链接、运行。<br/>
+go tool工具会忽略名为<code>testdata</code>的文件夹，使用这个文件夹来保存test中需要的数据。<br/>
+默认情况，<code>go tes</code>不需要任何参数。它会编译并当前目录下所有test文件。  <br/>
+测试包被安装在临时目录，所以它不会涉及到非测试包安装目录。<br/>
+除了build标志，<code>go test</code>自身支持的标志如下：</p>
+
+<pre><code>-args
+    将-args后面的参数不做任何修改和解释的传递给test可执行文件。  
+    需要在这个参数之前指定包名。  
+-c 
+    编译test二进制文件为pkg.test但是不运行。pkg为引入包路径的最后一层。
+    可以使用-o参数修改可执行文件名。  
+-exec xprog
+    使用xprog运行test二进制文件。行为表现与go run一样。详情参照go help run  
+-i 
+    安装测试依赖的包。但是不运行测试。  
+-o file
+    指定可执行测试文件名并运行测试。  
+</code></pre>
+
+<p>test二进制可执行文件接受参数来控制test执行。这些参数也可以在<code>go test</code>使用：</p>
+
+<pre><code>-bench regexp
+    运行负荷正则表达式的子性能测试。
+-benchmem
+    性能测试中的内存统计信息。  
+-benchtime t
+    运行足够多的性能测试用例次数，使测试时间达到t，t的类型为time.Duration(比如，-benchtime 1h30s)。默认是1秒。    
+-blockprofile block.out  
+    所有测试结束后，将goroutine blocking 性能数据写入指定文件。  
+-blockprofilerate n  
+    使用runtime.SetBlockProfileRate控制goroutine blocking性能数据格式。  
+-count n  
+    运行每个测试用例和性能测试用例n次。如果设置了-cpu参数，每个GOMAXPROCS运行n次。  
+-cover 
+    启动覆盖率分析  
+-covermode set,count,atomic
+    设置覆盖分析模式。如果设置了-race，则覆盖分析模式为atomic，否则为默认set模式。
+    set：
+    count：
+    atomic：
+-coverpkg pkg1,pkg2,pkg3
+    每个测试中都对给定列表中的包进行覆盖分析。默认是对正在进行测试的包进行分析。
+-coverprofile cover.out
+    所有测试都通过后，输出一个覆盖测试文件。  
+-cpu 1,2,4  
+    指定一个GOMAXPROCS列表，默认是GOMAXPROCS当前值。  
+</code></pre>
+</div>
+  
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/04/02/socks5-xie-yi/">[翻译]SOCKS5 协议</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-04-02T16:38:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>2</span><span class='date-suffix'>nd</span>, <span class='date-year'>2017</span></span> <span class='time'>4:38 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2>介绍</h2>
+
+<p>网络防火墙用来隔离组织内部网络和外部网络，比如<code>INTERNET</code>。这些防火墙系统扮演着内外部网络之间的应用层网关，用来控制<code>TELNET</code>、<code>FTP</code>和<code>SMTP</code>等协议的进入。随着更多复杂应用层协议被设计用来加速全局信息发现，需要为这些协议提供一个框架以便透明和安全的通过防火墙。 也需要提供为这种通过提供可靠授权。 <br/>
+<code>SOCKS5</code>协议被设计用来为基于TCP或者UDP协议的client-server模式应用程序方便且安全的使用网络防火墙服务。这个协议概念上认为是在应用层和传输层之间，因此它不提供网络层网关服务，比如转发<code>ICMP</code>消息。</p>
+
+<p>已经存在了一个<code>SOCKS4</code>协议，这个版本的协议在4版本的基础上支持UDP协议，包含通用授权范型和支持域名和V6版本IP地址。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/04/02/socks5-xie-yi/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/03/30/sshsui-dao-zhuan-fa-gong-neng/">SSH常用设置(免密、别名登录、隧道转发)</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-03-30T19:48:56+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:48 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>作为程序员每天都需要使用ssh登录到远程主机进行部署调试，本篇将总结ssh工具几个常用方法：</p>
+
+<ul>
+<li><a href="#password-less">免密登录</a></li>
+<li><a href="#alias">别名登录</a></li>
+<li><a href="#tunnel">隧道转发</a></li>
+</ul>
+
+
+<h2><a name="password-less"> </a>免密登录</h2>
+
+<ol>
+<li>在本地机器上生成pubkey</li>
+<li>将pubkey拷贝到远程主机~/.ssh/authorized_keys文件中</li>
+</ol>
+
+
+<h2><a name="alias"/> </a>别名登录</h2>
+
+<p>在免密登录的基础上， 可以方便实现别名登录
+在本地~/.ssh/config文件中配置远程主机相关信息：</p>
+
+<pre><code>Host vps
+    HostName 45.78.61.64
+    Port 22
+    User root
+</code></pre>
+
+<p> 本地可以使用</p>
+
+<pre><code>ssh vps
+</code></pre>
+
+<p> 这样的形式直接登录目标主机</p>
+
+<h2><a name="tunnel"> </a> 隧道转发</h2>
+
+<p>远端主机可能设置了防火墙，只开放少数端口，比如远端机器只开放了22 ssh端口，如果本地想连接远端3306端口的话，会被防火墙拒绝，这个时候我们可以利用ssh的隧道功能，将本地流量通过ssh tunnel转发远端目标端口，在~/.ssh/config配置文件中添加如下配置：</p>
+
+<pre><code>Host tunnel
+    HostName 45.78.61.64
+    Port 27764
+    LocalForward 3306 127.0.0.1:3306
+    User root
+</code></pre>
+
+<p> 上面的意思是将本地3306端口流量隧道转发到45.78.61.64 3306端口
+    添加配置后，需要运行下面命令：</p>
+
+<pre><code>ssh -f -N tunnel 
+</code></pre>
+
+<p>使用lsof -i:3306我们可以看到ssh程序正在监听这个端口，当有数据从这个端口进来时，ssh程序会将数据转发到远端sshd服务端程序，服务端程序会将流量转发到远端本地3306端口，ssh隧道数据是加密的，我上一篇开发的<a href="http://jintao-zero.github.io/blog/2017/03/29/golang-shi-xian-httpdai-li/">http proxy</a>我们可以利用ssh可以利用这个功能躲避GFW</p>
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -565,266 +775,6 @@ testfunc    description of testing functions
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/01/08/golang-tong-guo-httpfu-wu-huo-qu-cheng-xu-xing-neng-tong-ji-shu-ju/">Golang 通过http服务获取程序性能统计数据</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-01-08T22:55:07+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>10:55 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Golang标准库<code>net/http/pprof</code>通过HTTP服务对外提供性能统计数据，以便<code>pprof</code>这样的可视化工具使用。</p>
-
-<p>引入此<code>pprof</code>库向http服务注册路径处理函数。此库注册的http服务路径都是以<code>/debug/pprof</code>开头。</p>
-
-<h2>使用方法</h2>
-
-<h3>方式引入库</h3>
-
-<pre><code>import _ "net/http/pprof"
-</code></pre>
-
-<h3>开启HTTP服务</h3>
-
-<p>如果程序中已经运行了一个或者多个HTTP服务，那么就无需再开启HTTP服务，否则需要像如下代码片段，开启一个HTTP服务：</p>
-
-<pre><code>go func() {
-    log.Println(http.ListenAndServe("localhost:6060",   nil))
-}()
-</code></pre>
-
-<p>其中地址也可以不绑定到localhost,可以选择监听所有端口,比如:</p>
-
-<pre><code>go func() {
-    log.Println(http.ListenAndServe(":6060",    nil))
-}()
-</code></pre>
-
-<h3>获取性能数据</h3>
-
-<p>1、查看堆栈性能数据</p>
-
-<pre><code>go tool pprof http://localhost:6060/debug/pprof/heap
-</code></pre>
-
-<p>2、查看30s CPU性能数据</p>
-
-<pre><code>go tool pprof http://localhost:6060/debug/pprof/profile
-</code></pre>
-
-<p>3、查看goroutine阻塞性能数据</p>
-
-<pre><code>go tool pprof http://localhost:6060/debug/pprof/block
-</code></pre>
-
-<p>4、查看5s执行栈</p>
-
-<pre><code>wget http://localhost:6060/debug/pprof/trace?seconds=5
-</code></pre>
-
-<p>5、查看所有可用性能数据</p>
-
-<pre><code>浏览器打开  http://localhost:6060/debug/pprof/
-</code></pre>
-
-<p>参考：<br/>
-<a href="https://golang.org/pkg/net/http/pprof/">Golang官博</a></p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">golang创建、解压.tar.gz文件简单库</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-01-05T19:17:06+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>golang提供了<code>tar</code>包和<code>compress/gzip</code>包进行文件打包和压缩，但是没有函数同时进行打包和压缩，下面利用打包和压缩功能，实现一个简单的制作和解压.tar.gz文件的功能。</p>
-
-<h2>tar打包功能</h2>
-
-<p>利用tar中<code>Writer</code>和<code>Reader</code>可以实现将文件和文件夹进行打包的功能。</p>
-
-<h3>打包</h3>
-
-<p>创建目标文件</p>
-
-<pre><code>f, err := os.Create(dstPath)
-</code></pre>
-
-<p>创建<code>Writer</code></p>
-
-<pre><code>tw := tar.NewWriter(f)
-</code></pre>
-
-<p>循环遍历文件夹，写入Writer</p>
-
-<pre><code>fileInfo, err := os.Stat(path)
-if err != nil {
-    return err
-}
-if fileInfo.Mode().IsRegular() {
-    header, err := tar.FileInfoHeader(fileInfo, "")
-    if err != nil {
-        return err
-    }
-    header.Name = path
-    if err = tw.WriteHeader(header); err != nil {
-        return err
-    }
-    file, err := os.Open(path)
-    if err != nil {
-        return err
-    }
-    if _, err = io.Copy(tw, file); err != nil {
-        return err
-    }
-}
-
-if fileInfo.Mode().IsDir() {
-    // tar each file and dir in the dir
-    var file *os.File
-    if file, err = os.Open(path); err != nil {
-        return err
-    }
-    fileInfos, err := file.Readdir(0)
-    if err != nil {
-        return err
-    }
-    for _, info := range fileInfos {
-        if err = tarPath(filepath.Join(path, info.Name()), tw); err != nil {
-            return err
-        }
-    }
-}
-</code></pre>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/01/05/golangchuang-jian-,-jie-ya-dot-tar-dot-gzwen-jian/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Golang Cpu性能优化</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-01-01T17:18:20+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2017</span></span> <span class='time'>5:18 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>本文根据<a href="https://blog.golang.org/profiling-go-programs">Profiling Go Programs</a>文章，进行演示如何利用Golang性能工具进行cpu性能统计和优化。</p>
-
-<h2>准备工作</h2>
-
-<p>1、Golang编译运行环境。</p>
-
-<pre><code>go version go1.7 darwin/amd64
-</code></pre>
-
-<p>2、下载<a href="https://storage.googleapis.com/google-code-archive-source/v2/code.google.com/benchgraffiti/source-archive.zip">测试源码</a></p>
-
-<pre><code>-rw-r--r-- 1 jintao staff 16594  1  1 16:58 havlak1.go
--rw-r--r-- 1 jintao staff 16597  1  1 16:58 havlak2.go
--rw-r--r-- 1 jintao staff 16832  1  1 16:58 havlak3.go
--rw-r--r-- 1 jintao staff 16905  1  1 16:58 havlak4.go
--rw-r--r-- 1 jintao staff 17501  1  1 16:58 havlak5.go
--rw-r--r-- 1 jintao staff  9467  1  1 16:58 havlak6.go
-</code></pre>
-
-<p>havlak1-6是源文件，以及优化后的源文件</p>
-
-<h2>采集CPU性能数据</h2>
-
-<p>优化程序之前，需要采集性能数据。多种方法可以使用，本文中采用的方法是引入<code>runtime/pprof</code>包，在代码文件main函数中添加如下代码片段:</p>
-
-<pre><code>var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
-
-func main() {
-    flag.Parse()
-    if *cpuprofile != "" {
-        f, err := os.Create(*cpuprofile)
-        if err != nil {
-          log.Fatal(err)
-        }
-        pprof.StartCPUProfile(f)
-        defer pprof.StopCPUProfile()
-    }
-    ... 
-</code></pre>
-
-<p>利用flag包设置并解析cpuprofile参数，传入文件名，创建文件，调用<code>ppfof.StartCPUProfile</code>方法开始进行采样，并将采样结果保存在文件中，在程序返回之前调用<code>pprof.StopCPUProfile</code>方法确保所有采样数据刷新到结果文件中。</p>
-
-<pre><code>MacBook-Pro-2:havlak_new jintao$ time ./havlak1 -cpuprofile=havlak1.prof
-# of loops: 76000 (including 1 artificial root node)
-
-real    0m21.768s
-user    0m31.026s
-sys 0m0.284s
-</code></pre>
-
-<p>产生性能文件havlak1.prof</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/01/01/golang-cpuxing-neng-you-hua/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -842,23 +792,23 @@ sys 0m0.284s
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng/">使用daemontools管理进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/">RabbitMQ 入门实践</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
       </li>
     
       <li class="post">
         <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/08/09/opensslshi-zhan/">Openssl实战</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/08/09/zookeepershi-zhan/">Zookeeper实战</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2017/06/20/golangjia-liang-bian-du-suo-dao-zhi-cheng-xu-si-suo-wen-ti-ji-lu/">Golang加两遍读锁导致程序死锁问题分析</a>
       </li>
     
   </ul>
@@ -868,13 +818,13 @@ sys 0m0.284s
  <ul id="categories">
 	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
 <li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
-<li class='category'><a href='/blog/categories/dev/'>dev (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (4)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (3)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (4)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -899,8 +849,9 @@ sys 0m0.284s
 <a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
 <a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
 <a style="font-size: 90%" href="/blog/tags/crypt/">crypt</a>
+<a style="font-size: 90%" href="/blog/tags/daemon/">daemon</a>
 <a style="font-size: 90%" href="/blog/tags/go/">go</a>
-<a style="font-size: 147%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 162%" href="/blog/tags/golang/">golang</a>
 <a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>

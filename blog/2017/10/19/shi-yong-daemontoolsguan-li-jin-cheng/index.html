@@ -1,0 +1,481 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>使用daemontools管理进程 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="本片博客介绍如何使用daemontools管理在后台一直运行的进程，当程序异常退出时，deemontools可以将进程重新拉起。 安装 deemontools只可以运行在UNIX系统。
+步骤： 创建/package目录 mkdir -p /package chmod 1755 /package &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">使用daemontools管理进程</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-10-19T11:23:50+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>11:23 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>本片博客介绍如何使用<a href="http://cr.yp.to/daemontools.html">daemontools</a>管理在后台一直运行的进程，当程序异常退出时，deemontools可以将进程重新拉起。</p>
+
+<h2>安装</h2>
+
+<p>deemontools只可以运行在UNIX系统。<br/>
+步骤：</p>
+
+<ul>
+<li><p>创建<code>/package</code>目录</p>
+
+<pre><code>  mkdir -p /package  
+  chmod 1755 /package  
+  cd /package  
+</code></pre></li>
+<li><p>下载<a href="http://cr.yp.to/daemontools/daemontools-0.76.tar.gz">daemontools-0.76.tar.gz</a></p>
+
+<pre><code>  cd /package  
+  wget http://cr.yp.to/daemontools/daemontools-0.76.tar.gz  
+  tar xzvf daemontools-0.76.tar.gz   
+  cd admin/daemontools   
+</code></pre></li>
+<li><p>编译安装</p>
+
+<pre><code>  package/install
+</code></pre>
+
+<p>在CentOS 7上编译时报错：</p>
+
+<pre><code>  /usr/bin/ld: errno: TLS defini  tion in /lib/libc.so.6 section .tbss mismatches non-TLS reference in envdir.o
+</code></pre>
+
+<p>解决方法如下：</p>
+
+<pre><code>  将admin/daemontools-0.76/src/error.h中的extern int errno;替换为#include &lt;errno.h&gt;
+</code></pre>
+
+<p>安装完成后会自动创建<code>/command  /service</code>两个目录，command目录下面包含各种daemontools工具 service目录包含daemontools管理的服务</p></li>
+</ul>
+
+
+<!-- more -->
+
+
+<h2>配置daemontools开机启动</h2>
+
+<p>CentOS 7使用systemd来管理服务，新建/etc/systemd/system/daemontools.service文件，将如下内容放到新建文件中：</p>
+
+<pre><code>    [Unit]
+    Description=daemontools Start supervise
+    After=getty.target
+    [Service]
+    Type=simple
+    User=root
+    Group=root
+    Restart=always
+    ExecStart=/command/svscanboot /dev/ttyS0
+    TimeoutSec=0
+    [Install]
+    WantedBy=multi-user.target
+</code></pre>
+
+<ul>
+<li><p>启动服务</p>
+
+<pre><code>  systemctl start deamontools.service
+</code></pre></li>
+<li><p>查看服务状态</p>
+
+<pre><code>  systemctl status deamontools.service
+</code></pre></li>
+<li><p>设置开机启动</p>
+
+<pre><code>  systemctl enable daemontools.service
+</code></pre></li>
+</ul>
+
+
+<h2>使用daemontools管理进程</h2>
+
+<p>   daemontools.service服务的启动进程为/command/svscanboot，查看svscanboot程序的进程树：</p>
+
+<pre><code>    [root@hq-test command]# ps aux | grep svs
+    root     19658  0.0  0.0 113116  1428 ?        Ss   Oct18   0:00 /bin/sh /command/svscanboot /dev/ttyS0
+    root     19660  0.0  0.0   4344   480 ?        S    Oct18   0:00 svscan /service
+    root     30566  0.0  0.0 112640   956 pts/0    R+   14:35   0:00 grep --color=auto svs
+    [root@hq-test command]# pstree -ap 19658
+    svscanboot,19658 /command/svscanboot /dev/ttyS0
+      ├─readproctitle,19661 service errors:...
+        └─svscan,19660 /service
+              └─supervise,20625 test
+                        └─test,22043
+</code></pre>
+
+<p>   通过进程树我们看到svscanboot进程启动svscan进程，svscan读取/service目录，svscan启动supervise进程管理我们的应用进程test
+   下面讲解如何向daemontools添加一个应用进程:<br/>
+   应用进程所在目录为：<code>/tmp/test</code></p>
+
+<pre><code>    [root@hq-test test]# ls
+    test
+    [root@hq-test test]#
+</code></pre>
+
+<ul>
+<li><p> 在应用进程所在文件夹新建run文件</p>
+
+<pre><code>[root@hq-test test]# cat run
+#!/bin/sh
+exec /tmp/test/test 1&gt;&gt;/tmp/test/1.out 2&gt;&amp;1
+[root@hq-test test]# pwd
+/tmp/test
+[root@hq-test test]# ls
+run  test
+[root@hq-test test]#
+</code></pre>
+
+<ul>
+<li><p>向svscanboot注册服务</p>
+
+<p>  [root@hq-test test]# ln -s /tmp/test /service/test
+  [root@hq-test test]# ls /service/
+  test
+  [root@hq-test test]# ls -al /service/
+  total 8
+  drwxr-xr-x   2 root root 4096 Oct 19 17:23 .
+  drwxr-xr-x. 23 root root 4096 Oct 18 19:25 ..
+  lrwxrwxrwx   1 root root    9 Oct 19 17:23 test -> /tmp/test
+  [root@hq-test test]#</p>
+
+<p> 在/service目录中建立到应用程序目录的软连接后，svscan将会新建supervise进程，启动应用进程:</p>
+
+<p>  [root@hq-test test]# pstree -ap 19658
+  svscanboot,19658 /command/svscanboot /dev/ttyS0
+    ├─readproctitle,19661 service errors:&hellip;
+      └─svscan,19660 /service
+            └─supervise,5821 test
+                      └─test,5822</p></li>
+<li><p>查看服务状态
+  svstat services
+  services 为/service目录下的软链接</p>
+
+<p>  [root@hq-test test]# svstat /service/test/
+  /service/test/: up (pid 5822) 303 seconds</p></li>
+<li><p>管理服务</p>
+
+<p> svc opts services
+ opts包含如下选项：</p>
+
+<pre><code>  -u: Up。 如果服务不在运行，启动服务。如果服务停止了，重启服务。  
+  -d: Down。 如果服务在运行，发送一个TERM信号，之后发送CONT信号。服务停止后，不重启服务。  
+  -o: Once。如果服务不在运行，则启动服务。服务停止后，不在启动服务。  
+  -p: Pause。向服务发送STOP信号。  
+  -c: Continue。向服务发送一个CONT信号。  
+  -h: Hangup。向服务发送一个HUP信号。  
+  -a: Alarm。向服务发送一个ALARM信号。  
+  -i: Interrupt。向服务发送一个INT信号。  
+  -t: Terminate。向服务发送一个TERM信号。  
+  -k: Kill。 向服务发送一个KILL信号。  
+  -x: Exit。服务进程退出后supervise将会退出。  
+</code></pre>
+
+<p>停止服务进程：</p>
+
+<pre><code>  [root@hq-test test]# pstree -pa 19658
+  svscanboot,19658 /command/svscanboot /dev/ttyS0
+    ├─readproctitle,19661 service errors:...
+      └─svscan,19660 /service
+            └─supervise,10630 test
+                      └─test,10631
+  [root@hq-test test]# svstat /service/test/
+  /service/test/: up (pid 10631) 67 seconds
+  [root@hq-test test]# svc -d /service/test/
+  [root@hq-test test]# svstat /service/test/
+  /service/test/: down 5 seconds, normally up
+  [root@hq-test test]#
+</code></pre></li>
+</ul>
+
+
+<p> 重启服务进程：</p>
+
+<pre><code>   [root@hq-test test]# svc -u /service/test/
+   [root@hq-test test]# svstat /service/test/
+   /service/test/: up (pid 10750) 2 seconds
+   [root@hq-test test]# pstree -pa 19658
+   svscanboot,19658 /command/svscanboot /dev/ttyS0
+     ├─readproctitle,19661 service errors:...
+       └─svscan,19660 /service
+             └─supervise,10630 test
+                       └─test,10750
+   [root@hq-test test]# svstat /service/test/
+   /service/test/: up (pid 10750) 12 seconds
+   [root@hq-test test]#
+</code></pre>
+
+<p>删除服务：<br/>
+       先删除/service目录中的服务链接，
+       svc 命令中使用服务的目标链接</p>
+
+<pre><code>   [root@hq-test test]# rm /service/test
+   rm: remove symbolic link ‘/service/test’? y
+   [root@hq-test test]# svc -dx /tmp/test
+   [root@hq-test test]# pstree -pa 19658
+   svscanboot,19658 /command/svscanboot /dev/ttyS0
+     ├─readproctitle,19661 service errors:...
+       └─svscan,19660 /service
+   [root@hq-test test]#
+</code></pre>
+
+<h2>参考</h2>
+
+<ul>
+<li><a href="http://cr.yp.to/daemontools/svc.html">daemontools</a></li>
+</ul>
+</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-10-19T11:23:50+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>11:23 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ops/'>ops</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/" title="Previous Post: RabbitMQ 入门实践">&laquo; RabbitMQ 入门实践</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/" title="Next Post: Go context包源码分析">Go context包源码分析 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng/">使用daemontools管理进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/">RabbitMQ 入门实践</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (4)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (4)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
+<li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/crypt/">crypt</a>
+<a style="font-size: 90%" href="/blog/tags/daemon/">daemon</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 162%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
+<a style="font-size: 90%" href="/blog/tags/ops/">ops</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+<a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/tls/">tls</a>
+<a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

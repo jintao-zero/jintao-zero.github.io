@@ -3,6 +3,30 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/</loc>
+    
+    <lastmod>2017-10-26T10:38:30+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>http://jintao-zero.github.io/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng/</loc>
+    
+    <lastmod>2017-10-19T11:23:50+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
+    <loc>http://jintao-zero.github.io/blog/2017/09/21/rabbitmq-ru-men-shi-jian/</loc>
+    
+    <lastmod>2017-09-21T20:31:11+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/</loc>
     
     <lastmod>2017-09-04T18:44:00+08:00</lastmod>
@@ -341,14 +365,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2017-09-04T20:23:38+08:00</lastmod>
+    <lastmod>2017-10-29T22:03:04+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2017-09-04T20:23:38+08:00</lastmod>
+    <lastmod>2017-10-29T22:03:04+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
