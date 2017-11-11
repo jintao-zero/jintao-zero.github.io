@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-10-29T22:02:45+08:00</updated>
+  <updated>2017-11-11T15:54:20+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,234 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[使用logroate管理日志文件]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/"/>
+    <updated>2017-11-11T11:15:06+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian</id>
+    <content type="html"><![CDATA[<p>logrotate命令设计用来管理日志文件。它可以自动循环，压缩，删除和邮件发送日志文件。可以根据不同的周期（日、周、月）和大小来管理文件。<br/>
+通常情况下，logrotate作为cron天任务每天执行一次。如果logrotate一天之中被运行了多次，除非设置size作为日志循环处理条件或者使用<code>-f</code>或者<code>--force</code>参数，否则日志文件不会被多次处理。</p>
+
+<h2>logrotate如何工作</h2>
+
+<p>系统以通常是每天cron任务运行logrotate。CentOS系统中<code>logrotate</code>定时任务脚本位于<code>/etc/cron.daily</code>中。<br/>
+如果以更高的频率运行logrotate任务，那么可以将<code>logrotate</code>放置在<code>/etc/cron.hourly</code>目录中。<br/>
+logrotate运行时会读取/etc/logrotate.conf文件中的配置，根据文件中配置的信息对日志文件进行处理。<br/>
+logrotate cron任务执行脚本如下：</p>
+
+<pre><code>#!/bin/sh
+
+/usr/sbin/logrotate -s /var/lib/logrotate/logrotate.status /etc/logrotate.conf
+EXITVALUE=$?
+if [ $EXITVALUE != 0 ]; then
+    /usr/bin/logger -t logrotate "ALERT exited abnormally with [$EXITVALUE]"
+fi
+exit 0
+</code></pre>
+
+<!-- more -->
+
+
+<h2>logrotate.conf</h2>
+
+<p>logrotate主要的配置文件是<code>/etc/logrotate.conf</code>。<br/>
+这个配置文件中包含了一些logrotate在执行日志处理时的默认配置。<br/>
+在这个文件中包含了其他的配置文件：</p>
+
+<pre><code># RPM packages drop log rotation information into this directory
+include /etc/logrotate.d
+</code></pre>
+
+<p>我们可以将应用相关配置文件放置在<code>/etc/logrotate.d/</code>目录下</p>
+
+<h2>logrotate.d</h2>
+
+<p><code>ls /etc/logrotate.d/</code>可以查看系统中已经配置的应用相关配置文件：</p>
+
+<pre><code>[root@test logrotate.d]# ls -al /etc/logrotate.d/
+total 40
+drwxr-xr-x.  2 root root  4096 Nov 11 09:57 .
+drwxr-xr-x. 89 root root 12288 Nov 10 14:15 ..
+-rw-r--r--   1 root root   243 Oct 31  2016 nginx
+-rw-r--r--.  1 root root   136 Jun 10  2014 ppp
+-rw-r--r--   1 root root   127 Aug  5  2016 redis
+-rw-r--r--   1 root root   224 Nov  5  2016 syslog
+-rw-r--r--   1 root root   100 Mar  3  2017 wpa_supplicant
+-rw-r--r--   1 root root   100 Nov 15  2016 yum
+[root@test logrotate.d]#
+</code></pre>
+
+<p>配置文件中配置了关于如何对应用产生的日志文件进行处理的配置信息：</p>
+
+<pre><code>[root@test logrotate.d]# cat nginx
+    /var/log/nginx/*log {
+    create 0644 nginx nginx
+    daily
+    rotate 10
+    missingok
+    notifempty
+    compress
+    sharedscripts
+    postrotate
+        /bin/kill -USR1 `cat /run/nginx.pid 2&gt;/dev/null` 2&gt;/dev/null || true
+    endscript
+}
+</code></pre>
+
+<p>下面会对配置文件中的配置命令进行详细说明。</p>
+
+<h2>配置命令</h2>
+
+<p>可以使用通过查看man手册获取logrotate命令的相信命令参数说明：</p>
+
+<pre><code>man logrotate
+</code></pre>
+
+<p>/etc/logrotate.conf中配置了默认设置，应用配置文件会继承并覆盖/etc/logrotate.conf中的配置方法。</p>
+
+<h3>Log files</h3>
+
+<p>在上面nginx相关的配置信息中，开头的<code>/var/log/nginx/*log</code>即定义了需要处理的日志文件路径，大括号中的配置命令是对日志文件进行的具体配置。 <br/>
+配置日志文件路径时，可以使用通配符。在一个文件中可以包含多个这样的配置信息。</p>
+
+<h3>Rotate Count</h3>
+
+<p><code>rotate</code>命令配置了旧日志文件保留个数。当保留的日志文件超过这个数目时，最老的日志文件将会被删除。</p>
+
+<pre><code>rotate 10
+</code></pre>
+
+<p>这个命令高速logrotate保留10个日志文件。</p>
+
+<h3>Rotation interval</h3>
+
+<p>可以通过以下命令设置日志文件处理周期：</p>
+
+<pre><code>daily
+weekly
+monthly
+yearly
+</code></pre>
+
+<p>如果配置中没有指定时间周期，每次logrotate运行时都会日志文件进行处理，除非配置了size信息。<br/>
+如果想以不同的周期运行logrotate工具，可以设置不同的cron任务。比如，每小时执行一次logrotate工具，可以在<code>/etc/cron.hourly</code>中放置执行脚本，包含以下执行命令：</p>
+
+<pre><code>/usr/sbin/logrotate /etc/logrotate.hourly.conf
+</code></pre>
+
+<p>在<code>/etc/logrotate.hourly.conf</code>配置文件包含需要每小时进行处理的日志配置信息。</p>
+
+<h3>Size</h3>
+
+<p>可以使用<code>size</code>命令配置一个文件大小，logrotate工具根据这个文件大小来判断是否对日志文件进行处理。</p>
+
+<pre><code>size 100k
+size 100M
+size 100G
+</code></pre>
+
+<p>第一个命令配置日志文件大于100k字节时处理文件，第二个命令配置日志文件大于100M字节时处理日志文件，第三个命令配置日志文件大于100G时处理日志文件。 通常情况不建议将size设置太大。</p>
+
+<p>需要注意的是，<code>size</code>命令与<code>时间周期</code>配置是互斥的，而且<code>size</code>具有更高的优先级，当配置了<code>size</code>时，配置的<code>时间周期</code>将不起作用。</p>
+
+<h3>Compression</h3>
+
+<p>如果希望对产生的旧日志文件进行压缩处理，通常可以在<code>/etc/logrotate.conf</code>中配置<code>compress</code>，如果作为全局配置，那么所有产生的日志文件都会被压缩（以gzip格式）：</p>
+
+<pre><code>compress
+</code></pre>
+
+<p>对于具体应用来说，如果不想对日志文件进行压缩处理，那么可以使用<code>nocompress</code>进行配置：</p>
+
+<pre><code>nocompress
+</code></pre>
+
+<h3>Postrotate</h3>
+
+<p>logrotate每次处理配置文件配置的日志文件后将会运行<code>postrotate</code>脚本。通常使用<code>postrotate</code>脚本在处理日志文件后重启应用，这样应用可以使用一个新日志文件。</p>
+
+<pre><code>postrotate
+    /usr/sbin/apachectl restart &gt; /dev/null
+endscript
+</code></pre>
+
+<p><code>postrotate</code>命令表示脚本开始，<code>endscript</code>命令表示脚本结束。</p>
+
+<h3>sharedscripts</h3>
+
+<p><code>sharescripts</code>告诉logrotate只运行一次<code>postrotate</code>脚本。</p>
+
+<p>下面的脚本示例：</p>
+
+<pre><code>/data/l1/ss/test/trend/log.txt {
+    rotate 5            # 保存5个旧日志文件
+    copytruncate        # 拷贝并清除日志文件
+    #size 20M
+    maxsize 20M     # 日志文件最大大小为20M，达到20M时即被清理
+    start 0         # 日志文件从0编号
+    weekly              # 每周清理一次
+    #dateext
+    #dateyesterday
+    createolddir       # 如果日志文件保存路径不存在，则创建
+    olddir /data/l1/ss/test/trend/log      # 旧日志文件保存路径
+}
+</code></pre>
+
+<h2>测试 logrotate</h2>
+
+<p>如果怀疑日志文件没有被正确处理，或者添加了一个新配置，可以使用一些参数对logrotate进行调试。</p>
+
+<h3>Verbose</h3>
+
+<p><code>-v</code>参数，告诉logrotate输出详细信息。当logrotate没有按照设想处理日志时，使用<code>-v</code>参数进行调试。</p>
+
+<h3>Ddbug</h3>
+
+<p><code>-d</code>参数，告诉logrotate去检查日志文件，但是不实际执行处理动作。在测试新配置文件时，这个参数很有作用。<br/>
+debug参数可以帮助检查配置文件格式是否正确和是否能够发现日志文件。</p>
+
+<h3>Force</h3>
+
+<p><code>-f</code>参数，强制logrotate工具处理所有日志文件，不管当时日志文件是否满足处理条件。</p>
+
+<h3>Combining flags</h3>
+
+<p>测试命令可以组合使用。让logrotate强制执行并且输出所有详细信息，但是不实际执行，可以使用如下命令：</p>
+
+<pre><code>/usr/sbin/logrotate -vdf /etc/logrotate.conf
+</code></pre>
+
+<p>我们将会看到它会列出logrotate将会做什么，包括哪些日志文件将会处理和处理过程。</p>
+
+<p>如果想测试所有的配置信息，可以强制执行：</p>
+
+<pre><code>/usr/sbin/logrotate -vf /etc/logrotate.conf
+</code></pre>
+
+<p>日志将会强制处理，并打印详细信息。</p>
+
+<h2>状态信息</h2>
+
+<p>查看logrotate状态信息：</p>
+
+<pre><code>cat /var/lib/logrotate.status
+logrotate state -- version 2
+"/var/log/acpid.log" 2010-6-18
+"/var/log/iptables.log" 2010-6-18
+"/var/log/uucp.log" 2010-6-29
+..
+</code></pre>
+
+<h2>参考</h2>
+
+<ul>
+<li>man logrotate</li>
+<li><a href="https://support.rackspace.com/how-to/understanding-logrotate-utility/">Understanding logrotate utility</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Go Context包源码分析]]></title>
@@ -300,6 +528,8 @@ func (c *valueCtx) Value(key interface{}) interface{} {
 </code></pre>
 
 <h2>参考</h2>
+
+<p><a href="https://blog.golang.org/context">context</a></p>
 ]]></content>
   </entry>
   
@@ -3894,270 +4124,6 @@ func main()  {
 <a href="http://talks.golang.org/2012/concurrency.slide#1">Go Concurrency Patterns</a>         <br/>
 <a href="http://blog.golang.org/advanced-go-concurrency-patterns">Advanced Go Concurrency Patterns</a>      <br/>
 <a href="https://blog.golang.org/context">Go Concurrency Patterns: Context</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Golang Go命令详解]]></title>
-    <link href="http://jintao-zero.github.io/blog/2017/01/13/golang-goming-ling-xiang-jie/"/>
-    <updated>2017-01-13T19:17:12+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2017/01/13/golang-goming-ling-xiang-jie</id>
-    <content type="html"><![CDATA[<h1>go命令</h1>
-
-<p><a href="#compile">Compile packages and dependencies</a>    <br/>
-<a href="#clean">Remove object files</a><br/>
-<a href="#testing">Description of testing flags</a></p>
-
-<p><code>Go</code>工具用来管理Go语音源代码。
-使用：</p>
-
-<pre><code>go command [arguments]
-</code></pre>
-
-<p>命令为：</p>
-
-<pre><code>build       compile packages and dependencies
-clean       remove object files
-doc         show documentation for package or symbol
-env         print Go environment information
-fix         run go tool fix on packages
-fmt         run gofmt on package sources
-generate    generate Go files by processing source
-get         download and install packages and dependencies
-install     compile and install packages and dependencies
-list        list packages
-run         compile and run Go program
-test        test packages
-tool        run specified go tool
-version     print Go version
-vet         run go tool vet on packages
-</code></pre>
-
-<p>使用<code>go help [command]</code>查看命令相信信息。<br/>
-更多topic：</p>
-
-<pre><code>c           calling between Go and C
-buildmode   description of build modes
-filetype    file types
-gopath      GOPATH environment variable
-environment environment variables
-importpath  import path syntax
-packages    description of package lists
-testflag    description of testing flags
-testfunc    description of testing functions
-</code></pre>
-
-<p>使用<code>go help [topic]</code>查看topic帮助信息</p>
-
-<!-- more -->
-
-
-<h2><a name="compile"></a>编译包及其依赖</h2>
-
-<p>使用：</p>
-
-<pre><code>go build [-o output] [-i] [build flags] [packages]
-</code></pre>
-
-<p><code>Build</code>编译包，及其依赖，但是不进行安装。</p>
-
-<p>如果输入的是一些.go文件，build认为是编译由这些文件组成的单独包。
-当单独编译main包时，build将可执行程序写入输出文件，输出文件以列出的第一个.go源文件名称命名，或者以main包源文件所在的文件夹名称命名，Windows环境下，可执行成后后缀为.exe。</p>
-
-<p>当编译多个包或者一个非main包，build命令只是编译这些包，丢弃结果文件，只是查看包是否能够编译成功。</p>
-
-<p>编译包时，build忽略以<code>_test.go</code>为后缀的文件。</p>
-
-<p><code>-o</code>参数，可以用来指定编译结果存放路径。<br/>
-<code>-i</code>参数，设置将目标程序依赖的包进行安装。</p>
-
-<p>build 标志是<code>build,clean,get,install,list,run,test</code>共享的：</p>
-
-<pre><code>-a
-    force rebuilding of packages that are already up-to-date.
--n
-    print the commands but do not run them.
--p n
-    the number of programs, such as build commands or
-    test binaries, that can be run in parallel.
-    The default is the number of CPUs available.
--race
-    enable data race detection.
-    Supported only on linux/amd64, freebsd/amd64, darwin/amd64 and windows/amd64.
--msan
-    enable interoperation with memory sanitizer.
-    Supported only on linux/amd64,
-    and only with Clang/LLVM as the host C compiler.
--v
-    print the names of packages as they are compiled.
--work
-    print the name of the temporary work directory and
-    do not delete it when exiting.
--x
-    print the commands.
-
--asmflags 'flag list'
-    arguments to pass on each go tool asm invocation.
--buildmode mode
-    build mode to use. See 'go help buildmode' for more.
--compiler name
-    name of compiler to use, as in runtime.Compiler (gccgo or gc).
--gccgoflags 'arg list'
-    arguments to pass on each gccgo compiler/linker invocation.
--gcflags 'arg list'
-    arguments to pass on each go tool compile invocation.
--installsuffix suffix
-    a suffix to use in the name of the package installation directory,
-    in order to keep output separate from default builds.
-    If using the -race flag, the install suffix is automatically set to race
-    or, if set explicitly, has _race appended to it.  Likewise for the -msan
-    flag.  Using a -buildmode option that requires non-default compile flags
-    has a similar effect.
--ldflags 'flag list'
-    arguments to pass on each go tool link invocation.
--linkshared
-    link against shared libraries previously created with
-    -buildmode=shared.
--pkgdir dir
-    install and load all packages from dir instead of the usual locations.
-    For example, when building with a non-standard configuration,
-    use -pkgdir to keep generated packages in a separate location.
--tags 'tag list'
-    a list of build tags to consider satisfied during the build.
-    For more information about build tags, see the description of
-    build constraints in the documentation for the go/build package.
--toolexec 'cmd args'
-    a program to use to invoke toolchain programs like vet and asm.
-    For example, instead of running asm, the go command will run
-    'cmd args /path/to/asm &lt;arguments for asm&gt;'.
-</code></pre>
-
-<p>上面列的参数标志接收以空格为分隔符的字符串列表。如果参数中包含空格，那么需要将参数用单引号或者双引号包裹。</p>
-
-<p>使用<code>go help packages</code>查看更多关于包的信息，使用<code>go help gopath</code>查看更多关于编译和安装路径的信息，使用<code>go help c</code>查看更多关于Go和C/C++调用的帮助信息。</p>
-
-<p><code>Build</code>依附于<code>go help gopath</code>中描述的惯例。并不是所有项目遵从惯例。使用不同构建惯例或者构建系统可能会选择使用更低层的构建工具如<code>go tool compile</code>和<code>go tool link</code>。</p>
-
-<h2><a name="clean"></a>删除目标文件</h2>
-
-<p>使用：</p>
-
-<pre><code>go clean [-i] [-r] [-n] [-x] [build flags] [packages]
-</code></pre>
-
-<p>将包源代码路径中的目标文件删除。<code>go</code>命令通常在临时目录构建目标对象，所以<code>go clean</code>通常用来删除其他工具或者手动执行<code>go build</code>生成的结果文件。</p>
-
-<p>特别的，clena命令将包源码路径下生成的如下文件删除：</p>
-
-<pre><code>_obj/            old object directory, left from Makefiles
-_test/           old test directory, left from Makefiles
-_testmain.go     old gotest file, left from Makefiles
-test.out         old test log, left from Makefiles
-build.out        old test log, left from Makefiles
-*.[568ao]        object files, left from Makefiles
-
-DIR(.exe)        from go build
-DIR.test(.exe)   from go test -c
-MAINFILE(.exe)   from go build MAINFILE.go
-*.so             from SWIG
-</code></pre>
-
-<p><code>-i</code>参数指定go clean 命令将go install命令安装的包文件或者二进制文件删除。 <br/>
-<code>-n</code>参数指定go clean把要执行的删除命令打印，但是不实际执行。<br/>
-<code>-r</code>参数指定go clean对于指定包的所有依赖进行go clean命令。<br/>
-<code>-x</code>参数指定go clean在执行删除操作时将命令打印。</p>
-
-<h2><a name="testing"></a>Description of testing flags</h2>
-
-<pre><code>-bench regexp
-    Run (sub)benchmarks matching a regular expression.
-    The given regular expression is split into smaller ones by top-level '/', where each must match the corresponding part of a benchmark's identifier.
-    By default, no benchmarks run. To run all benchmarks,
-    use '-bench .' or '-bench=.'.
-
--benchmem
-    Print memory allocation statistics for benchmarks.
-
--benchtime t
-    Run enough iterations of each benchmark to take t, specified as a time.Duration (for example, -benchtime 1h30s).
-    The default is 1 second (1s).
-
--blockprofile block.out
-    Write a goroutine blocking profile to the specified file when all tests are complete.
-    Writes test binary as -c would.
-
--blockprofilerate n
-    Control the detail provided in goroutine blocking profiles by calling runtime.SetBlockProfileRate with n.
-    See 'go doc runtime.SetBlockProfileRate'.
-    The profiler aims to sample, on average, one blocking event every n nanoseconds the program spends blocked.  By default, if -test.blockprofile is set without this flag, all blocking events are recorded, equivalent to -test.blockprofilerate=1.
-
--count n
-    Run each test and benchmark n times (default 1).
-    If -cpu is set, run n times for each GOMAXPROCS value.
-    Examples are always run once.
-
--cover
-    Enable coverage analysis.
-
--covermode set,count,atomic
-    Set the mode for coverage analysis for the package[s] being tested. The default is "set" unless -race is enabled, in which case it is "atomic".
-    The values:
-        set: bool: does this statement run?
-        count: int: how many times does this statement run?
-        atomic: int: count, but correct in multithreaded tests; significantly more expensive.
-    Sets -cover.
-
--coverpkg pkg1,pkg2,pkg3
-    Apply coverage analysis in each test to the given list of packages.
-    The default is for each test to analyze only the package being tested.
-    Packages are specified as import paths.
-    Sets -cover.
-
--coverprofile cover.out
-    Write a coverage profile to the file after all tests have passed.
-    Sets -cover.
-
--cpu 1,2,4
-    Specify a list of GOMAXPROCS values for which the tests or benchmarks should be executed.  The default is the current value of GOMAXPROCS.
-
--cpuprofile cpu.out
-    Write a CPU profile to the specified file before exiting.
-    Writes test binary as -c would.
-
--memprofile mem.out
-    Write a memory profile to the file after all tests have passed.
-    Writes test binary as -c would.
-
--memprofilerate n
-    Enable more precise (and expensive) memory profiles by setting runtime.MemProfileRate.  See 'go doc runtime.MemProfileRate'.
-    To profile all memory allocations, use -test.memprofilerate=1 and pass --alloc_space flag to the pprof tool.
-
--outputdir directory
-    Place output files from profiling in the specified directory, by default the directory in which "go test" is running.
-
--parallel n
-    Allow parallel execution of test functions that call t.Parallel. The value of this flag is the maximum number of tests to run simultaneously; by default, it is set to the value of GOMAXPROCS.
-    Note that -parallel only applies within a single test binary.
-    The 'go test' command may run tests for different packages in parallel as well, according to the setting of the -p flag
-    (see 'go help build').
-
--run regexp
-    Run only those tests and examples matching the regular expression.
-    For tests the regular expression is split into smaller ones by top-level '/', where each must match the corresponding part of a test's identifier.
-
--short
-    Tell long-running tests to shorten their run time.
-    It is off by default but set during all.bash so that installing the Go tree can run a sanity check but not spend time running exhaustive tests.
-
--timeout t
-    If a test runs longer than t, panic. The default is 10 minutes (10m).
-
--trace trace.out
-    Write an execution trace to the specified file before exiting.
-
--v
-    Verbose output: log all tests as they are run. Also print all text from Log and Logf calls even if the test succeeds.
-</code></pre>
 ]]></content>
   </entry>
   

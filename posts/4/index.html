@@ -9,9 +9,8 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="本篇文章对一些常用的排序算法进行简单介绍和实现，包括冒泡排序，选择排序，插入排序、归并排序、快速排序和堆排序。 冒泡排序 冒泡排序算法（百度百科）的运作如下：（从后往前）
-1. 比较相邻的元素。如果第一个比第二个大，就交换他们两个。
-2. 对每一对相邻元素作同样的工作，从开始第一对到结尾的最后一对 &hellip;">
+  <meta name="description" content="最近开始进行Hadoop分布式计算相关内容的学习，先从搭建开发环境开始。下面记录一下搭建Hadoop开发环境的过程，以及注意点。
+本节介绍如何快速搭建和配置一个单节点Hadoop环境，便于使用Hadoop MapReduce和Hadoop Distributed File System(HDFS &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -69,6 +68,75 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Hadoop环境搭建</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-09-19T15:41:51+08:00'><span class='date'><span class='date-month'>Sep</span> <span class='date-day'>19</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:41 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>最近开始进行Hadoop分布式计算相关内容的学习，先从搭建开发环境开始。下面记录一下搭建Hadoop开发环境的过程，以及注意点。
+本节介绍如何快速搭建和配置一个单节点Hadoop环境，便于使用Hadoop MapReduce和Hadoop Distributed File System(HDFS)。</p>
+
+<h2>依赖条件</h2>
+
+<p>支持的操作系统平台  <br/>
+GNU/Linux支持作为Hadoop的开发和生产环境，Hadoop已经证明可以在GNU/Linux集群上运行2000节点。本文使用Ubuntu操作系统做为实验环境。</p>
+
+<pre><code>Linux node8 3.16.0-30-generic #40~14.04.1-Ubuntu SMP Thu Jan 15 17:43:14 UTC 2015 x86_64 x86_64 x86_64 GNU/Linux
+</code></pre>
+
+<p>Windows系统也可以搭建Hadoop集群，本文暂时没有涉及，可以参考<a href="http://wiki.apache.org/hadoop/Hadoop2OnWindows">wiki page</a></p>
+
+<p>依赖的软件</p>
+
+<ul>
+<li><p>Java环境<br/>
+  安装方法：</p>
+
+<p>  1、到oracle官网下载<a href="http://download.oracle.com/otn-pub/java/jdk/8u60-b27/jdk-8u60-linux-x64.tar.gz">JDK二进制压缩包</a><br/>
+  2、将压缩包解压到/usr/local/lib/目录下，安装目录也可以换到其他路径  <br/>
+      sudo tar xzvf jdk-8u45-linux-x64.tar.gz -C /usr/local/lib/<br/>
+  3、修改/etc/profile文件配置JAVA_HOME、PATH、CLASSPATH环境变量<br/>
+      JAVA_HOME=/usr/local/lib/jdk1.8.0_45<br/>
+      PATH=$JAVA_HOME/bin:$PATH<br/>
+      CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar <br/>
+  4、运行java -version查看是否显示java版本信息</p></li>
+<li><p>ssh远程控制软件<br/>
+  如果系统没有运行sshd服务，则Ubuntu下运行apt-get命令安装ssh服务端
+  sudo apt-get install openssh-server</p></li>
+</ul>
+
+
+<h2>下载Hadoop软件</h2>
+
+<p>本文采用的是Hadoop最新的稳定版本<a href="http://apache.fayea.com/hadoop/common/current/hadoop-2.7.1.tar.gz">2.7.1</a></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/09/19/hadoophuan-jing-da-jian/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -651,67 +719,6 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Tcp服务端并发之子进程</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-02-17T14:56:56+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:56 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>上一篇博客中实现的tcp服务端每次只能处理一个客户端连接，如果有多个客户端同时与服务端进行通讯的话，那只能进行等待上一个客户端通讯完成才可以，那么如何修改服务端为并发服务器程序呢？Unix中编写并发服务器程序最简单的方法就是fork一个子进程来服务每个客户。以下为一个典型的并发服务器的轮廓：</p>
-
-<pre><code>pid_t pid;
-int listenfd, connfd;
-listenfd = Socket(...);
-    /* fill in sockaddr_in{} with server's well-known port */
-Bind*(listenfd, ...);
-Listen(listenfd, LISTENQ);
-for ( ; ; ) {
-    connfd = Accept(listenfd, ...);  /* probably blocks */
-    if ((pid = Fork()) == 0) {
-        Close(listenfd);    /* child close listening socket */
-        doit(connfd);       /* process the request */
-        close(connfd);      /* child terminates */
-        exit(0);            /* child terminate */
-    }
-    Close(connfd);          /* parent closes connected socket */
-}
-</code></pre>
-
-<p>fork函数</p>
-
-<pre><code>pid_t fork(void);
-</code></pre>
-
-<p>fork创建一个新进程。新进程是当前运行进程的一个拷贝。fork函数一次调用，两次返回。对于子进程返回值为0，对于父进程，返回值为子进程id。</p>
-
-<p>以下为根据上面的并发服务器轮廓代码修改的tcp客户端代码：</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/5">&larr; Older</a>
@@ -729,6 +736,10 @@ for ( ; ; ) {
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
       </li>
     
@@ -744,10 +755,6 @@ for ( ; ; ) {
         <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -761,7 +768,7 @@ for ( ; ; ) {
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (4)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (5)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -792,7 +799,7 @@ for ( ; ; ) {
 <a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
-<a style="font-size: 90%" href="/blog/tags/ops/">ops</a>
+<a style="font-size: 126%" href="/blog/tags/ops/">ops</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
 <a style="font-size: 90%" href="/blog/tags/tls/">tls</a>

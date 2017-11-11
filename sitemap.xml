@@ -3,6 +3,14 @@
   
   
   <url>
+    <loc>http://jintao-zero.github.io/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/</loc>
+    
+    <lastmod>2017-11-11T11:15:06+08:00</lastmod>
+    
+    <priority>0.8</priority>
+  </url>
+  
+  <url>
     <loc>http://jintao-zero.github.io/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/</loc>
     
     <lastmod>2017-10-26T10:38:30+08:00</lastmod>
@@ -365,14 +373,14 @@
   
   <url>
     <loc>http://jintao-zero.github.io/blog/archives/</loc>
-    <lastmod>2017-10-29T22:03:04+08:00</lastmod>
+    <lastmod>2017-11-11T15:54:20+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   
   <url>
     <loc>http://jintao-zero.github.io/</loc>
-    <lastmod>2017-10-29T22:03:04+08:00</lastmod>
+    <lastmod>2017-11-11T15:54:20+08:00</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

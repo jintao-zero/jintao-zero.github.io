@@ -9,8 +9,8 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Go标准库context定义了一个Context类型，Context类型包含超时时间，取消信号和请求范围内的变量值。
-context包提供了WithCancel，WithDeadline和WithTimeout函数来分别返回不同类型的Context接口。 下面对context包的源码进行分析： &hellip;">
+  <meta name="description" content="logrotate命令设计用来管理日志文件。它可以自动循环，压缩，删除和邮件发送日志文件。可以根据不同的周期（日、周、月）和大小来管理文件。
+通常情况下，logrotate作为cron天任务每天执行一次。如果logrotate一天之中被运行了多次，除非设置size作为日志循环处理条件或者使用- &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +68,58 @@ context包提供了WithCancel，WithDeadline和WithTimeout函数来分别返回�
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-11-11T11:15:06+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>11:15 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>logrotate命令设计用来管理日志文件。它可以自动循环，压缩，删除和邮件发送日志文件。可以根据不同的周期（日、周、月）和大小来管理文件。<br/>
+通常情况下，logrotate作为cron天任务每天执行一次。如果logrotate一天之中被运行了多次，除非设置size作为日志循环处理条件或者使用<code>-f</code>或者<code>--force</code>参数，否则日志文件不会被多次处理。</p>
+
+<h2>logrotate如何工作</h2>
+
+<p>系统以通常是每天cron任务运行logrotate。CentOS系统中<code>logrotate</code>定时任务脚本位于<code>/etc/cron.daily</code>中。<br/>
+如果以更高的频率运行logrotate任务，那么可以将<code>logrotate</code>放置在<code>/etc/cron.hourly</code>目录中。<br/>
+logrotate运行时会读取/etc/logrotate.conf文件中的配置，根据文件中配置的信息对日志文件进行处理。<br/>
+logrotate cron任务执行脚本如下：</p>
+
+<pre><code>#!/bin/sh
+
+/usr/sbin/logrotate -s /var/lib/logrotate/logrotate.status /etc/logrotate.conf
+EXITVALUE=$?
+if [ $EXITVALUE != 0 ]; then
+    /usr/bin/logger -t logrotate "ALERT exited abnormally with [$EXITVALUE]"
+fi
+exit 0
+</code></pre>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -541,61 +593,6 @@ f begin to get Rlock
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-06-11T12:19:45+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>12:19 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>golang工程常用代码目录结构</p>
-
-<pre><code>github.com/user/project
-    pkg
-        p1
-            *.go
-        p2
-            *.go 
-    cmd
-        cmdline
-            main.go
-    web
-            main.go
-    vendor
-        github/*/*
-    examples
-    docs
-</code></pre>
-
-<h2>参考</h2>
-
-<ul>
-<li><p><a href="https://stackoverflow.com/questions/32634837/project-structure-for-a-tool-with-multiple-uis/32635264#32635264">Project structure for a tool with multiple UIs</a></p></li>
-<li><p><a href="https://forum.golangbridge.org/t/how-should-i-structure-packages-for-a-multiple-binary-web-application/665">How should I structure packages for a multiple-binary web application?</a></p></li>
-<li><a href="https://github.com/seccom/kpass">kpass</a></li>
-</ul>
-
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -609,6 +606,10 @@ f begin to get Rlock
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
@@ -626,10 +627,6 @@ f begin to get Rlock
         <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -643,7 +640,7 @@ f begin to get Rlock
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (4)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (5)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -674,7 +671,7 @@ f begin to get Rlock
 <a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
-<a style="font-size: 90%" href="/blog/tags/ops/">ops</a>
+<a style="font-size: 126%" href="/blog/tags/ops/">ops</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
 <a style="font-size: 90%" href="/blog/tags/tls/">tls</a>

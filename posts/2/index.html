@@ -9,7 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="Test packages 使用： go test [build/test flags] [packages] [build/test flags &amp; test binary flags] Go test命令自动测试packages参数指定的包。它以如下格式打印测试结果摘要信息： ok &hellip;">
+  <meta name="description" content="golang工程常用代码目录结构 github.com/user/project pkg p1 *.go p2 *.go cmd cmdline main.go web main.go vendor github/*/* examples docs 参考 Project structure for &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -67,6 +67,61 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/06/11/golang-gong-cheng-dai-ma-jie-gou/">Golang 工程代码结构</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-06-11T12:19:45+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>12:19 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>golang工程常用代码目录结构</p>
+
+<pre><code>github.com/user/project
+    pkg
+        p1
+            *.go
+        p2
+            *.go 
+    cmd
+        cmdline
+            main.go
+    web
+            main.go
+    vendor
+        github/*/*
+    examples
+    docs
+</code></pre>
+
+<h2>参考</h2>
+
+<ul>
+<li><p><a href="https://stackoverflow.com/questions/32634837/project-structure-for-a-tool-with-multiple-uis/32635264#32635264">Project structure for a tool with multiple UIs</a></p></li>
+<li><p><a href="https://forum.golangbridge.org/t/how-should-i-structure-packages-for-a-multiple-binary-web-application/665">How should I structure packages for a multiple-binary web application?</a></p></li>
+<li><a href="https://github.com/seccom/kpass">kpass</a></li>
+</ul>
+
+</div>
+  
+  
+
+
+    </article>
   
   
     <article>
@@ -696,85 +751,6 @@ Go中<code>context</code>包提供了这样的功能，利用context包可以进
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Golang Go命令详解</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-01-13T19:17:12+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:17 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h1>go命令</h1>
-
-<p><a href="#compile">Compile packages and dependencies</a>    <br/>
-<a href="#clean">Remove object files</a><br/>
-<a href="#testing">Description of testing flags</a></p>
-
-<p><code>Go</code>工具用来管理Go语音源代码。
-使用：</p>
-
-<pre><code>go command [arguments]
-</code></pre>
-
-<p>命令为：</p>
-
-<pre><code>build       compile packages and dependencies
-clean       remove object files
-doc         show documentation for package or symbol
-env         print Go environment information
-fix         run go tool fix on packages
-fmt         run gofmt on package sources
-generate    generate Go files by processing source
-get         download and install packages and dependencies
-install     compile and install packages and dependencies
-list        list packages
-run         compile and run Go program
-test        test packages
-tool        run specified go tool
-version     print Go version
-vet         run go tool vet on packages
-</code></pre>
-
-<p>使用<code>go help [command]</code>查看命令相信信息。<br/>
-更多topic：</p>
-
-<pre><code>c           calling between Go and C
-buildmode   description of build modes
-filetype    file types
-gopath      GOPATH environment variable
-environment environment variables
-importpath  import path syntax
-packages    description of package lists
-testflag    description of testing flags
-testfunc    description of testing functions
-</code></pre>
-
-<p>使用<code>go help [topic]</code>查看topic帮助信息</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/01/13/golang-goming-ling-xiang-jie/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -792,6 +768,10 @@ testfunc    description of testing functions
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
       </li>
     
@@ -807,10 +787,6 @@ testfunc    description of testing functions
         <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -824,7 +800,7 @@ testfunc    description of testing functions
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (4)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (5)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -855,7 +831,7 @@ testfunc    description of testing functions
 <a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
-<a style="font-size: 90%" href="/blog/tags/ops/">ops</a>
+<a style="font-size: 126%" href="/blog/tags/ops/">ops</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
 <a style="font-size: 90%" href="/blog/tags/tls/">tls</a>

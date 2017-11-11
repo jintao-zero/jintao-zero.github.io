@@ -9,8 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="实现了一个简单服务端，使用tcp与客户端进行通讯。本片文章主要介绍在tcp服务端网络编程中用到的几个基本函数：
-1、创建套接字socket函数 int socket(int domain, int type, int protocol) socket函数创建一个通讯端并返回这个终端的文件描述符。 &hellip;">
+  <meta name="description" content="上一篇博客中实现的tcp服务端每次只能处理一个客户端连接，如果有多个客户端同时与服务端进行通讯的话，那只能进行等待上一个客户端通讯完成才可以，那么如何修改服务端为并发服务器程序呢？Unix中编写并发服务器程序最简单的方法就是fork一个子进程来服务每个客户。以下为一个典型的并发服务器的轮廓： &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +67,67 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Tcp服务端并发之子进程</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-17T14:56:56+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>上一篇博客中实现的tcp服务端每次只能处理一个客户端连接，如果有多个客户端同时与服务端进行通讯的话，那只能进行等待上一个客户端通讯完成才可以，那么如何修改服务端为并发服务器程序呢？Unix中编写并发服务器程序最简单的方法就是fork一个子进程来服务每个客户。以下为一个典型的并发服务器的轮廓：</p>
+
+<pre><code>pid_t pid;
+int listenfd, connfd;
+listenfd = Socket(...);
+    /* fill in sockaddr_in{} with server's well-known port */
+Bind*(listenfd, ...);
+Listen(listenfd, LISTENQ);
+for ( ; ; ) {
+    connfd = Accept(listenfd, ...);  /* probably blocks */
+    if ((pid = Fork()) == 0) {
+        Close(listenfd);    /* child close listening socket */
+        doit(connfd);       /* process the request */
+        close(connfd);      /* child terminates */
+        exit(0);            /* child terminate */
+    }
+    Close(connfd);          /* parent closes connected socket */
+}
+</code></pre>
+
+<p>fork函数</p>
+
+<pre><code>pid_t fork(void);
+</code></pre>
+
+<p>fork创建一个新进程。新进程是当前运行进程的一个拷贝。fork函数一次调用，两次返回。对于子进程返回值为0，对于父进程，返回值为子进程id。</p>
+
+<p>以下为根据上面的并发服务器轮廓代码修改的tcp客户端代码：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/02/17/tcpfu-wu-duan-bing-fa-zhi-zi-jin-cheng/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -371,6 +431,10 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
       </li>
     
@@ -386,10 +450,6 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
         <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/08/19/golang-jia-mi-bao-xue-xi-yu-shi-jian/">Golang 加密包学习与实践</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -403,7 +463,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
-<li class='category'><a href='/blog/categories/ops/'>ops (4)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (5)</a></li>
 <li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
 <li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
 <li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
@@ -434,7 +494,7 @@ Octopress可以将用Markdown编写的文本转化为html静态页面，两者�
 <a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
 <a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
 <a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
-<a style="font-size: 90%" href="/blog/tags/ops/">ops</a>
+<a style="font-size: 126%" href="/blog/tags/ops/">ops</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
 <a style="font-size: 90%" href="/blog/tags/tls/">tls</a>

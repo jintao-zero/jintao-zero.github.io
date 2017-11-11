@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>使用logroate管理日志文件 - jintao&#8217;s blog</title>
+  <meta name="author" content="jintao">
+
+  
+  <meta name="description" content="logrotate命令设计用来管理日志文件。它可以自动循环，压缩，删除和邮件发送日志文件。可以根据不同的周期（日、周、月）和大小来管理文件。
+通常情况下，logrotate作为cron天任务每天执行一次。如果logrotate一天之中被运行了多次，除非设置size作为日志循环处理条件或者使用- &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<!--link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css" -->
+
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">jintao&#8217;s blog</a></h1>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:jintao-zero.github.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">使用logroate管理日志文件</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-11-11T11:15:06+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>11:15 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>logrotate命令设计用来管理日志文件。它可以自动循环，压缩，删除和邮件发送日志文件。可以根据不同的周期（日、周、月）和大小来管理文件。<br/>
+通常情况下，logrotate作为cron天任务每天执行一次。如果logrotate一天之中被运行了多次，除非设置size作为日志循环处理条件或者使用<code>-f</code>或者<code>--force</code>参数，否则日志文件不会被多次处理。</p>
+
+<h2>logrotate如何工作</h2>
+
+<p>系统以通常是每天cron任务运行logrotate。CentOS系统中<code>logrotate</code>定时任务脚本位于<code>/etc/cron.daily</code>中。<br/>
+如果以更高的频率运行logrotate任务，那么可以将<code>logrotate</code>放置在<code>/etc/cron.hourly</code>目录中。<br/>
+logrotate运行时会读取/etc/logrotate.conf文件中的配置，根据文件中配置的信息对日志文件进行处理。<br/>
+logrotate cron任务执行脚本如下：</p>
+
+<pre><code>#!/bin/sh
+
+/usr/sbin/logrotate -s /var/lib/logrotate/logrotate.status /etc/logrotate.conf
+EXITVALUE=$?
+if [ $EXITVALUE != 0 ]; then
+    /usr/bin/logger -t logrotate "ALERT exited abnormally with [$EXITVALUE]"
+fi
+exit 0
+</code></pre>
+
+<!-- more -->
+
+
+<h2>logrotate.conf</h2>
+
+<p>logrotate主要的配置文件是<code>/etc/logrotate.conf</code>。<br/>
+这个配置文件中包含了一些logrotate在执行日志处理时的默认配置。<br/>
+在这个文件中包含了其他的配置文件：</p>
+
+<pre><code># RPM packages drop log rotation information into this directory
+include /etc/logrotate.d
+</code></pre>
+
+<p>我们可以将应用相关配置文件放置在<code>/etc/logrotate.d/</code>目录下</p>
+
+<h2>logrotate.d</h2>
+
+<p><code>ls /etc/logrotate.d/</code>可以查看系统中已经配置的应用相关配置文件：</p>
+
+<pre><code>[root@test logrotate.d]# ls -al /etc/logrotate.d/
+total 40
+drwxr-xr-x.  2 root root  4096 Nov 11 09:57 .
+drwxr-xr-x. 89 root root 12288 Nov 10 14:15 ..
+-rw-r--r--   1 root root   243 Oct 31  2016 nginx
+-rw-r--r--.  1 root root   136 Jun 10  2014 ppp
+-rw-r--r--   1 root root   127 Aug  5  2016 redis
+-rw-r--r--   1 root root   224 Nov  5  2016 syslog
+-rw-r--r--   1 root root   100 Mar  3  2017 wpa_supplicant
+-rw-r--r--   1 root root   100 Nov 15  2016 yum
+[root@test logrotate.d]#
+</code></pre>
+
+<p>配置文件中配置了关于如何对应用产生的日志文件进行处理的配置信息：</p>
+
+<pre><code>[root@test logrotate.d]# cat nginx
+    /var/log/nginx/*log {
+    create 0644 nginx nginx
+    daily
+    rotate 10
+    missingok
+    notifempty
+    compress
+    sharedscripts
+    postrotate
+        /bin/kill -USR1 `cat /run/nginx.pid 2&gt;/dev/null` 2&gt;/dev/null || true
+    endscript
+}
+</code></pre>
+
+<p>下面会对配置文件中的配置命令进行详细说明。</p>
+
+<h2>配置命令</h2>
+
+<p>可以使用通过查看man手册获取logrotate命令的相信命令参数说明：</p>
+
+<pre><code>man logrotate
+</code></pre>
+
+<p>/etc/logrotate.conf中配置了默认设置，应用配置文件会继承并覆盖/etc/logrotate.conf中的配置方法。</p>
+
+<h3>Log files</h3>
+
+<p>在上面nginx相关的配置信息中，开头的<code>/var/log/nginx/*log</code>即定义了需要处理的日志文件路径，大括号中的配置命令是对日志文件进行的具体配置。 <br/>
+配置日志文件路径时，可以使用通配符。在一个文件中可以包含多个这样的配置信息。</p>
+
+<h3>Rotate Count</h3>
+
+<p><code>rotate</code>命令配置了旧日志文件保留个数。当保留的日志文件超过这个数目时，最老的日志文件将会被删除。</p>
+
+<pre><code>rotate 10
+</code></pre>
+
+<p>这个命令高速logrotate保留10个日志文件。</p>
+
+<h3>Rotation interval</h3>
+
+<p>可以通过以下命令设置日志文件处理周期：</p>
+
+<pre><code>daily
+weekly
+monthly
+yearly
+</code></pre>
+
+<p>如果配置中没有指定时间周期，每次logrotate运行时都会日志文件进行处理，除非配置了size信息。<br/>
+如果想以不同的周期运行logrotate工具，可以设置不同的cron任务。比如，每小时执行一次logrotate工具，可以在<code>/etc/cron.hourly</code>中放置执行脚本，包含以下执行命令：</p>
+
+<pre><code>/usr/sbin/logrotate /etc/logrotate.hourly.conf
+</code></pre>
+
+<p>在<code>/etc/logrotate.hourly.conf</code>配置文件包含需要每小时进行处理的日志配置信息。</p>
+
+<h3>Size</h3>
+
+<p>可以使用<code>size</code>命令配置一个文件大小，logrotate工具根据这个文件大小来判断是否对日志文件进行处理。</p>
+
+<pre><code>size 100k
+size 100M
+size 100G
+</code></pre>
+
+<p>第一个命令配置日志文件大于100k字节时处理文件，第二个命令配置日志文件大于100M字节时处理日志文件，第三个命令配置日志文件大于100G时处理日志文件。 通常情况不建议将size设置太大。</p>
+
+<p>需要注意的是，<code>size</code>命令与<code>时间周期</code>配置是互斥的，而且<code>size</code>具有更高的优先级，当配置了<code>size</code>时，配置的<code>时间周期</code>将不起作用。</p>
+
+<h3>Compression</h3>
+
+<p>如果希望对产生的旧日志文件进行压缩处理，通常可以在<code>/etc/logrotate.conf</code>中配置<code>compress</code>，如果作为全局配置，那么所有产生的日志文件都会被压缩（以gzip格式）：</p>
+
+<pre><code>compress
+</code></pre>
+
+<p>对于具体应用来说，如果不想对日志文件进行压缩处理，那么可以使用<code>nocompress</code>进行配置：</p>
+
+<pre><code>nocompress
+</code></pre>
+
+<h3>Postrotate</h3>
+
+<p>logrotate每次处理配置文件配置的日志文件后将会运行<code>postrotate</code>脚本。通常使用<code>postrotate</code>脚本在处理日志文件后重启应用，这样应用可以使用一个新日志文件。</p>
+
+<pre><code>postrotate
+    /usr/sbin/apachectl restart &gt; /dev/null
+endscript
+</code></pre>
+
+<p><code>postrotate</code>命令表示脚本开始，<code>endscript</code>命令表示脚本结束。</p>
+
+<h3>sharedscripts</h3>
+
+<p><code>sharescripts</code>告诉logrotate只运行一次<code>postrotate</code>脚本。</p>
+
+<p>下面的脚本示例：</p>
+
+<pre><code>/data/l1/ss/test/trend/log.txt {
+    rotate 5            # 保存5个旧日志文件
+    copytruncate        # 拷贝并清除日志文件
+    #size 20M
+    maxsize 20M     # 日志文件最大大小为20M，达到20M时即被清理
+    start 0         # 日志文件从0编号
+    weekly              # 每周清理一次
+    #dateext
+    #dateyesterday
+    createolddir       # 如果日志文件保存路径不存在，则创建
+    olddir /data/l1/ss/test/trend/log      # 旧日志文件保存路径
+}
+</code></pre>
+
+<h2>测试 logrotate</h2>
+
+<p>如果怀疑日志文件没有被正确处理，或者添加了一个新配置，可以使用一些参数对logrotate进行调试。</p>
+
+<h3>Verbose</h3>
+
+<p><code>-v</code>参数，告诉logrotate输出详细信息。当logrotate没有按照设想处理日志时，使用<code>-v</code>参数进行调试。</p>
+
+<h3>Ddbug</h3>
+
+<p><code>-d</code>参数，告诉logrotate去检查日志文件，但是不实际执行处理动作。在测试新配置文件时，这个参数很有作用。<br/>
+debug参数可以帮助检查配置文件格式是否正确和是否能够发现日志文件。</p>
+
+<h3>Force</h3>
+
+<p><code>-f</code>参数，强制logrotate工具处理所有日志文件，不管当时日志文件是否满足处理条件。</p>
+
+<h3>Combining flags</h3>
+
+<p>测试命令可以组合使用。让logrotate强制执行并且输出所有详细信息，但是不实际执行，可以使用如下命令：</p>
+
+<pre><code>/usr/sbin/logrotate -vdf /etc/logrotate.conf
+</code></pre>
+
+<p>我们将会看到它会列出logrotate将会做什么，包括哪些日志文件将会处理和处理过程。</p>
+
+<p>如果想测试所有的配置信息，可以强制执行：</p>
+
+<pre><code>/usr/sbin/logrotate -vf /etc/logrotate.conf
+</code></pre>
+
+<p>日志将会强制处理，并打印详细信息。</p>
+
+<h2>状态信息</h2>
+
+<p>查看logrotate状态信息：</p>
+
+<pre><code>cat /var/lib/logrotate.status
+logrotate state -- version 2
+"/var/log/acpid.log" 2010-6-18
+"/var/log/iptables.log" 2010-6-18
+"/var/log/uucp.log" 2010-6-29
+..
+</code></pre>
+
+<h2>参考</h2>
+
+<ul>
+<li>man logrotate</li>
+<li><a href="https://support.rackspace.com/how-to/understanding-logrotate-utility/">Understanding logrotate utility</a></li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">jintao</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-11-11T11:15:06+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>11:15 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/ops/'>ops</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+  
+	
+<!-- JiaThis Button BEGIN -->
+<div class="jiathis_style_32x32">
+	<a class="jiathis_button_qzone"></a>
+	<a class="jiathis_button_tsina"></a>
+	<a class="jiathis_button_tqq"></a>
+	<a class="jiathis_button_weixin"></a>
+	<a class="jiathis_button_renren"></a>
+	<a href="http://www.jiathis.com/share?uid=2035889" class="jiathis jiathis_txt jtico jtico_jiathis" target="_blank"></a>
+	<a class="jiathis_counter_style"></a>
+</div>
+<script type="text/javascript">
+var jiathis_config = {data_track_clickback:'true'};
+</script>
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js?uid=2035889" charset="utf-8"></script>
+<!-- JiaThis Button END -->
+
+<!-- UY BEGIN -->
+<div id="uyan_frame"></div>
+<script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid=2035889"></script>
+<!-- UY END -->
+
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/" title="Previous Post: Go context包源码分析">&laquo; Go context包源码分析</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/">Go Context包源码分析</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/10/19/shi-yong-daemontoolsguan-li-jin-cheng/">使用daemontools管理进程</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/">RabbitMQ 入门实践</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+ <h1>Categories</h1>
+ <ul id="categories">
+	 <li class='category'><a href='/blog/categories/alogrithm/'>alogrithm (1)</a></li>
+<li class='category'><a href='/blog/categories/bigdata/'>bigdata (3)</a></li>
+<li class='category'><a href='/blog/categories/dev/'>dev (4)</a></li>
+<li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
+<li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
+<li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
+<li class='category'><a href='/blog/categories/ops/'>ops (5)</a></li>
+<li class='category'><a href='/blog/categories/program/'>program (12)</a></li>
+<li class='category'><a href='/blog/categories/tool/'>tool (1)</a></li>
+<li class='category'><a href='/blog/categories/unix/'>unix (2)</a></li>
+
+ </ul>
+</section>
+<section>
+<h1>Tags</h1>
+<ul class="tag-cloud">
+	<a style="font-size: 90%" href="/blog/tags/alogrithm/">Alogrithm</a>
+<a style="font-size: 126%" href="/blog/tags/devops/">DevOps</a>
+<a style="font-size: 210%" href="/blog/tags/golang/">Golang</a>
+<a style="font-size: 90%" href="/blog/tags/http/">HTTP</a>
+<a style="font-size: 126%" href="/blog/tags/hadoop/">Hadoop</a>
+<a style="font-size: 90%" href="/blog/tags/hdfs/">Hdfs</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">Linux</a>
+<a style="font-size: 90%" href="/blog/tags/markdown/">Markdown</a>
+<a style="font-size: 191%" href="/blog/tags/network/">Network</a>
+<a style="font-size: 90%" href="/blog/tags/nosql/">Nosql</a>
+<a style="font-size: 126%" href="/blog/tags/python/">Python</a>
+<a style="font-size: 90%" href="/blog/tags/redis/">Redis</a>
+<a style="font-size: 90%" href="/blog/tags/socks/">SOCKS</a>
+<a style="font-size: 126%" href="/blog/tags/unix/">Unix</a>
+<a style="font-size: 90%" href="/blog/tags/crypt/">crypt</a>
+<a style="font-size: 90%" href="/blog/tags/daemon/">daemon</a>
+<a style="font-size: 90%" href="/blog/tags/go/">go</a>
+<a style="font-size: 162%" href="/blog/tags/golang/">golang</a>
+<a style="font-size: 90%" href="/blog/tags/linux/">linux</a>
+<a style="font-size: 90%" href="/blog/tags/mapreduce/">mapreduce</a>
+<a style="font-size: 90%" href="/blog/tags/openssl/">openssl</a>
+<a style="font-size: 126%" href="/blog/tags/ops/">ops</a>
+<a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
+<a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/tls/">tls</a>
+<a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
+
+</ul>
+</section>
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - jintao -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
