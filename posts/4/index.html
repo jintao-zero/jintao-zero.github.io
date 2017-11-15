@@ -9,8 +9,8 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="最近开始进行Hadoop分布式计算相关内容的学习，先从搭建开发环境开始。下面记录一下搭建Hadoop开发环境的过程，以及注意点。
-本节介绍如何快速搭建和配置一个单节点Hadoop环境，便于使用Hadoop MapReduce和Hadoop Distributed File System(HDFS &hellip;">
+  <meta name="description" content="crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。 crontab [ -u user ] file
+crontab [ -u user ] [ -i ] { -e | -l | - &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +68,83 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Crontab任务设置及路径、动态库、产生多个进程问题解决</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-11-21T11:17:04+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>11:17 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>crontab文件中包含了cron守护进程需要执行的指令：某个时间执行这条命令。每个用户拥有自己的crontab，crontab中的命令以crontab所属用户运行。</p>
+
+<pre><code>crontab [ -u user ] file
+crontab [ -u user ] [ -i ] { -e | -l | -r }
+</code></pre>
+
+<p>命令第一种形式是用file中的命令设置crontab任务<br/>
+-l 参数是打印当前crontab任务到标准输出<br/>
+-e 参数是使用VISUAL或者EDITOR环境变量定义的编辑器编辑当前crontab定时任务<br/>
+-r 参数删除当前定时任务<br/>
+-i 与用户进行交互</p>
+
+<h2>任务设置</h2>
+
+<p>crontab文件中可以包含三种语句：<br/>
+1、注释
+以#开头的语句都是注释</p>
+
+<pre><code>#this is a comment in crontab 
+</code></pre>
+
+<p>2、设置环境变量</p>
+
+<pre><code>LD_LIBRARY_PATH = /homt/lib/
+</code></pre>
+
+<p>3、设置定时任务<br/>
+每一行定义一条定时任务，包括五个时间、日期字段，时间日期后面的内容都是命令<br/>
+时间日期包括分、时、天、月和一周某天字段：</p>
+
+<pre><code>ield          allowed values
+-----          --------------
+minute         0-59
+hour           0-23
+day of month   1-31
+month          1-12 (or names, see below)
+day of week    0-7 (0 or 7 is Sun, or use names)
+</code></pre>
+
+<p>字段可以是＊，代表范围内所有<br/>
+字段也可以是一个范围，比如hour字段8-10，代表8，9，10<br/>
+字段也可以是一个列表，比如hour字段8，9，10<br/>
+字段也可以是一个范围和列表的混合，比如hour字段1-7，9－12<br/>
+字段也可以为一个间隔，比如hour 1-8/2,代表1,3,5,7</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/11/21/crontabren-wu-she-zhi-ji-lu-jing-,-dong-tai-ku-,-chan-sheng-duo-ge-jin-cheng-wen-ti-jie-jue/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -629,96 +706,6 @@ void FD_ZERO(fd_set </em>fdset)</p></li>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/04/05/python-property-shu-xing-yong-fa/">Python Property 属性用法</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-04-05T17:26:05+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>5:26 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>python提供了一个property类：</p>
-
-<pre><code>class property([fget[, fset[, fdel[, doc]]]])
-</code></pre>
-
-<p>property类为新式类（继承object）返回property属性<br/>
-fget函数用来获取属性值。fset设置属性值。fdel用来删除属性。doc为属性创建docstring。<br/>
-property的典型应用是应用一个被管理的属性x：</p>
-
-<pre><code>class C(object):
-def __init__(self):
-    self._x = None
-
-def getx(self):
-    return self._x
-
-def setx(self, value):
-    self._x = value
-
-def delx(self):
-    del self._x
-
-x = property(getx, setx, delx, "I'm the 'x' property.")
-</code></pre>
-
-<p>如果c是类C的实例，c.x将会调用getx，c.x＝value将会调用setx，del c.x会调用用delx</p>
-
-<p>将property 用作decorrator可以定义只读properties：</p>
-
-<pre><code>class Parrot(object):
-    def __init__(self):
-        self._voltage = 100000
-
-    @property
-    def voltage(self):
-        """Get the current voltage."""
-        return self._voltage
-</code></pre>
-
-<p>@property修饰符将voltage函数变为voltage函数的同名属性的只读getter函数，同时这只这个属性的docstring与voltage函数相同</p>
-
-<p>一个property对象具有getter，setter和deleter方法可以用当作修饰符将属性同名函数变为属性对应的访问函数，下面是例子：</p>
-
-<pre><code>class C(object):
-    def __init__(self):
-        self._x = None
-
-    @property
-    def x(self):
-        """I'm the 'x' property."""
-        return self._x
-
-    @x.setter
-    def x(self, value):
-        self._x = value
-
-    @x.deleter
-    def x(self):
-        del self._x
-</code></pre>
-
-<p>上面的用法与第一个列子相同，需要注意的是几个函数的名字都相同</p>
-</div>
-  
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/5">&larr; Older</a>
@@ -736,6 +723,10 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo/">设置TCP连接keepalive保活</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a>
       </li>
     
@@ -751,10 +742,6 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
         <a href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/">RabbitMQ 入门实践</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -765,7 +752,7 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
 <li class='category'><a href='/blog/categories/dev/'>dev (4)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
-<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (10)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/ops/'>ops (5)</a></li>
@@ -802,6 +789,7 @@ x = property(getx, setx, delx, "I'm the 'x' property.")
 <a style="font-size: 126%" href="/blog/tags/ops/">ops</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/tcp-slash-ip/">tcp/ip</a>
 <a style="font-size: 90%" href="/blog/tags/tls/">tls</a>
 <a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
 

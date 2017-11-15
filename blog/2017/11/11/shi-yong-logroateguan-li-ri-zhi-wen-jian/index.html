@@ -210,7 +210,7 @@ size 100G
 
 <p>第一个命令配置日志文件大于100k字节时处理文件，第二个命令配置日志文件大于100M字节时处理日志文件，第三个命令配置日志文件大于100G时处理日志文件。 通常情况不建议将size设置太大。</p>
 
-<p>需要注意的是，<code>size</code>命令与<code>时间周期</code>配置是互斥的，而且<code>size</code>具有更高的优先级，当配置了<code>size</code>时，配置的<code>时间周期</code>将不起作用。</p>
+<p>需要注意的是，<code>size</code>命令与<code>时间周期</code>配置是互斥的，根据试验表明，后面设置的数据行会覆盖前面, 当后面配置了<code>size</code>时，前面配置的<code>时间周期</code>将不起作用，反之亦然。</p>
 
 <h3>Compression</h3>
 
@@ -370,6 +370,8 @@ var jiathis_config = {data_track_clickback:'true'};
         <a class="basic-alignment left" href="/blog/2017/10/26/go-contextbao-yuan-ma-fen-xi/" title="Previous Post: Go context包源码分析">&laquo; Go context包源码分析</a>
       
       
+        <a class="basic-alignment right" href="/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo/" title="Next Post: 设置TCP连接keepalive保活">设置TCP连接keepalive保活 &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -381,6 +383,10 @@ var jiathis_config = {data_track_clickback:'true'};
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo/">设置TCP连接keepalive保活</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a>
@@ -398,10 +404,6 @@ var jiathis_config = {data_track_clickback:'true'};
         <a href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/">RabbitMQ 入门实践</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -412,7 +414,7 @@ var jiathis_config = {data_track_clickback:'true'};
 <li class='category'><a href='/blog/categories/dev/'>dev (4)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
-<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (10)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/ops/'>ops (5)</a></li>
@@ -449,6 +451,7 @@ var jiathis_config = {data_track_clickback:'true'};
 <a style="font-size: 126%" href="/blog/tags/ops/">ops</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/tcp-slash-ip/">tcp/ip</a>
 <a style="font-size: 90%" href="/blog/tags/tls/">tls</a>
 <a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
 

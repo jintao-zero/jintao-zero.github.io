@@ -9,8 +9,7 @@
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="logrotate命令设计用来管理日志文件。它可以自动循环，压缩，删除和邮件发送日志文件。可以根据不同的周期（日、周、月）和大小来管理文件。
-通常情况下，logrotate作为cron天任务每天执行一次。如果logrotate一天之中被运行了多次，除非设置size作为日志循环处理条件或者使用- &hellip;">
+  <meta name="description" content="一个tcp连接包含两端。如何确保连接两端的socket都在线呢，一个方法是应用程序定期发送一个心跳信息给对方，tcp/ip提供了一个系统层面的保活机制，设置了socket keepalive属性后，系统会定期给对端发送心跳报文，根据是否能收到回复来判断对端是否在线，当对端不在线时， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -68,6 +67,78 @@
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo/">设置TCP连接keepalive保活</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-11-15T15:46:35+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:46 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>一个tcp连接包含两端。如何确保连接两端的socket都在线呢，一个方法是应用程序定期发送一个心跳信息给对方，tcp/ip提供了一个系统层面的保活机制，设置了socket keepalive属性后，系统会定期给对端发送心跳报文，根据是否能收到回复来判断对端是否在线，当对端不在线时，对本段socket的读操作将会读到EOF。</p>
+
+<h2>keepalive</h2>
+
+<p>三个属性决定keepalive如何工作，在Linux系统中，这三个属性位于<code>proc</code>文件系统中：</p>
+
+<ul>
+<li><code>tcp_keepalive_time</code><br/>
+连接空闲时间，超时后发送保活探测包，默认为<code>7200</code>秒</li>
+<li><code>tcp_keepalive_intvl</code><br/>
+每天探测包之间的间隔时间，默认为：<code>75</code>秒</li>
+<li><code>tcp_keepalive_probes</code>
+总的保护包数，超过则认为对端不在线，默认为<code>9</code>个</li>
+</ul>
+
+
+<p>keepalvie的工作过程如下：</p>
+
+<ol>
+<li>客户端建立到服务端的连接</li>
+<li>当连接的空闲时间超过<code>tcp_keepalive_time</code>时，客户端向服务端发送一个tcp<code>ACK</code>包</li>
+<li>服务端是否对刚刚的<code>ACK</code>包进行回复？
+
+<ul>
+<li>NO
+
+<ol>
+<li>. 等待<code>tcp_keepalive_intvl</code>超时，发送<code>ACK</code>包</li>
+<li>. 如果探测包个数达到<code>tcp_keepalive_probes</code>，则发送一个<code>RST</code>报文并关闭连接</li>
+</ol>
+</li>
+<li>YES<br/>
+   收到心跳包回复，则继续步骤2</li>
+</ul>
+</li>
+</ol>
+
+
+<p>大多数系统中，默认是开启tcp连接保活的，当对端(7200+74*9)秒都没有回复的话，则会关闭本端连接。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -529,70 +600,6 @@ f begin to get Rlock
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Go代码走读规范</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-06-14T19:27:11+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>7:27 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Go代码走读时注意点，非代码规范：</p>
-
-<ul>
-<li><a href="#gofmt">Gofmt</a></li>
-<li><a href="#Comment%20Sentences">Comment Sentences</a></li>
-<li><a href="#Contexts">Contexts</a></li>
-<li><a href="#Copying">Copying</a></li>
-<li><a href="#Declaring%20Empty%20Slices">Declaring Empty Slices</a></li>
-<li><a href="#Crypto%20Rand">Crypto Rand</a></li>
-<li><a href="#Doc%20Comments">Doc Comments</a></li>
-<li><a href="#Don't%20Panic">Don&rsquo;t Panic</a></li>
-<li><a href="#Error%20Strings">Error Strings</a></li>
-<li><a href="#Examples">Examples</a></li>
-<li><a href="#Goroutine%20Lifetimes">Goroutine Lifetimes</a></li>
-<li><a href="#Handle%20Errors">Handle Errors</a></li>
-<li><a href="#Import">Import</a></li>
-<li><a href="#Import%20Dot">Import Dot</a></li>
-<li><a href="#In-Band%20Errors">In-Band Errors</a></li>
-<li><a href="#Indent%20Error%20Flow">Indent Error Flow</a></li>
-<li><a href="#Initialisms">Initialisms</a></li>
-<li><a href="#Interfaces">Interfaces</a></li>
-<li><a href="#Mixed%20Caps">Mixed Caps</a></li>
-<li><a href="#Named%20Result%20Parameters">Named Result Parameters</a></li>
-<li><a href="#Package%20Comments">Package Comments</a></li>
-<li><a href="#Package%20Names">Package Names</a></li>
-<li><a href="#Pass%20Values">Pass Values</a></li>
-<li><a href="#Receiver%20Names">Receiver Names</a></li>
-<li><a href="#Receiver%20Type">Receiver Type</a></li>
-<li><a href="#Synchronous%20Functions">Synchronous Functions</a></li>
-</ul>
-
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/06/14/godai-ma-zou-du-gui-fan/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -606,6 +613,10 @@ f begin to get Rlock
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo/">设置TCP连接keepalive保活</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/">使用logroate管理日志文件</a>
@@ -623,10 +634,6 @@ f begin to get Rlock
         <a href="/blog/2017/09/21/rabbitmq-ru-men-shi-jian/">RabbitMQ 入门实践</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2017/09/04/shi-yong-stracediao-shi-jin-cheng/">使用strace调试进程</a>
-      </li>
-    
   </ul>
 </section>
 <section>
@@ -637,7 +644,7 @@ f begin to get Rlock
 <li class='category'><a href='/blog/categories/dev/'>dev (4)</a></li>
 <li class='category'><a href='/blog/categories/devops/'>devops (3)</a></li>
 <li class='category'><a href='/blog/categories/go/'>go (1)</a></li>
-<li class='category'><a href='/blog/categories/network/'>network (9)</a></li>
+<li class='category'><a href='/blog/categories/network/'>network (10)</a></li>
 <li class='category'><a href='/blog/categories/nosql/'>nosql (1)</a></li>
 <li class='category'><a href='/blog/categories/octopress/'>octopress (2)</a></li>
 <li class='category'><a href='/blog/categories/ops/'>ops (5)</a></li>
@@ -674,6 +681,7 @@ f begin to get Rlock
 <a style="font-size: 126%" href="/blog/tags/ops/">ops</a>
 <a style="font-size: 90%" href="/blog/tags/protocol-buffer/">protocol-buffer</a>
 <a style="font-size: 90%" href="/blog/tags/ssh/">ssh</a>
+<a style="font-size: 90%" href="/blog/tags/tcp-slash-ip/">tcp/ip</a>
 <a style="font-size: 90%" href="/blog/tags/tls/">tls</a>
 <a style="font-size: 90%" href="/blog/tags/zookeeper/">zookeeper</a>
 

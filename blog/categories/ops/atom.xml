@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Ops | jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/blog/categories/ops/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-11-11T15:54:20+08:00</updated>
+  <updated>2017-11-15T16:53:45+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -141,7 +141,7 @@ size 100G
 
 <p>第一个命令配置日志文件大于100k字节时处理文件，第二个命令配置日志文件大于100M字节时处理日志文件，第三个命令配置日志文件大于100G时处理日志文件。 通常情况不建议将size设置太大。</p>
 
-<p>需要注意的是，<code>size</code>命令与<code>时间周期</code>配置是互斥的，而且<code>size</code>具有更高的优先级，当配置了<code>size</code>时，配置的<code>时间周期</code>将不起作用。</p>
+<p>需要注意的是，<code>size</code>命令与<code>时间周期</code>配置是互斥的，根据试验表明，后面设置的数据行会覆盖前面, 当后面配置了<code>size</code>时，前面配置的<code>时间周期</code>将不起作用，反之亦然。</p>
 
 <h3>Compression</h3>
 

@@ -5,11 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>使用FIFO命名管道进行进程间通讯 - jintao&#8217;s blog</title>
+  <title>设置TCP连接keepalive保活 - jintao&#8217;s blog</title>
   <meta name="author" content="jintao">
 
   
-  <meta name="description" content="管道是进程间通讯的一种方式。使用pipe，popen，pclose，等接口我们可以使用管道来进行进程间通讯。但是这一种管道只能由相关进程使用，这些相关进程的共同祖先进程创建了管道。通过FIFO，也称为命名管道，不相关的进程也可以进行通讯。 创建命名管道 调用mkfifo接口创建命名管道： # &hellip;">
+  <meta name="description" content="一个tcp连接包含两端。如何确保连接两端的socket都在线呢，一个方法是应用程序定期发送一个心跳信息给对方，tcp/ip提供了一个系统层面的保活机制，设置了socket keepalive属性后，系统会定期给对端发送心跳报文，根据是否能收到回复来判断对端是否在线，当对端不在线时， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -18,7 +18,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://jintao-zero.github.io/blog/2015/06/14/shi-yong-fifoming-ming-guan-dao-jin-xing-jin-cheng-jian-tong-xun">
+  <link rel="canonical" href="http://jintao-zero.github.io/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="/atom.xml" rel="alternate" title="jintao's blog" type="application/atom+xml">
@@ -70,7 +70,7 @@
   
   <header>
     
-      <h1 class="entry-title">使用FIFO命名管道进行进程间通讯</h1>
+      <h1 class="entry-title">设置TCP连接keepalive保活</h1>
     
     
       <p class="meta">
@@ -79,147 +79,102 @@
 
 
 
-<time class='entry-date' datetime='2015-06-14T15:56:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:56 pm</span></time>
+<time class='entry-date' datetime='2017-11-15T15:46:35+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:46 pm</span></time>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>管道是进程间通讯的一种方式。使用<code>pipe</code>，<code>popen</code>，<code>pclose</code>，等接口我们可以使用管道来进行进程间通讯。但是这一种管道只能由相关进程使用，这些相关进程的共同祖先进程创建了管道。通过FIFO，也称为命名管道，不相关的进程也可以进行通讯。</p>
+<div class="entry-content"><p>一个tcp连接包含两端。如何确保连接两端的socket都在线呢，一个方法是应用程序定期发送一个心跳信息给对方，tcp/ip提供了一个系统层面的保活机制，设置了socket keepalive属性后，系统会定期给对端发送心跳报文，根据是否能收到回复来判断对端是否在线，当对端不在线时，对本段socket的读操作将会读到EOF。</p>
 
-<h1>创建命名管道</h1>
+<h2>keepalive</h2>
 
-<p>调用mkfifo接口创建命名管道：</p>
-
-<pre><code>#include &lt;sys/types.h&gt;
-#include &lt;sys/stat.h&gt;
-int mkfifo(const char *path, mode_t mode);
-</code></pre>
-
-<p>创建FIFO类似于创建文件。FIFO的路径名存在于文件系统中。FIFO是一种文件类型。stat结构成员st_mode的编码指明文件是否是FIFO类型。可以用S_ISFIFO宏对此进行测试。 mkfifo函数创建一个路径名为path的fifo。mode和umask掩码规定了命名管道的访问权限。<br/>
-参数：<br/>
-path是管道在文件系统中的存在路径。<br/>
-mode于open函数中定义的mode一样。</p>
-
-<p>返回值：<br/>
-成功返回0。失败返回-1，同时设置errno错误码。</p>
-
-<p>错误原因：</p>
+<p>三个属性决定keepalive如何工作，在Linux系统中，这三个属性位于<code>proc</code>文件系统中：</p>
 
 <ul>
-<li>ENOTSUP       系统内核不支持fifo</li>
-<li>ENOTDIR       path前缀不是合法目录</li>
-<li>ENAMETOOLONG  path路径太长</li>
-<li>EACCESS       用户对于path中的目录没有权限访问</li>
-<li>EROFS         path指定的目录在只读文件系统</li>
-<li><p>EEXIST        path指定文件已经存在</p>
-
-<p>  <!-- more --></p></li>
+<li><code>tcp_keepalive_time</code><br/>
+连接空闲时间，超时后发送保活探测包，默认为<code>7200</code>秒</li>
+<li><code>tcp_keepalive_intvl</code><br/>
+每天探测包之间的间隔时间，默认为：<code>75</code>秒</li>
+<li><code>tcp_keepalive_probes</code>
+总的保护包数，超过则认为对端不在线，默认为<code>9</code>个</li>
 </ul>
 
 
-<h1>注意事项</h1>
+<p>keepalvie的工作过程如下：</p>
 
-<p>我们可以像访问普通文件一样访问命名管道文件。一般的文件I/O函数都可以用于FIFO。<br/>
-当打开一个FIFO，非阻塞标志（O_NONBLOCK）产生下列影响：</p>
+<ol>
+<li>客户端建立到服务端的连接</li>
+<li>当连接的空闲时间超过<code>tcp_keepalive_time</code>时，客户端向服务端发送一个tcp<code>ACK</code>包</li>
+<li>服务端是否对刚刚的<code>ACK</code>包进行回复？
 
 <ul>
-<li>在一般情况下（没有指定O_NOBLOCK），只读open要阻塞到某个其他进程为写而打开此FIFO。类似地，只写open要阻塞到某个进程为读而打开此FIFO。</li>
-<li>如果指定了O_NONBLOCK，则只读open立即返回。但是，如果没有进程已经为读而打开一个FIFO，那么只写open将出错返回-1，其errno是ENXIO。</li>
+<li>NO
+
+<ol>
+<li>. 等待<code>tcp_keepalive_intvl</code>超时，发送<code>ACK</code>包</li>
+<li>. 如果探测包个数达到<code>tcp_keepalive_probes</code>，则发送一个<code>RST</code>报文并关闭连接</li>
+</ol>
+</li>
+<li>YES<br/>
+   收到心跳包回复，则继续步骤2</li>
+</ul>
+</li>
+</ol>
+
+
+<p>大多数系统中，默认是开启tcp连接保活的，当对端(7200+74*9)秒都没有回复的话，则会关闭本端连接。</p>
+
+<!-- more -->
+
+
+<h2>修改具体连接保活属性</h2>
+
+<p>系统提供了默认值，在具体应用程序中，我们可以单独对连接设置不同的属性值：<br/>
+C/C++代码示例如下：</p>
+
+<pre><code>int keepalive_enabled = 1;
+int keepalive_idle = 10; // 10 second
+int keepalive_intvl = 5; // send keepalive every 5 second
+int keepalive_cnt = 3; //
+int ret = setsockopt(conn_sock, SOL_SOCKET, SO_KEEPALIVE, &amp;keepalive_enabled, sizeof(int));
+ret = setsockopt(conn_sock, IPPROTO_TCP, TCP_KEEPIDLE, &amp;keepalive_idle, sizeof(int));
+ret = setsockopt(conn_sock, IPPROTO_TCP, TCP_KEEPINTVL, &amp;keepalive_intvl, sizeof(int));     
+ret = setsockopt(conn_sock, IPPROTO_TCP, TCP_KEEPCNT, &amp;keepalive_cnt, sizeof(int));
+</code></pre>
+
+<h2>修改系统全局保活属性</h2>
+
+<ul>
+<li><p>修改proc文件系统中的属性值</p>
+
+<pre><code>  echo 10 &gt; /proc/sys/net/ipv4/tcp_keepalive_time
+  echo 5  &gt; /proc/sys/net/ipv4/tcp_keepalive_intvl
+  echo 3  &gt; /proc/sys/net/ipv4/tcp_keepalive_probes  
+</code></pre>
+
+<p>  这种方法修改的属性值，系统重启后属性值会恢复</p></li>
+<li><p>sysctl命令修改</p>
+
+<pre><code>  /sbin/sysctl -w net.ipv4.tcp_keepalive_time=10
+  /sbin/sysctl -w net.ipv4.tcp_keepalive_intvl=5
+  /sbin/sysctl -w net.ipv4.tcp_keepalive_probes=3
+</code></pre>
+
+<p>  这种方法，系统重启后属性值会恢复</p></li>
+<li><p>修改/etc/sysctl.conf配置文件</p>
+
+<pre><code>  net.ipv4.tcp_keepalive_time=10
+  net.ipv4.tcp_keepalive_intvl=5
+  net.ipv4.tcp_keepalive_probes=3   
+</code></pre></li>
 </ul>
 
 
-<p>当多个写进程同时向同一FIFO进行写操作时，如果保证来自不同程序的数据块不相互交错，每个写操作必须原子话，FIFO的长度是需要考虑的一个很重要因素。系统对任一时刻在一个FIFO中可以存在的数据长度是有限制的。它由#define PIPE_BUF定义，在头文件limits.h中。在Linux和许多其他类UNIX系统中，它的值通常是4096字节，Red Hat Fedora9下是4096，但在某些系统中它可能会小到512字节。</p>
-
-<ul>
-<li>当要写入的数据量不大于PIPE_BUF时，Linux将保证写入的原子性。如果此时管道空闲缓冲区不足以容纳要写入的字节数，则进入睡眠，直到当缓冲区中能够容纳要写入的字节数时，才开始进行一次性写操作。即写入的数据长度小于等于PIPE_BUF时，那么或者写入全部字节，或者一个字节都不写入，它属于一个一次性行为，具体要看FIFO中是否有足够的缓冲区。</li>
-<li>当要写入的数据量大于PIPE_BUF时，Linux将不再保证写入的原子性。FIFO缓冲区一有空闲区域，写进程就会试图向管道写入数据，写操作在写完所有请求写的数据后返回。</li>
-</ul>
-
-
-<h1>FIFO示例</h1>
-
-<p>创建FIFO</p>
-
-<pre><code>ret = mkfifo(FIFO_NAME,0777);
-if ((-1 == ret) &amp;&amp; (errno != EEXIST)) {
-    perror("create fifo fail.\n");
-    exit(1);
-}
-</code></pre>
-
-<p>读FIFO进程代码</p>
-
-<pre><code>// create fifo
-int ret = mkfifo(FIFO_NAME,0777);
-if ((-1 == ret) &amp;&amp; (errno != EEXIST)) {
-    perror("create fifo fail.\n");
-    exit(1);
-}
-
-int fd = open(FIFO_NAME, O_RDONLY);
-// int fd = open(FIFO_NAME, O_RDWR);
-if (-1 == fd) {
-    printf("open fifo %s fail\n", FIFO_NAME);
-    exit(1);
-}
-printf("open fifo %s for read suc\n", FIFO_NAME);
-
-char buf[1024];
-while (1 ) {
-    ssize_t size = read(fd, buf, sizeof(buf));
-    if (size &gt; 0) {
-        buf[size] = '\0';
-        printf("read from fifo: %s\n", buf);
-    } else if(size == 0) {
-        printf("write end of fifo exit\n");
-        break;
-    } else {
-        perror("read fail from fifo:");
-        break;
-    }
-}
-close(fd);
-return 0;
-</code></pre>
-
-<p>写FIFO进程代码</p>
-
-<pre><code>// create fifo
-int ret = mkfifo(FIFO_NAME,0777);
-if ((-1 == ret) &amp;&amp; (errno != EEXIST)) {
-    perror("create fifo fail.\n");
-    exit(1);
-}
-
-int fd = open(FIFO_NAME, O_WRONLY);
-if (-1 == fd) {
-    printf("open fifo %s fail\n", FIFO_NAME);
-    exit(1);
-}
-printf("open fifo %s for write suc", FIFO_NAME);
-
-while (1) {
-    char buf[1024] = {0};
-    if (gets(buf) == NULL) {
-        break;
-    }
-    int len = strlen(buf);
-    if (0 == len)
-      break;
-    printf("%d\n", len);
-    ssize_t size = write(fd, buf, len);
-    if (size &gt;= 0) {
-        printf("write to fifo: %s, msg: %s, size:%ld \n", FIFO_NAME, buf, size);
-    } else {
-        perror("write fail\n");
-        break;
-    }
-}
-close(fd);
-return 0;
-</code></pre>
+<p> ##参考
+* <a href="http://coryklein.com/tcp/2015/11/25/custom-configuration-of-tcp-socket-keep-alive-timeouts.html">Custom Configuration of TCP Socket Keep-Alive Timeouts</a><br/>
+* <a href="http://tldp.org/HOWTO/TCP-Keepalive-HOWTO/usingkeepalive.html">TCP Keepalive HOWTO</a></p>
 </div>
 
 
@@ -235,12 +190,12 @@ return 0;
 
 
 
-<time class='entry-date' datetime='2015-06-14T15:56:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>3:56 pm</span></time>
+<time class='entry-date' datetime='2017-11-15T15:46:35+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>3:46 pm</span></time>
       
 
 <span class="categories">
   
-    <a class='category' href='/blog/categories/unix/'>unix</a>
+    <a class='category' href='/blog/categories/network/'>network</a>
   
 </span>
 
@@ -280,10 +235,8 @@ var jiathis_config = {data_track_clickback:'true'};
     
     <p class="meta">
       
-        <a class="basic-alignment left" href="/blog/2015/06/02/linux-slash-unixshe-zhi-suid/" title="Previous Post: Linux/Unix设置SUID">&laquo; Linux/Unix设置SUID</a>
+        <a class="basic-alignment left" href="/blog/2017/11/11/shi-yong-logroateguan-li-ri-zhi-wen-jian/" title="Previous Post: 使用logroate管理日志文件">&laquo; 使用logroate管理日志文件</a>
       
-      
-        <a class="basic-alignment right" href="/blog/2015/06/16/libnetfilter-queuexue-xi-bi-ji/" title="Next Post: libnetfilter_queue实战">libnetfilter_queue实战 &raquo;</a>
       
     </p>
   </footer>

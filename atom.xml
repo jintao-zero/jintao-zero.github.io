@@ -4,7 +4,7 @@
   <title><![CDATA[jintao's blog]]></title>
   <link href="http://jintao-zero.github.io/atom.xml" rel="self"/>
   <link href="http://jintao-zero.github.io/"/>
-  <updated>2017-11-11T15:54:20+08:00</updated>
+  <updated>2017-11-15T16:53:45+08:00</updated>
   <id>http://jintao-zero.github.io/</id>
   <author>
     <name><![CDATA[jintao]]></name>
@@ -12,6 +12,103 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[设置TCP连接keepalive保活]]></title>
+    <link href="http://jintao-zero.github.io/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo/"/>
+    <updated>2017-11-15T15:46:35+08:00</updated>
+    <id>http://jintao-zero.github.io/blog/2017/11/15/she-zhi-tcplian-jie-keepalivebao-huo</id>
+    <content type="html"><![CDATA[<p>一个tcp连接包含两端。如何确保连接两端的socket都在线呢，一个方法是应用程序定期发送一个心跳信息给对方，tcp/ip提供了一个系统层面的保活机制，设置了socket keepalive属性后，系统会定期给对端发送心跳报文，根据是否能收到回复来判断对端是否在线，当对端不在线时，对本段socket的读操作将会读到EOF。</p>
+
+<h2>keepalive</h2>
+
+<p>三个属性决定keepalive如何工作，在Linux系统中，这三个属性位于<code>proc</code>文件系统中：</p>
+
+<ul>
+<li><code>tcp_keepalive_time</code><br/>
+连接空闲时间，超时后发送保活探测包，默认为<code>7200</code>秒</li>
+<li><code>tcp_keepalive_intvl</code><br/>
+每天探测包之间的间隔时间，默认为：<code>75</code>秒</li>
+<li><code>tcp_keepalive_probes</code>
+总的保护包数，超过则认为对端不在线，默认为<code>9</code>个</li>
+</ul>
+
+
+<p>keepalvie的工作过程如下：</p>
+
+<ol>
+<li>客户端建立到服务端的连接</li>
+<li>当连接的空闲时间超过<code>tcp_keepalive_time</code>时，客户端向服务端发送一个tcp<code>ACK</code>包</li>
+<li>服务端是否对刚刚的<code>ACK</code>包进行回复？
+
+<ul>
+<li>NO
+
+<ol>
+<li>. 等待<code>tcp_keepalive_intvl</code>超时，发送<code>ACK</code>包</li>
+<li>. 如果探测包个数达到<code>tcp_keepalive_probes</code>，则发送一个<code>RST</code>报文并关闭连接</li>
+</ol>
+</li>
+<li>YES<br/>
+   收到心跳包回复，则继续步骤2</li>
+</ul>
+</li>
+</ol>
+
+
+<p>大多数系统中，默认是开启tcp连接保活的，当对端(7200+74*9)秒都没有回复的话，则会关闭本端连接。</p>
+
+<!-- more -->
+
+
+<h2>修改具体连接保活属性</h2>
+
+<p>系统提供了默认值，在具体应用程序中，我们可以单独对连接设置不同的属性值：<br/>
+C/C++代码示例如下：</p>
+
+<pre><code>int keepalive_enabled = 1;
+int keepalive_idle = 10; // 10 second
+int keepalive_intvl = 5; // send keepalive every 5 second
+int keepalive_cnt = 3; //
+int ret = setsockopt(conn_sock, SOL_SOCKET, SO_KEEPALIVE, &amp;keepalive_enabled, sizeof(int));
+ret = setsockopt(conn_sock, IPPROTO_TCP, TCP_KEEPIDLE, &amp;keepalive_idle, sizeof(int));
+ret = setsockopt(conn_sock, IPPROTO_TCP, TCP_KEEPINTVL, &amp;keepalive_intvl, sizeof(int));     
+ret = setsockopt(conn_sock, IPPROTO_TCP, TCP_KEEPCNT, &amp;keepalive_cnt, sizeof(int));
+</code></pre>
+
+<h2>修改系统全局保活属性</h2>
+
+<ul>
+<li><p>修改proc文件系统中的属性值</p>
+
+<pre><code>  echo 10 &gt; /proc/sys/net/ipv4/tcp_keepalive_time
+  echo 5  &gt; /proc/sys/net/ipv4/tcp_keepalive_intvl
+  echo 3  &gt; /proc/sys/net/ipv4/tcp_keepalive_probes  
+</code></pre>
+
+<p>  这种方法修改的属性值，系统重启后属性值会恢复</p></li>
+<li><p>sysctl命令修改</p>
+
+<pre><code>  /sbin/sysctl -w net.ipv4.tcp_keepalive_time=10
+  /sbin/sysctl -w net.ipv4.tcp_keepalive_intvl=5
+  /sbin/sysctl -w net.ipv4.tcp_keepalive_probes=3
+</code></pre>
+
+<p>  这种方法，系统重启后属性值会恢复</p></li>
+<li><p>修改/etc/sysctl.conf配置文件</p>
+
+<pre><code>  net.ipv4.tcp_keepalive_time=10
+  net.ipv4.tcp_keepalive_intvl=5
+  net.ipv4.tcp_keepalive_probes=3   
+</code></pre></li>
+</ul>
+
+
+<p> ##参考
+* <a href="http://coryklein.com/tcp/2015/11/25/custom-configuration-of-tcp-socket-keep-alive-timeouts.html">Custom Configuration of TCP Socket Keep-Alive Timeouts</a><br/>
+* <a href="http://tldp.org/HOWTO/TCP-Keepalive-HOWTO/usingkeepalive.html">TCP Keepalive HOWTO</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[使用logroate管理日志文件]]></title>
@@ -141,7 +238,7 @@ size 100G
 
 <p>第一个命令配置日志文件大于100k字节时处理文件，第二个命令配置日志文件大于100M字节时处理日志文件，第三个命令配置日志文件大于100G时处理日志文件。 通常情况不建议将size设置太大。</p>
 
-<p>需要注意的是，<code>size</code>命令与<code>时间周期</code>配置是互斥的，而且<code>size</code>具有更高的优先级，当配置了<code>size</code>时，配置的<code>时间周期</code>将不起作用。</p>
+<p>需要注意的是，<code>size</code>命令与<code>时间周期</code>配置是互斥的，根据试验表明，后面设置的数据行会覆盖前面, 当后面配置了<code>size</code>时，前面配置的<code>时间周期</code>将不起作用，反之亦然。</p>
 
 <h3>Compression</h3>
 
@@ -3938,192 +4035,6 @@ fmt.Println("t is now", t)
     <updated>2017-02-03T19:55:10+08:00</updated>
     <id>http://jintao-zero.github.io/blog/2017/02/03/golangshi-yong-protobufda-jian-rpc</id>
     <content type="html"><![CDATA[
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Go并发模型之Context]]></title>
-    <link href="http://jintao-zero.github.io/blog/2017/01/18/gobing-fa-mo-xing-zhi-context/"/>
-    <updated>2017-01-18T15:26:37+08:00</updated>
-    <id>http://jintao-zero.github.io/blog/2017/01/18/gobing-fa-mo-xing-zhi-context</id>
-    <content type="html"><![CDATA[<p>Go语言中go和channel是开发高并发程序的基础。我们使用channel进行goroutine程序通讯，传送数据和控制信号，<a href="https://blog.golang.org/pipelines">Pipelines and Cancelation</a>向我们讲解了如何利用Done通道来向goroutine发送结束信号：</p>
-
-<pre><code>func main() {
-    var done = make(chan struct {})
-    go func(done chan struct{}) {
-        select {
-        case &lt;- done:
-            fmt.Println("receive exit signal")
-        }
-    }(done)
-
-    done &lt;- struct {}{}
-    time.Sleep(3 * time.Second)
-}
-</code></pre>
-
-<p>在Go服务端，每一个请求都对应会有一个goroutine进行处理。处理函数通常又会开启另外的goroutine去访问后段服务，比如数据库和RPC服务。对应一个请求创建的这一系列的goroutine通常会需要访问请求相关的信息，比如终端用户名，授权token和请求的deadline等等。当一个请求被取消或者处理超时，与这个请求相关的一些列goroutine应该尽快退出，以便系统回收资源。<br/>
-Go中<code>context</code>包提供了这样的功能，利用context包可以进行请求范围内的数据传递，发送请求信号和deadline查看。本文简单示例如何使用<code>context</code>包进行goroutine并发编程。</p>
-
-<!-- more -->
-
-
-<h2>Context</h2>
-
-<p><code>Context</code>接口定义如下：</p>
-
-<pre><code>// A Context carries a deadline, cancelation signal, and request-scoped values
-// across API boundaries. Its methods are safe for simultaneous use by multiple
-// goroutines.
-type Context interface {
-    // Done returns a channel that is closed when this Context is canceled
-    // or times out.
-    Done() &lt;-chan struct{}
-
-    // Err indicates why this context was canceled, after the Done channel
-    // is closed.
-    Err() error
-
-    // Deadline returns the time when this Context will be canceled, if any.
-    Deadline() (deadline time.Time, ok bool)
-
-    // Value returns the value associated with key or nil if none.
-    Value(key interface{}) interface{}
-}
-</code></pre>
-
-<p><code>Context</code>接口包含四个方法。<br/>
-当Context被取消或者超时时，<code>Done</code>返回的通道将会被关闭。<br/>
-<code>Err</code>函数返回关闭原因。  <br/>
-<code>Deadline</code>返回Context将要被取消的时间，如果设置了超时时间的话,程序可以利用Deadline的返回值判断是否需要有必要开始操作，或者利用返回值设置I/O超时时间。<br/>
-<code>Value</code>方法返回与key相对应的value数据。<br/>
-<code>Context</code>接口是并发安全的。可以将同一个Context对象传递给任意goroutine。</p>
-
-<h3>派生contexts</h3>
-
-<p>context包提供函数从已存在Conext接口对象派生新接口对象。这些对象形成了一个树，当一个Context被取消时，所有从此Context对象派生的对象都被取消。<br/>
-<code>Background</code>是任何Context树的根；Background永远不会被取消</p>
-
-<pre><code>// Background returns an empty Context. It is never canceled, has no deadline,
-// and has no values. Background is typically used in main, init, and tests,
-// and as the top-level Context for incoming requests.
-func Background() Context
-</code></pre>
-
-<p><code>WithCancle</code>和<code>WithTimeout</code>返回一个可以比parent Context更早取消的Context接口对象。</p>
-
-<h3>WithCancle示例</h3>
-
-<pre><code>func f1(ctx context.Context) {
-    fmt.Println("f1 running...")
-    withCancel, cancel := context.WithCancel(ctx)
-    defer cancel()
-    go f2(withCancel)
-    // wait f2 to run
-    time.Sleep(time.Second)
-    fmt.Println("f1 cancel f2", )
-    cancel()
-    ticker := time.NewTicker(time.Second)
-    for ; ;  {
-        select {
-        case &lt;- ctx.Done():
-            fmt.Println("f1, parent call canceled", ctx.Err())
-        case t := &lt;- ticker.C:
-            fmt.Println("f1 running at ", t)
-        }
-
-    }
-}
-
-func f2(ctx context.Context)  {
-    fmt.Println("f2 running...")
-    ticker := time.NewTicker(time.Second)
-    for ; ;  {
-        select {
-        case &lt;- ctx.Done():
-            fmt.Println("f2, parent call canceled", ctx.Err())
-            return
-        case t := &lt;- ticker.C:
-            fmt.Println("f2 running at", t)
-        }
-    }
-}
-
-func main()  {
-    ctx, cancel := context.WithCancel(context.Background())
-    defer cancel()
-
-    go f1(ctx)
-    for {
-        time.Sleep(5 * time.Second)
-    }
-    //cancel()
-    //time.Sleep(5 * time.Second)
-}
-</code></pre>
-
-<p><code>WithCancel</code>从parent派生出一个新Context接口对象和一个CancelFunc函数。调用CancelFunc函数时关闭<code>Done</code>返回的通道，通知子goroutine退出。</p>
-
-<h3>WithDeadline</h3>
-
-<p><code>WithDeadline</code> 返回一个Context接口对象，当设置的deadline时间到达时，<code>Context</code>对象<code>Done</code>可读。</p>
-
-<pre><code>func main()  {
-    n := time.Now()
-    ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(5 * time.Second))
-    defer cancel()
-    ticker := time.NewTicker(1 * time.Second)
-    for {
-        select {
-        case &lt;-ticker.C:
-            fmt.Println("ticker timeout")
-        case &lt;-ctx.Done():
-            fmt.Println("context timeout", time.Since(n))
-            return
-        }
-    }
-}                                                                                                }
-</code></pre>
-
-<h3>WithTimeout示例</h3>
-
-<p><code>WithTimeout</code>与<code>WithDeadline</code>类似，当设置的超时时间到达时，<code>Done</code>可读  <br/>
-    func main()  {
-        ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
-        defer cancel()
-        ticker := time.NewTicker(1 * time.Second)
-        for {
-            select {
-            case &lt;-ticker.C:
-                fmt.Println(&ldquo;ticker timeout&rdquo;)
-            case &lt;-ctx.Done():
-                fmt.Println(&ldquo;context timeout&rdquo;)
-                return
-            }
-        }
-    }</p>
-
-<h3>WithValue示例</h3>
-
-<p>使用<code>WithValue</code>来传递请求相关数据</p>
-
-<pre><code>func WithValue(parent Context, key, val interface{}) Context
-func main()  {
-    ctx := context.WithValue(context.Background(), "test", "value")
-    go func(ctx context.Context) {
-        fmt.Println(ctx.Value("test"))
-    }(ctx)
-    time.Sleep(5 * time.Second)
-}
-</code></pre>
-
-<h2>参考</h2>
-
-<p>更多关于Go并发模型的讲解：<br/>
-<a href="https://blog.golang.org/pipelines">Go Concurrency Patterns: Pipelines and cancellation</a>         <br/>
-<a href="http://talks.golang.org/2012/concurrency.slide#1">Go Concurrency Patterns</a>         <br/>
-<a href="http://blog.golang.org/advanced-go-concurrency-patterns">Advanced Go Concurrency Patterns</a>      <br/>
-<a href="https://blog.golang.org/context">Go Concurrency Patterns: Context</a></p>
 ]]></content>
   </entry>
   
